@@ -57,4 +57,5 @@ export interface ArticleResult {
   issues: string[];
   remaining: AuditProblem[];
   tokens: number;
+  edited?: boolean;
 }

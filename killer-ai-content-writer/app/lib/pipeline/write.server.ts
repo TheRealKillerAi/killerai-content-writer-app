@@ -6,6 +6,7 @@ import { chatJson } from "./llm.server";
 import {
   cleanStructure,
   findRepeats,
+  removeRepeats,
   repairLink,
   runChecks,
   splitSentences,
@@ -85,10 +86,12 @@ export async function writeArticle(
       .replace(/\n[ \t]+/g, "\n")
       .replace(/ {2,}/g, " ")
       .replace(/\n{3,}/g, "\n\n");
-    art.body_markdown = cleanStructure(art.body_markdown);
+    art.body_markdown = cleanStructure(removeRepeats(art.body_markdown));
     if (link) art.body_markdown = art.body_markdown.replace(MASK, link);
     art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
   };
+
+  article.body_markdown = cleanStructure(removeRepeats(article.body_markdown));
 
   await progress("Checking every sentence against your facts");
   let report = await audit(article);

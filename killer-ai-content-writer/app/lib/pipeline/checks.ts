@@ -208,3 +208,34 @@ export function findRepeats(body: string) {
 export function repairLink(md: string, name: string) {
   return md.replace(/(?<!\()\{\{PRODUCT_URL\}\}(?!\))/g, `[${name}]({{PRODUCT_URL}})`);
 }
+
+/** Deterministically deletes any sentence that repeats an earlier one; drops bullets left with almost nothing. */
+export function removeRepeats(md: string) {
+  const seen = new Set<string>();
+  const isDup = (sentence: string) => {
+    const w = norm(sentence);
+    if (w.length < 4) return false;
+    const sh = [...shingles(w, Math.min(6, w.length))];
+    const dup = sh.some((x) => seen.has(x));
+    if (!dup) sh.forEach((x) => seen.add(x));
+    return dup;
+  };
+  const out: string[] = [];
+  for (const line of md.split("\n")) {
+    if (/^#{1,6}\s/.test(line) || !line.trim() || line.includes("{{PRODUCT_URL}}")) {
+      out.push(line);
+      continue;
+    }
+    const prefix = (line.match(/^\s*(?:[-*+]\s+|\d+\.\s+|>\s*)?/) || [""])[0];
+    const parts = line.slice(prefix.length).split(/(?<=[.!?*])\s+(?=[A-Z0-9*_"(])/);
+    const kept = parts.filter((p) => !isDup(p));
+    if (kept.length === parts.length) {
+      out.push(line);
+      continue;
+    }
+    const text = kept.join(" ").trim();
+    const words = text.replace(/[*_]/g, " ").split(/\s+/).filter(Boolean).length;
+    if (words >= 6) out.push(prefix + text);
+  }
+  return out.join("\n");
+}

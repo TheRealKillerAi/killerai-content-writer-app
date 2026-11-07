@@ -1,7 +1,8 @@
 import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
-import type { Angle, ArticleResult, MerchantFacts, ProductFacts } from "./pipeline/types";
+import { articleText, runChecks } from "./pipeline/checks";
+import type { Angle, Article, ArticleResult, MerchantFacts, ProductFacts } from "./pipeline/types";
 
 /** Starts writing in the background and returns the new article id straight away. */
 export async function startArticle(
@@ -48,4 +49,25 @@ export async function getArticle(shop: string, id: string) {
     angle: JSON.parse(row.angle) as Angle,
     result: row.result ? (JSON.parse(row.result) as ArticleResult) : null,
   };
+}
+
+/** Saves the merchant's edits and re-runs the deterministic checks. Edits themselves are not AI fact-checked. */
+export async function saveEdits(shop: string, id: string, article: Article) {
+  const row = await db.article.findFirst({ where: { id, shop } });
+  if (!row?.result) return null;
+  const prev = JSON.parse(row.result) as ArticleResult;
+  const checks = runChecks(article);
+  const text = articleText(article);
+  const remaining = prev.remaining.filter((p) => text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)));
+  const next: ArticleResult = {
+    ...prev,
+    article,
+    words: checks.words,
+    issues: checks.issues,
+    remaining,
+    status: remaining.length === 0 && checks.issues.length === 0 ? "READY FOR MERCHANT APPROVAL" : "NEEDS REVIEW",
+    edited: true,
+  };
+  await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
+  return next;
 }
