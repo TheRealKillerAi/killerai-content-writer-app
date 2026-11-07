@@ -61,8 +61,21 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       throw redirect(`/app/article/${id}`);
     }
     if (intent === "angles") {
-      const existing = await existingArticleTitles(admin);
-      const { angles } = await findAngles(product.facts, existing, facts.known);
+      const kept = await loadAngles(session.shop, productId);
+      const existing = [...(await existingArticleTitles(admin)), ...kept.map((a) => a.working_title)];
+      const { angles: fresh } = await findAngles(product.facts, existing, facts.known);
+      // Keep what's already there and add genuinely new angles (no duplicates by title or search term).
+      const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      const seen = new Set(kept.flatMap((a) => [key(a.working_title), key(a.target_query)]));
+      const added = fresh.filter((a) => {
+        const k1 = key(a.working_title);
+        const k2 = key(a.target_query);
+        if (seen.has(k1) || seen.has(k2)) return false;
+        seen.add(k1);
+        seen.add(k2);
+        return true;
+      });
+      const angles = [...kept, ...added].slice(0, 30);
       await saveAngles(session.shop, productId, angles);
       return { intent, error: null, angles };
     }
