@@ -180,6 +180,13 @@ export default function ProductPage() {
 
   const q = questionsF.data;
 
+  // After answers are saved, automatically re-check whether anything else is missing for this angle.
+  useEffect(() => {
+    if (saveF.data?.saved && q?.angle) {
+      questionsF.submit({ intent: "questions", angle: JSON.stringify(q.angle) }, { method: "POST" });
+    }
+  }, [saveF.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <s-page heading={f.title}>
       <s-link slot="breadcrumb-actions" href="/app">Products</s-link>
@@ -275,8 +282,7 @@ export default function ProductPage() {
         <s-section heading={`Before we write: ${q.angle.working_title}`}>
           {saveF.data?.saved ? (
             <s-banner tone="success" heading="Saved">
-              Your answers are saved as facts for this product. Choose the angle again to see if anything else is
-              needed.
+              Your answers are saved as facts for this product. We've checked again for anything still missing.
             </s-banner>
           ) : null}
           <QuestionForm
