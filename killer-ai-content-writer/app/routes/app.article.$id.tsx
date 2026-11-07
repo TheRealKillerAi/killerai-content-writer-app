@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { getArticle, saveEdits } from "../lib/articles.server";
+import { dedupeArticle, getArticle, saveEdits } from "../lib/articles.server";
 import type { Article, ArticleResult } from "../lib/pipeline/types";
 import { getProduct } from "../lib/products.server";
 import { renderMarkdown } from "../lib/markdown";
@@ -19,6 +19,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const form = await request.formData();
+  if (form.get("intent") === "dedupe") {
+    const result = await dedupeArticle(session.shop, params.id!);
+    return { saved: !!result };
+  }
   const article = JSON.parse(String(form.get("article"))) as Article;
   const result = await saveEdits(session.shop, params.id!, article);
   return { saved: !!result };
@@ -80,6 +84,16 @@ function ArticleReview({
       {r.remaining.length || r.issues.length ? (
         <s-section heading="Things to check">
           <s-stack direction="block" gap="small">
+            {r.remaining.some((p) => /^repeats an earlier/.test(p.problem)) && !dirty ? (
+              <s-stack direction="inline">
+                <s-button
+                  {...(saving ? { loading: true } : {})}
+                  onClick={() => fetcher.submit({ intent: "dedupe" }, { method: "POST" })}
+                >
+                  Remove repeated sentences
+                </s-button>
+              </s-stack>
+            ) : null}
             {r.remaining.map((p, i) => (
               <s-text key={"p" + i}>
                 <strong>"{p.text.replace(/\*\*/g, "").slice(0, 140)}"</strong> — {p.problem}

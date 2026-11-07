@@ -1,7 +1,7 @@
 import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
-import { articleText, runChecks } from "./pipeline/checks";
+import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
 import type { Angle, Article, ArticleResult, MerchantFacts, ProductFacts } from "./pipeline/types";
 
 /** Starts writing in the background and returns the new article id straight away. */
@@ -58,7 +58,13 @@ export async function saveEdits(shop: string, id: string, article: Article) {
   const prev = JSON.parse(row.result) as ArticleResult;
   const checks = runChecks(article);
   const text = articleText(article);
-  const remaining = prev.remaining.filter((p) => text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)));
+  // Repeats are always re-detected from the current text; other audit findings stay only while their sentence is still there.
+  const remaining = [
+    ...prev.remaining.filter(
+      (p) => !/^repeats an earlier/.test(p.problem) && text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)),
+    ),
+    ...findRepeats(article.body_markdown),
+  ];
   const next: ArticleResult = {
     ...prev,
     article,
@@ -70,4 +76,12 @@ export async function saveEdits(shop: string, id: string, article: Article) {
   };
   await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
   return next;
+}
+
+export async function dedupeArticle(shop: string, id: string) {
+  const row = await db.article.findFirst({ where: { id, shop } });
+  if (!row?.result) return null;
+  const prev = JSON.parse(row.result) as ArticleResult;
+  const article = { ...prev.article, body_markdown: cleanStructure(removeRepeats(prev.article.body_markdown)) };
+  return saveEdits(shop, id, article);
 }
