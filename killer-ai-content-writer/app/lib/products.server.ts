@@ -1,0 +1,93 @@
+import type { ProductFacts } from "./pipeline/types";
+
+type Admin = { graphql: (query: string, opts?: { variables?: Record<string, unknown> }) => Promise<Response> };
+
+async function gql<T>(admin: Admin, query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const res = await admin.graphql(query, { variables });
+  const body = await res.json();
+  if (body.errors?.length) throw new Error(body.errors.map((e: { message: string }) => e.message).join("; "));
+  return body.data as T;
+}
+
+export type ProductRow = {
+  id: string;
+  title: string;
+  status: string;
+  vendor: string;
+  productType: string;
+  imageUrl: string | null;
+};
+
+export async function listProducts(admin: Admin, search: string, after?: string | null) {
+  const data = await gql<{
+    products: {
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      nodes: {
+        id: string; title: string; status: string; vendor: string; productType: string;
+        featuredMedia: { preview: { image: { url: string } | null } | null } | null;
+      }[];
+    };
+  }>(
+    admin,
+    `#graphql
+    query Products($query: String, $after: String) {
+      products(first: 20, query: $query, after: $after, sortKey: UPDATED_AT, reverse: true) {
+        pageInfo { hasNextPage endCursor }
+        nodes {
+          id title status vendor productType
+          featuredMedia { preview { image { url } } }
+        }
+      }
+    }`,
+    { query: search || null, after: after || null },
+  );
+  return {
+    pageInfo: data.products.pageInfo,
+    products: data.products.nodes.map<ProductRow>((p) => ({
+      id: p.id, title: p.title, status: p.status, vendor: p.vendor, productType: p.productType,
+      imageUrl: p.featuredMedia?.preview?.image?.url ?? null,
+    })),
+  };
+}
+
+export async function getProduct(admin: Admin, id: string) {
+  const data = await gql<{
+    product: {
+      id: string; title: string; handle: string; status: string; vendor: string; productType: string;
+      tags: string[]; descriptionHtml: string;
+      options: { name: string; values: string[] }[];
+      featuredMedia: { preview: { image: { url: string } | null } | null } | null;
+    } | null;
+  }>(
+    admin,
+    `#graphql
+    query Product($id: ID!) {
+      product(id: $id) {
+        id title handle status vendor productType tags descriptionHtml
+        options { name values }
+        featuredMedia { preview { image { url } } }
+      }
+    }`,
+    { id },
+  );
+  const p = data.product;
+  if (!p) return null;
+  const facts: ProductFacts = {
+    title: p.title, handle: p.handle, vendor: p.vendor, productType: p.productType,
+    tags: p.tags, options: p.options.filter((o) => o.name !== "Title"), description_html: p.descriptionHtml,
+  };
+  return { id: p.id, status: p.status, imageUrl: p.featuredMedia?.preview?.image?.url ?? null, facts };
+}
+
+export async function existingArticleTitles(admin: Admin): Promise<string[]> {
+  try {
+    const data = await gql<{ articles: { nodes: { title: string }[] } }>(
+      admin,
+      `#graphql
+      query ExistingArticles { articles(first: 50) { nodes { title } } }`,
+    );
+    return data.articles.nodes.map((a) => a.title);
+  } catch {
+    return []; // not fatal: angles still work, just without overlap checking
+  }
+}
