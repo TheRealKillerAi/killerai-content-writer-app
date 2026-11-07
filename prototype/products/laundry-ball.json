@@ -3,7 +3,17 @@
   "handle": "reusable-eco-laundry-ball",
   "vendor": "NCPCL",
   "productType": "Laundry Balls",
-  "price": "12.95 AUD",
-  "tags": ["Best Selling", "Cleaning", "Clothing", "ECO Ball", "Eco-Friendly", "Eco-Home", "Eco-Safe", "Homeware", "Laundry Ball"],
-  "description": "Reusable Eco Laundry Ball for Everyday Loads. Laundry often means another bottle, another measure and another product to replace. This refillable Eco... [TRUNCATED: replace with full description_html from Shopify once the connector is repointed]"
+  "price": "12.95 (store currency)",
+  "tags": [
+    "Best Selling",
+    "Cleaning",
+    "Clothing",
+    "ECO Ball",
+    "Eco-Friendly",
+    "Eco-Home",
+    "Eco-Safe",
+    "Homeware",
+    "Laundry Ball"
+  ],
+  "description_html": "<h2>Reusable Eco Laundry Ball for Everyday Loads</h2><p>Laundry often means another bottle, another measure and another product to replace. This refillable Eco Laundry Ball uses natural minerals for a 4 kg wash without added detergent, fragrance or fabric softener, giving you a simpler option for regular loads.</p><h3>Key Features</h3><ul><li>One ball for a 4 kg wash.</li><li>Reusable for up to 1,000 washes.</li><li>Natural minerals clean without added detergent, fragrance or fabric softener.</li><li>Recharge in sunlight for a few hours each month with regular use.</li><li>Recyclable outer ball where suitable facilities accept it.</li><li>Refillable design for repeat use.</li></ul><p><strong>Make wash day simpler with a refillable laundry ball that replaces repeat detergent-bottle purchases in your regular routine.</strong></p>"
 }
