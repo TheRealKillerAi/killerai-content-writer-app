@@ -1,4 +1,4 @@
-const URL_ = "https://api.deepseek.com/chat/completions";
+const URL_ = process.env.DEEPSEEK_URL || "https://api.deepseek.com/chat/completions";
 export async function chat(messages, { temperature = 0.5 } = {}) {
   const key = process.env.DEEPSEEK_API_KEY;
   if (!key) throw new Error("Set DEEPSEEK_API_KEY");

@@ -7,5 +7,4 @@
 - Structure: TL;DR first, question-style H2s, short lists for trade-offs, a gentle "ready to explore" product section near the end, then a Sources list.
 - Reassuring closers ("You do not have to choose one product forever"). No hype words, no emoji in body copy.
 
-Sample of the voice (opening of the benchmark post):
-"Maybe you have seen a menstrual cup online, in a bathroom cabinet or on a shop shelf and wondered what using one is actually like. Does it replace pads and tampons completely? Is it hard to use? How do you clean it? And what happens if it does not feel right the first time? Those are sensible questions. Switching period products is personal, and a reusable option is not automatically the best choice for everyone."
+Do NOT reuse any wording from earlier posts. The voice is a set of traits, not a script.

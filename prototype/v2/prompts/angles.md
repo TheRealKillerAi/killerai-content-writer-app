@@ -8,5 +8,8 @@ Rules
 - These are AI suggestions, not measured search volumes. Do not state or imply search volume or difficulty numbers.
 - Australian English.
 
-Return ONLY JSON: {"angles":[{"target_query":"","intent":"informational|commercial","working_title":"","why_it_fits":"","needs_info":[""],"risk":"normal|high","overlaps_existing":false}]}
+- Score honestly how well PRODUCT DATA alone can answer the angle: answerable_from_data 3 = fully, 2 = mostly, 1 = needs outside facts, 0 = cannot. Angles like "does X work", "is X worth it" or "how to choose a size/fit" usually need outside evidence or merchant-supplied facts: set needs_outside_evidence true and list exactly what is missing in needs_info.
+- Prefer angles that can be answered well and honestly. Do not promise an answer in the title that the data cannot support.
+
+Return ONLY JSON: {"angles":[{"target_query":"","intent":"informational|commercial","working_title":"","why_it_fits":"","answerable_from_data":0,"needs_outside_evidence":false,"needs_info":[""],"risk":"normal|high","overlaps_existing":false}]}
 Give exactly 6 angles, best first.

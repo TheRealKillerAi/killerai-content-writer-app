@@ -12,3 +12,10 @@ Run from this folder (Node 18+):
     node run.mjs ../products/menstrual-cup.json
 
 Results: `out/<product>/article.md` (read this), plus `1-angles.json`, `2-article.json`, `3-audit.json`, `4-checks.json`.
+
+## v3 changes
+- Angles carry `answerable_from_data` and `needs_outside_evidence`; the default pick is the most answerable angle (override with `--angle N`).
+- Optional merchant answers: `inputs/answers/<handle>.json` ({"question": "answer"}). Treated as source of truth, like product data. This models the free plan asking the merchant.
+- Audit then surgical fix (edit only the flagged sentences), up to 2 rounds, then re-audit. Never rewrites the whole article.
+- Code checks now also flag wording copied from your earlier post (7-word runs) and Sources sections with no real sources.
+- Final status: READY FOR MERCHANT APPROVAL or NEEDS REVIEW.
