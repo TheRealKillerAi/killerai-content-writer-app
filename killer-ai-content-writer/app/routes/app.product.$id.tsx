@@ -4,7 +4,7 @@ import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
-import { deleteFact, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
+import { deleteFact, clearChosen, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
 import { startArticle } from "../lib/articles.server";
@@ -14,7 +14,7 @@ import type { Angle, MerchantFacts, Question } from "../lib/pipeline/types";
 const gidFor = (id: string) => `gid://shopify/Product/${id}`;
 
 type ActionResult = {
-  intent: "angles" | "questions" | "save" | "delete" | "write";
+  intent: "angles" | "questions" | "save" | "delete" | "write" | "clear";
   error: string | null;
   angles?: Angle[];
   angle?: Angle;
@@ -43,6 +43,10 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       const items = JSON.parse(String(form.get("items") ?? "[]")) as { question: string; answer: string; unknown: boolean }[];
       await saveFacts(session.shop, productId, items);
       return { intent, error: null, saved: true };
+    }
+    if (intent === "clear") {
+      await clearChosen(session.shop, productId);
+      return { intent, error: null };
     }
     if (intent === "delete") {
       await deleteFact(session.shop, productId, String(form.get("question")));
@@ -248,6 +252,7 @@ export default function ProductPage() {
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
   const writeF = useFetcher<ActionResult>();
+  const clearF = useFetcher<ActionResult>();
   const f = product.facts;
   const angles = anglesF.data?.angles ?? savedAngles;
   const anglesBusy = anglesF.state !== "idle";
@@ -283,22 +288,6 @@ export default function ProductPage() {
         {angles.length ? "Refresh article angles" : "Find article angles"}
       </s-button>
 
-      <s-section heading="What we know about this product">
-        <s-stack direction="block" gap="small">
-          <s-paragraph>
-            The article can only state facts found here (plus anything you add below). If something is missing from
-            your product page, it will not be guessed.
-          </s-paragraph>
-          <s-text>Type: {f.productType || "not set"} · Vendor: {f.vendor || "not set"}</s-text>
-          {f.options.length ? (
-            <s-text>Options: {f.options.map((o) => `${o.name} (${o.values.join(", ")})`).join(" · ")}</s-text>
-          ) : null}
-          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-            <div dangerouslySetInnerHTML={{ __html: f.description_html || "<em>No description yet.</em>" }} />
-          </s-box>
-        </s-stack>
-      </s-section>
-
       {chosen ? (
         <s-section heading="Ready to write">
           <s-stack direction="block" gap="base">
@@ -306,6 +295,12 @@ export default function ProductPage() {
               Chosen angle: <strong>{chosen.working_title}</strong>
             </s-text>
             <s-stack direction="inline" gap="small">
+              <s-button
+                {...(clearF.state !== "idle" ? { loading: true } : {})}
+                onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
+              >
+                ← Choose a different angle
+              </s-button>
               <s-button
                 variant="primary"
                 {...(writeF.state !== "idle" ? { loading: true } : {})}
@@ -321,12 +316,40 @@ export default function ProductPage() {
               </s-button>
             </s-stack>
             <s-text color="subdued">
-              Or pick a different angle with "Find article angles" above. Only facts you've given us are used; anything
+              Changed your mind? Go back and pick another angle from the list below. Only facts you've given us are used; anything
               you marked "don't know" is left out.
             </s-text>
           </s-stack>
         </s-section>
       ) : null}
+
+      {!chosen && !angles.length ? (
+        <s-banner tone="info" heading="Step 1: find article angles">
+          Click "Find article angles" (top right). We'll suggest what shoppers are searching for, based on your product
+          facts. You then choose one, tell us anything we're missing, and we write it.
+        </s-banner>
+      ) : null}
+      {!chosen && angles.length ? (
+        <s-banner tone="info" heading="Step 2: choose an angle">
+          Pick one of the suggested angles below to continue.
+        </s-banner>
+      ) : null}
+
+      <s-section heading="What we know about this product">
+        <s-stack direction="block" gap="small">
+          <s-paragraph>
+            The article can only state facts found here (plus anything you add below). If something is missing from
+            your product page, it will not be guessed.
+          </s-paragraph>
+          <s-text>Type: {f.productType || "not set"} · Vendor: {f.vendor || "not set"}</s-text>
+          {f.options.length ? (
+            <s-text>Options: {f.options.map((o) => `${o.name} (${o.values.join(", ")})`).join(" · ")}</s-text>
+          ) : null}
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <div dangerouslySetInnerHTML={{ __html: f.description_html || "<em>No description yet.</em>" }} />
+          </s-box>
+        </s-stack>
+      </s-section>
 
       <FactsList
         facts={facts}

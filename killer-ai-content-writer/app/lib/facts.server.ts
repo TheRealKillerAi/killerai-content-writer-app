@@ -56,3 +56,7 @@ export async function saveChosen(shop: string, productId: string, angle: Angle) 
     update: { chosen },
   });
 }
+
+export async function clearChosen(shop: string, productId: string) {
+  await db.productAngles.updateMany({ where: { shop, productId }, data: { chosen: null } });
+}
