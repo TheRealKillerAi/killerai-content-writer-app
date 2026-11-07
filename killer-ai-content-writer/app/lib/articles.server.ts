@@ -61,7 +61,7 @@ export async function saveEdits(shop: string, id: string, article: Article) {
   // Repeats are always re-detected from the current text; other audit findings stay only while their sentence is still there.
   const remaining = [
     ...prev.remaining.filter(
-      (p) => !/^repeats an earlier/.test(p.problem) && text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)),
+      (p) => !/^copies an earlier/.test(p.problem) && text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)),
     ),
     ...findRepeats(article.body_markdown),
   ];

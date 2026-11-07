@@ -185,23 +185,24 @@ export function cleanStructure(md: string) {
   return renumber(lines.join("\n").replace(/\n{3,}/g, "\n\n").trim());
 }
 
+const COPY_RATIO = 0.7; // a sentence is a repeat only if most of it already appeared word for word
+
 export function findRepeats(body: string) {
   const sentences = body
-    .split(/(?<=[.!?])\s+|\n+/)
+    .split("\n")
+    .filter((l) => !/^#{1,6}\s/.test(l))
+    .flatMap((l) => l.replace(/^\s*(?:[-*+]\s+|\d+\.\s+|>\s*)/, "").split(/(?<=[.!?*])\s+(?=[A-Z0-9*_"(])/))
     .map((s) => s.trim())
     .filter((s) => s.split(/\s+/).length >= 4);
-  const seen = new Map<string, number>();
+  const seen = new Set<string>();
   const out: { text: string; problem: string }[] = [];
-  sentences.forEach((s, i) => {
-    const w = norm(s);
-    for (const sh of shingles(w, Math.min(6, w.length))) {
-      if (seen.has(sh) && seen.get(sh) !== i) {
-        out.push({ text: s, problem: `repeats an earlier sentence ("${sh}")` });
-        return;
-      }
-      if (!seen.has(sh)) seen.set(sh, i);
-    }
-  });
+  for (const s of sentences) {
+    const sh = [...shingles(norm(s), Math.min(6, norm(s).length))];
+    if (!sh.length) continue;
+    const hit = sh.filter((x) => seen.has(x));
+    if (hit.length / sh.length >= COPY_RATIO) out.push({ text: s, problem: `copies an earlier sentence almost word for word ("${hit[0]}")` });
+    sh.forEach((x) => seen.add(x));
+  }
   return out;
 }
 
@@ -216,7 +217,7 @@ export function removeRepeats(md: string) {
     const w = norm(sentence);
     if (w.length < 4) return false;
     const sh = [...shingles(w, Math.min(6, w.length))];
-    const dup = sh.some((x) => seen.has(x));
+    const dup = sh.filter((x) => seen.has(x)).length / sh.length >= COPY_RATIO;
     if (!dup) sh.forEach((x) => seen.add(x));
     return dup;
   };

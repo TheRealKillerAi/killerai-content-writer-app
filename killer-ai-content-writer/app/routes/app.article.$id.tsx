@@ -84,13 +84,13 @@ function ArticleReview({
       {r.remaining.length || r.issues.length ? (
         <s-section heading="Things to check">
           <s-stack direction="block" gap="small">
-            {r.remaining.some((p) => /^repeats an earlier/.test(p.problem)) && !dirty ? (
+            {r.remaining.some((p) => /^copies an earlier/.test(p.problem)) && !dirty ? (
               <s-stack direction="inline">
                 <s-button
                   {...(saving ? { loading: true } : {})}
                   onClick={() => fetcher.submit({ intent: "dedupe" }, { method: "POST" })}
                 >
-                  Remove repeated sentences
+                  Remove copied sentences
                 </s-button>
               </s-stack>
             ) : null}

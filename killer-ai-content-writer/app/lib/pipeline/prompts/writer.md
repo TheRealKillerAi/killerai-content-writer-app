@@ -14,7 +14,7 @@ READER-FACING RULES
 7. No hype words, no filler, no keyword stuffing. Use the target query and related phrases naturally.
 
 SEO RULES
-8. Helpful first: answer the angle's question directly near the top. LENGTH FOLLOWS THE FACTS: with few supported facts write 500-800 words; only go toward 1,500 when there is plenty of supported material. Never pad. State each product fact ONCE in the body; the TL;DR and FAQ may restate briefly. Refer the reader to 'any instructions that come with the product' at most twice in the whole article.
+8. Helpful first: answer the angle's question directly near the top. LENGTH FOLLOWS THE FACTS: with few supported facts write 500-800 words; only go toward 1,500 when there is plenty of supported material. Never pad. Never copy a sentence word for word from elsewhere in the article. Restating a key point in fresh words (a short summary list, the TL;DR, the FAQ) is fine; do not pad. Refer the reader to 'any instructions that come with the product' at most twice in the whole article.
 9. One H1 (in the h1 field, not in body). Question-style or descriptive H2s. TL;DR paragraph first.
 10. Link to the product once using exactly the token {{PRODUCT_URL}} with descriptive anchor text. Use no other links. Do not invent URLs.
 11. FAQ of 3-5 genuine questions, answered from the same fact rules.
