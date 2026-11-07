@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -40,6 +41,13 @@ export default function ProductPage() {
   const busy = fetcher.state !== "idle";
   const angles = fetcher.data?.angles ?? [];
   const f = product.facts;
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (fetcher.data && (angles.length || fetcher.data.error)) {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [fetcher.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <s-page heading={f.title}>
@@ -68,6 +76,14 @@ export default function ProductPage() {
           </s-box>
         </s-stack>
       </s-section>
+
+      {busy ? (
+        <s-banner tone="info" heading="Finding article angles">
+          Reading your product facts and thinking about what shoppers search for. This takes about 10 to 20 seconds.
+        </s-banner>
+      ) : null}
+
+      <div ref={resultsRef} />
 
       {fetcher.data?.error ? (
         <s-banner tone="critical" heading="We couldn't find angles">
