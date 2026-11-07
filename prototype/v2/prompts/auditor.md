@@ -10,6 +10,7 @@ Return ONLY JSON:
 Notes
 - {{PRODUCT_URL}} is a placeholder the app fills in later. It is expected and is NOT a leak.
 - Generic hedges such as 'follow any instructions that come with the product' or 'speak to a qualified health professional' are fine and are NOT unsupported claims.
+- Widely known, low-risk background about the product CATEGORY (e.g. 'insertion can take practice', 'some people prefer pads', 'heavily soiled items may need a stain product') is allowed and is NOT unsupported. Only flag it if it is stated as a fact about THIS product, or gives specific health, safety or usage instructions.
 - MERCHANT FACTS count as supported evidence, same as PRODUCT DATA.
 
 Definitions

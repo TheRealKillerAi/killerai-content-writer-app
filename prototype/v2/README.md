@@ -19,3 +19,6 @@ Results: `out/<product>/article.md` (read this), plus `1-angles.json`, `2-articl
 - Audit then surgical fix (edit only the flagged sentences), up to 2 rounds, then re-audit. Never rewrites the whole article.
 - Code checks flag Sources sections with no real sources, leaked wording, links, lengths. Similarity to your benchmark posts is reported for information only, and a judge step scores the new article against them (better/similar/worse).
 - Final status: READY FOR MERCHANT APPROVAL or NEEDS REVIEW.
+
+## v4: asking the merchant
+After choosing an angle the tool checks whether the data has enough facts. If not, it asks up to 5 short questions in the terminal (Enter skips any). Answers are saved to `inputs/answers/<handle>.json` and treated as trusted product facts on every later run. Use `--no-ask` to skip. Delete the answers file to start fresh.

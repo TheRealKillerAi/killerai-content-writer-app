@@ -2,6 +2,7 @@
 // Optional merchant answers: inputs/answers/<handle>.json  (a JSON object of question -> answer)
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { chat } from "./llm.mjs";
+import readline from "node:readline/promises";
 const judgeP = await readFile(new URL("./prompts/judge.md", import.meta.url), "utf8");
 import { runChecks, loadReference, articleText } from "./checks.mjs";
 const here = (p) => new URL(p, import.meta.url);
@@ -9,17 +10,18 @@ const args = process.argv.slice(2);
 const file = args.find((a) => a.endsWith(".json"));
 const forced = args.includes("--angle") ? Number(args[args.indexOf("--angle") + 1]) - 1 : null;
 const product = JSON.parse(await readFile(file, "utf8"));
-const [anglesP, writerP, auditP, fixerP, voice, existing] = await Promise.all(
-  ["prompts/angles.md", "prompts/writer.md", "prompts/auditor.md", "prompts/fixer.md", "voice/zwc-voice.md", "inputs/existing-articles.json"].map((p) => readFile(here(p), "utf8")),
+const [anglesP, writerP, auditP, fixerP, questionsP, voice, existing] = await Promise.all(
+  ["prompts/angles.md", "prompts/writer.md", "prompts/auditor.md", "prompts/fixer.md", "prompts/questions.md", "voice/zwc-voice.md", "inputs/existing-articles.json"].map((p) => readFile(here(p), "utf8")),
 );
-const answers = await readFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), "utf8").catch(() => "{}");
+let answers = await readFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), "utf8").catch(() => "{}");
 const benchFiles = JSON.parse(await readFile(here("inputs/benchmarks.json"), "utf8"))[product.handle.slice(0, 40)] || [];
 const ref = await loadReference(benchFiles);
 const dir = `out/${product.handle.slice(0, 40)}`;
 await mkdir(here(`./${dir}/`), { recursive: true });
 const save = (name, obj) => writeFile(here(`./${dir}/${name}`), typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
 const pd = JSON.stringify(product, null, 2);
-const facts = `PRODUCT DATA\n${pd}\n\nMERCHANT FACTS\n${answers}`;
+const mkFacts = () => `PRODUCT DATA\n${pd}\n\nMERCHANT FACTS\n${answers}`;
+let facts = mkFacts();
 let tokens = 0;
 const call = async (sys, user, t) => { const r = await chat([{ role: "system", content: sys }, { role: "user", content: user }], { temperature: t }); tokens += r.usage?.total_tokens || 0; return r.json; };
 
@@ -31,8 +33,34 @@ let idx = forced ?? a.angles.findIndex((x) => x.answerable_from_data >= 2 && !x.
 if (idx < 0) idx = 0;
 const angle = a.angles[idx];
 console.log(`Chosen (${forced !== null ? "your choice" : "most answerable"}): ${idx + 1}. ${angle.working_title}`);
-const gaps = angle.needs_info?.filter(Boolean) || [];
+let gaps = angle.needs_info?.filter(Boolean) || [];
 if (gaps.length) console.log(`Facts the data lacks for this angle (article will avoid them):\n - ${gaps.join("\n - ")}`);
+
+if (!args.includes("--no-ask")) {
+  console.log("Checking whether the data has enough facts for this angle...");
+  const q = await call(questionsP, `${facts}\n\nCHOSEN ANGLE\n${JSON.stringify(angle)}`, 0.3);
+  await save("1b-questions.json", q);
+  console.log(`Fact budget: ${q.fact_budget}`);
+  const qs = (q.questions || []).slice(0, 5);
+  if (qs.length && q.fact_budget !== "good") {
+    if (process.stdin.isTTY) {
+      console.log("\nA few questions (press Enter to skip any). Your answers become trusted product facts:\n");
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      const got = JSON.parse(answers); const skipped = [];
+      for (const x of qs) {
+        let ans = "";
+        try { ans = (await rl.question(`? ${x.q}\n  > `)).trim(); } catch { /* input closed: treat as skipped */ }
+        if (ans) got[x.q] = ans; else skipped.push(x.q);
+      }
+      rl.close();
+      await writeFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), JSON.stringify(got, null, 2));
+      answers = JSON.stringify(got, null, 2); facts = mkFacts();
+      gaps = skipped;
+    } else {
+      console.log("Questions you could answer to improve it (run in a terminal to be asked):\n - " + qs.map((x) => x.q).join("\n - "));
+    }
+  }
+}
 
 console.log("2/5 Writing...");
 const write = () => call(writerP, `VOICE GUIDE\n${voice}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(angle)}\n\nSOURCES PROVIDED\nnone`, 0.6);
