@@ -1,0 +1,25 @@
+{
+  "fact_budget": "ok",
+  "questions": [
+    {
+      "q": "What are the exact dimensions (diameter and length, including stem) of the Small and Large cups?",
+      "why": "Size specs help readers confirm fit and compare against other brands, which the current data lacks."
+    },
+    {
+      "q": "Does the instruction manual specify how often to replace the cup, and any signs (cracks, odour, discolouration) that mean it should be replaced sooner?",
+      "why": "The 5–10 year lifespan claim needs concrete replacement triggers for a credible cleaning/care article."
+    },
+    {
+      "q": "What exactly is included in the box (cup, pouch, manual, anything else)?",
+      "why": "Confirms what buyers receive, useful for a 'what's in the pack' section."
+    },
+    {
+      "q": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?",
+      "why": "Boiling is covered, but readers often ask about alternative sterilising methods."
+    },
+    {
+      "q": "Are there any stated limits on soap or cleaning products to avoid (e.g. oil-based, fragranced, antibacterial), and any warnings about harsh cleaners?",
+      "why": "Adds concrete 'what not to use' facts that strengthen the cleaning guidance."
+    }
+  ]
+}

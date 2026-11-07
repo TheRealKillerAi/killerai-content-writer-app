@@ -1,13 +1,13 @@
 {
-  "words": 1401,
-  "h2": 10,
+  "words": 776,
+  "h2": 9,
   "productLinks": 1,
   "issues": [
-    "leaked wording: \"deliberately not\""
+    "meta_description is 173 chars (max 155)"
   ],
   "similarity": {
     "sharedSevenWordRuns": 13,
-    "example": "menstrual cup collects flow rather than absorbing"
+    "example": "mild unscented water based soap clear the"
   },
   "status": "NEEDS REVIEW"
 }

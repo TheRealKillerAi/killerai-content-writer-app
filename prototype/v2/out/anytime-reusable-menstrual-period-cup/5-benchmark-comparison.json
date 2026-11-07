@@ -1,10 +1,10 @@
 {
   "new": {
     "reader_usefulness": 4,
-    "honesty_about_tradeoffs": 4,
+    "honesty_about_tradeoffs": 3,
     "voice_and_tone": 3,
     "structure_and_scannability": 4,
-    "search_intent_coverage": 5,
+    "search_intent_coverage": 4,
     "caution_with_claims": 4
   },
   "benchmarks": [
@@ -20,13 +20,13 @@
   ],
   "verdict": "worse",
   "biggest_gaps": [
-    "Repetition and padding: the eight-hour point is restated many times (short answer, why eight hours, real life, FAQ) and whole sentences repeat verbatim (e.g. 'suitable for swimming and exercise when correctly inserted' twice in one section, 'Follow the supplied instructions' stacked). Tighten to one clear statement per section.",
-    "Voice is flatter and more mechanical than the benchmark's warm, reader-directed tone; the benchmark addresses the reader's real worries ('Is it hard to use?', 'what happens if it does not feel right') while the new article reads like a spec sheet. Add a short empathetic framing paragraph up front.",
-    "Missing the broader context the benchmark provides: comparison of cup vs pad vs tampon mechanics, cleaning routine detail, and 'you don't have to choose one product forever' reassurance are thin or absent, so search intent around 'is a cup right for me' is only partly served."
+    "Repetition and padding: the daily-routine section restates the same three points (cold water, mild unscented soap, rinse residue) three times in a row; tighten to one clear instruction set and use the space for something new.",
+    "Vagueness where the benchmark is concrete: 'What should you avoid?' and the no-pot sterilising answer both defer to 'the instructions' instead of naming the cleaners the owner's care guide warns against (bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soap, harsh alcohol) — if that data wasn't supplied, say so plainly rather than gesturing at it.",
+    "Missing the trade-off framing that makes the benchmark useful: no acknowledgement that cleaning requires access to clean water/private facilities, that heavier flow may mean emptying before eight hours, or that a cup isn't for everyone — add a short 'what this routine asks of you' note."
   ],
   "what_new_does_well": [
-    "Directly answers the core query (8-hour wear time) with clear capacity figures and honest 'maximum not target' framing.",
-    "Good trade-off section (learning curve, cleaning, comfort, wear time, upfront cost) and consistent stop-if-pain caution.",
-    "Scannable structure with headings and a useful FAQ block matching common search questions."
+    "Clear two-routine structure (daily wash vs between-cycle sterilise) that maps directly to the search intent and is easy to scan.",
+    "Good safety and caution language: stop if pain, general-information disclaimer, and repeated 'follow the included instructions' framing.",
+    "Accurate use of supplied product facts (capacities, eight-hour wear, swimming/exercise, 5–10 year lifespan, cotton machine-washable pouch) without inventing claims."
   ]
 }

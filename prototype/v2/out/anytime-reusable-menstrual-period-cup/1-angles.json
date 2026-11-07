@@ -1,27 +1,40 @@
 {
   "angles": [
     {
-      "target_query": "how to choose a menstrual cup size",
+      "target_query": "how to clean a menstrual cup",
       "intent": "informational",
-      "working_title": "Small or Large? How to Choose the Right Menstrual Cup Size",
-      "why_it_fits": "The product data gives explicit capacity figures for Small (~15 ml) and Large (~28–30 ml), so we can explain the trade-offs between the two sizes honestly.",
-      "answerable_from_data": 2,
+      "working_title": "How to Clean a Menstrual Cup: Daily Rinsing and Between-Cycle Sterilising",
+      "why_it_fits": "Cleaning is the biggest practical question for new cup users, and the merchant has supplied the exact manual steps plus pouch care, so we can answer it accurately without guessing.",
+      "answerable_from_data": 3,
+      "needs_outside_evidence": false,
+      "needs_info": [],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "small or large menstrual cup how to choose",
+      "intent": "commercial",
+      "working_title": "Small or Large Menstrual Cup: How to Pick the Right Size",
+      "why_it_fits": "The product comes in two sizes with stated capacities, so we can explain the capacity difference and general selection logic; however, flow and anatomy guidance needs care and outside facts.",
+      "answerable_from_data": 1,
       "needs_outside_evidence": true,
       "needs_info": [
-        "General guidance on how flow volume, cervix position, age or having given birth typically influence size choice — this is general menstrual health advice not present in the product data and should be sourced or kept very general"
+        "Which size is recommended for lighter versus heavier flow days",
+        "Guidance on age, childbirth history or cervical position as size factors",
+        "Whether the merchant recommends seeing a health professional for sizing concerns"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "how long can you wear a menstrual cup before emptying",
+      "target_query": "how long can you leave a menstrual cup in",
       "intent": "informational",
-      "working_title": "How Long Can You Wear a Menstrual Cup? The 8-Hour Rule Explained",
-      "why_it_fits": "The listing states use for up to eight hours before removing and cleaning, so the article can explain that guideline and what it means day to day.",
+      "working_title": "How Long Can You Leave a Menstrual Cup In? The 8-Hour Rule Explained",
+      "why_it_fits": "The product data states up to eight hours before removal and cleaning, which directly answers a common safety-adjacent question; we can frame it around the stated limit and general hygiene basics.",
       "answerable_from_data": 2,
       "needs_outside_evidence": false,
       "needs_info": [
-        "General hygiene and safety guidance on emptying/cleaning frequency, and what to do on heavier days, to avoid overstating the eight-hour figure"
+        "Whether the merchant advises emptying more often on heavy flow days"
       ],
       "risk": "high",
       "overlaps_existing": false
@@ -29,55 +42,38 @@
     {
       "target_query": "can you swim or exercise with a menstrual cup",
       "intent": "informational",
-      "working_title": "Swimming, Gym and Sport With a Menstrual Cup: What to Expect",
-      "why_it_fits": "The product data states the cup is suitable for swimming and exercise when correctly inserted, which supports a practical article on active use.",
+      "working_title": "Swimming and Exercise With a Menstrual Cup: What to Expect",
+      "why_it_fits": "The product data explicitly says it is suitable for swimming and exercise when correctly inserted, so we can answer the core question and cover practical preparation.",
       "answerable_from_data": 2,
       "needs_outside_evidence": false,
       "needs_info": [
-        "General advice on insertion confidence and changing/cleaning when out and about, which is not in the product data"
+        "Any merchant advice on changing the cup at public pools or gyms"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "how to clean and care for a menstrual cup",
+      "target_query": "how long does a menstrual cup last",
       "intent": "informational",
-      "working_title": "How to Clean and Store a Menstrual Cup So It Lasts",
-      "why_it_fits": "The listing mentions a 5–10 year lifespan with proper care and includes a storage pouch, so a care-and-storage article is directly supported.",
-      "answerable_from_data": 1,
-      "needs_outside_evidence": true,
-      "needs_info": [
-        "Recommended cleaning method (boiling, cup wash, sterilising) and storage best practice — not stated in the product data and needs merchant or general guidance",
-        "Whether the included instruction manual specifies a particular cleaning routine"
-      ],
-      "risk": "high",
+      "working_title": "How Long Does a Menstrual Cup Last? The 5 to 10 Year Lifespan Explained",
+      "why_it_fits": "The product data gives a typical lifespan of 5 to 10 years with proper care and the cleaning routine that supports it, so we can explain what 'proper care' means in practice.",
+      "answerable_from_data": 3,
+      "needs_outside_evidence": false,
+      "needs_info": [],
+      "risk": "normal",
       "overlaps_existing": false
     },
     {
       "target_query": "is a menstrual cup worth it compared to pads and tampons",
       "intent": "commercial",
-      "working_title": "Is a Reusable Menstrual Cup Worth It? Weighing Up Cost and Waste",
-      "why_it_fits": "The description contrasts repeat purchases of disposables with a 5–10 year reusable lifespan, giving an honest basis for a value comparison.",
+      "working_title": "Is a Menstrual Cup Worth It? Weighing Up Reusable Versus Disposable Period Products",
+      "why_it_fits": "This is a high-intent comparison angle the store can answer honestly on waste and repeat purchases, but a full 'worth it' verdict needs cost and lifespan maths the product data only partly supplies.",
       "answerable_from_data": 1,
       "needs_outside_evidence": true,
       "needs_info": [
-        "The product's own price, so any cost comparison is accurate",
-        "Typical Australian prices for pads and tampons to compare against",
-        "Any specific waste or savings figures must come from cited sources, not be invented"
-      ],
-      "risk": "high",
-      "overlaps_existing": false
-    },
-    {
-      "target_query": "what is a menstrual cup made of and is silicone safe",
-      "intent": "informational",
-      "working_title": "Medical-Grade Silicone Menstrual Cups: What That Actually Means",
-      "why_it_fits": "The product is explicitly medical-grade silicone, so the article can explain the material honestly without making health claims beyond the listing.",
-      "answerable_from_data": 1,
-      "needs_outside_evidence": true,
-      "needs_info": [
-        "What 'medical-grade silicone' means as a material standard, and any certification the merchant holds",
-        "General safety information about silicone versus other cup materials, sourced rather than assumed"
+        "The retail price of the cup and of typical disposable products to compare costs",
+        "How many disposables an average cycle uses, sourced or clearly stated as an estimate",
+        "Confirmation of the cup's lifespan assumption for any cost-per-year calculation"
       ],
       "risk": "high",
       "overlaps_existing": false
