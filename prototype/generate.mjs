@@ -1,5 +1,5 @@
 // Usage: DEEPSEEK_API_KEY=... node generate.mjs products/laundry-ball.json "keyword idea"
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 const [file, keyword = ""] = process.argv.slice(2);
 if (!process.env.DEEPSEEK_API_KEY || !file) {
   console.error("Set DEEPSEEK_API_KEY and pass a product JSON file."); process.exit(1);
@@ -21,5 +21,6 @@ for (let attempt = 1; attempt <= 4; attempt++) {
 if (!res.ok) { console.error(res.status, await res.text()); process.exit(1); }
 const data = await res.json();
 const out = `out/${JSON.parse(product).handle.slice(0, 40)}.md`;
+await mkdir(new URL("./out/", import.meta.url), { recursive: true });
 await writeFile(new URL(`./${out}`, import.meta.url), data.choices[0].message.content);
 console.log("Wrote", out, "| tokens:", JSON.stringify(data.usage));
