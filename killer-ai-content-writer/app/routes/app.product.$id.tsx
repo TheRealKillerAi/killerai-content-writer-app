@@ -93,7 +93,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
 };
 
 function answerLabel(n: number) {
-  return n >= 3 ? "Fully answerable from your product data" : n === 2 ? "Mostly answerable" : "Needs more facts from you";
+  return n >= 3 ? "Fully answerable from your product data" : n === 2 ? "Mostly answerable" : "A few extra details would help";
 }
 
 function FactsList({
@@ -310,7 +310,7 @@ export default function ProductPage() {
           ? angles.length
             ? "Select the angle you want to write about, then press Continue."
             : 'Click "Find article angles" (top right). We suggest what shoppers search for, based on your product facts.'
-          : "Add anything we're missing below (or skip), then press Continue to write the article."}
+          : "Add any extra details below if you'd like (or skip this), then press Continue to write the article."}
       </s-banner>
 
       {step === 2 && chosen ? (
@@ -322,7 +322,7 @@ export default function ProductPage() {
                 {...(questionsBusy ? { loading: true } : {})}
                 onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" })}
               >
-                Check for missing facts
+                Check for extra details
               </s-button>
             </s-stack>
           </s-stack>
@@ -436,7 +436,7 @@ export default function ProductPage() {
         <s-section heading={`Before we write: ${q.angle.working_title}`}>
           {saveF.data?.saved ? (
             <s-banner tone="success" heading="Saved">
-              Your answers are saved as facts for this product. We've checked again for anything still missing.
+              Your answers are saved as facts for this product. We've checked again for any other helpful details.
             </s-banner>
           ) : null}
           <QuestionForm

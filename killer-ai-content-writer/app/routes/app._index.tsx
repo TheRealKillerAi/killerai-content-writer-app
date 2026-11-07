@@ -17,16 +17,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 const STEPS = [
   { n: "1", title: "Pick a product", text: "Choose any product in your store. Its details on Shopify are the source of truth." },
-  { n: "2", title: "Choose an angle", text: "We suggest what shoppers search for. You pick one and tell us anything we're missing." },
-  { n: "3", title: "Review and publish", text: "Every sentence is checked against your facts. Edit what you like, then send it to your blog." },
+  { n: "2", title: "Choose an angle", text: "We suggest what shoppers are searching for. Pick the one you like and add any extra details you'd like included." },
+  { n: "3", title: "Review and publish", text: "Every sentence is checked against your product information. Fine-tune the wording if you like, then send it to your blog." },
 ];
 
 const POINTS = [
-  { title: "Facts first", text: "Claims about your product come only from your product page and what you tell us. Anything we can't support is rewritten or removed." },
-  { title: "Sounds like you", text: "Set your brand voice once and every article follows it, in Australian English." },
-  { title: "Built for search", text: "Clear headings, a direct answer up top, a short summary and FAQs, following Google's guidance on helpful content." },
+  { title: "Facts first", text: "Claims about your product come only from your product page and the details you share." },
+  { title: "Sounds like you", text: "Set your brand voice once and every article follows it." },
+  { title: "Built for search and AI", text: "Clear headings, a direct answer up top, a short summary and FAQs, so your articles suit both search engines and AI answers." },
   { title: "More than a blog post", text: "Each article comes with email and social copy and image ideas, ready to copy and paste." },
-  { title: "You stay in control", text: "Articles start as drafts. Nothing goes live until you say so." },
 ];
 
 export default function Home() {
