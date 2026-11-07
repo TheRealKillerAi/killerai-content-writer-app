@@ -7,7 +7,7 @@ import { existingArticleTitles, getProduct } from "../lib/products.server";
 import { deleteFact, clearChosen, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
-import { loadSettings } from "../lib/settings.server";
+import { loadEffectiveSettings } from "../lib/settings.server";
 import { listArticles, startArticle } from "../lib/articles.server";
 import { LlmError } from "../lib/pipeline/llm.server";
 import type { Angle, MerchantFacts, Question } from "../lib/pipeline/types";
@@ -59,13 +59,13 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     const facts = await loadFacts(session.shop, productId);
     if (intent === "write") {
       const angle = JSON.parse(String(form.get("angle"))) as Angle;
-      const id = await startArticle(session.shop, productId, product.facts, angle, facts, await loadSettings(session.shop));
+      const id = await startArticle(session.shop, productId, product.facts, angle, facts, await loadEffectiveSettings(admin, session.shop));
       throw redirect(`/app/article/${id}`);
     }
     if (intent === "angles") {
       const kept = await loadAngles(session.shop, productId);
       const existing = [...(await existingArticleTitles(admin)), ...kept.map((a) => a.working_title)];
-      const { angles: fresh } = await findAngles(product.facts, existing, facts.known, await loadSettings(session.shop));
+      const { angles: fresh } = await findAngles(product.facts, existing, facts.known, await loadEffectiveSettings(admin, session.shop));
       // Keep what's already there and add genuinely new angles (no duplicates by title or search term).
       const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
       const seen = new Set(kept.flatMap((a) => [key(a.working_title), key(a.target_query)]));
@@ -295,7 +295,7 @@ export default function ProductPage() {
 
   return (
     <s-page heading={f.title}>
-      <s-link slot="breadcrumb-actions" href="/app">Products</s-link>
+      <s-link slot="breadcrumb-actions" href="/app/products">Products</s-link>
       <s-button
         slot="primary-action"
         variant="primary"
@@ -455,7 +455,7 @@ export default function ProductPage() {
       <s-section>
         <s-stack direction="inline" justifyContent="space-between" alignItems="center">
           {step === 1 ? (
-            <s-button href="/app">← Back to products</s-button>
+            <s-button href="/app/products">← Back to products</s-button>
           ) : (
             <s-button
               {...(clearF.state !== "idle" ? { loading: true } : {})}

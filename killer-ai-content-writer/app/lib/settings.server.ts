@@ -1,4 +1,5 @@
 import db from "../db.server";
+import { getShopName } from "./products.server";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings";
 
 export async function loadSettings(shop: string): Promise<AppSettings> {
@@ -44,4 +45,13 @@ export function settingsFromForm(f: FormData): AppSettings {
 export async function saveSettings(shop: string, settings: AppSettings) {
   const data = JSON.stringify(settings);
   await db.shopSettings.upsert({ where: { shop }, create: { shop, data }, update: { data } });
+}
+
+type AdminLike = Parameters<typeof getShopName>[0];
+
+/** Saved settings, with the store's own name filled in when the business name is blank. */
+export async function loadEffectiveSettings(admin: AdminLike, shop: string): Promise<AppSettings> {
+  const settings = await loadSettings(shop);
+  if (!settings.businessName.trim()) settings.businessName = await getShopName(admin);
+  return settings;
 }

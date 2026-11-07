@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { loadSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
+import { loadEffectiveSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
 import learnVoicePrompt from "../lib/pipeline/prompts/learn-voice.md?raw";
@@ -12,7 +12,7 @@ type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; v
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const [settings, blogs] = await Promise.all([loadSettings(session.shop), listBlogs(admin)]);
+  const [settings, blogs] = await Promise.all([loadEffectiveSettings(admin, session.shop), listBlogs(admin)]);
   return { settings, blogs };
 };
 
@@ -130,7 +130,12 @@ export default function Settings() {
         <s-section heading="About your store">
           <s-stack direction="block" gap="base">
             <s-paragraph>Context that helps us pitch articles correctly. We never treat this as a source of product facts.</s-paragraph>
-            <s-text-field name="businessName" label="Business name" value={s.businessName} />
+            <s-text-field
+              name="businessName"
+              label="Business name"
+              details="Filled in from your Shopify store name. Change it if you trade under a different name."
+              value={s.businessName}
+            />
             <s-text-area name="whatYouSell" label="What you sell" rows={2} value={s.whatYouSell} />
             <s-text-area name="audience" label="Who your customers are" rows={2} value={s.audience} />
           </s-stack>
@@ -189,6 +194,12 @@ export default function Settings() {
               Most stores can leave these alone. Several take effect when publishing to your blog is released.
             </s-paragraph>
             <s-checkbox name="toc" label="Add a table of contents" checked={s.toc} />
+            <s-banner tone="warning" heading="Check before turning on any schema option">
+              Your theme, or another app (such as an SEO app), may already add article, FAQ or breadcrumb schema to
+              your blog posts. Adding it twice can confuse search engines. To check, paste the address of an existing
+              blog post into Google's Rich Results Test. If it already shows Article, FAQ or Breadcrumb results, leave
+              that option off.
+            </s-banner>
             <s-checkbox
               name="articleSchema"
               label="Add article schema"

@@ -141,3 +141,12 @@ export async function recentArticleTexts(admin: Admin, count = 6): Promise<strin
     return [];
   }
 }
+
+export async function getShopName(admin: Admin): Promise<string> {
+  try {
+    const data = await gql<{ shop: { name: string } }>(admin, `#graphql\n      query ShopName { shop { name } }`);
+    return data.shop.name ?? "";
+  } catch {
+    return "";
+  }
+}
