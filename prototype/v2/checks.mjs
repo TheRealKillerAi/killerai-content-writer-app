@@ -64,18 +64,24 @@ export function verifyLabels(sentences, raw, factsText, answersObj = {}) {
     const c = byId.get(s.id);
     if (!c) { missing.push(s.id); continue; }
     if (!NEEDS.has(c.category)) continue;
-    const q = c.evidence ? flat(String(c.evidence)) : "";
+    const quotes = [].concat(c.evidence || []).map((e) => flat(String(e))).filter(Boolean);
+    const q = quotes.join(" ");
     const content = (t) => t.split(" ").filter((w) => w.length >= 4 && !STOP.has(w));
-    const fromAnswer = Object.entries(answersObj).find(([, a]) => q && flat(String(a)).includes(q));
+    const fromAnswer = Object.entries(answersObj).find(([, a]) => quotes.length === 1 && flat(String(a)).includes(quotes[0]));
     const ev = content(q + (fromAnswer ? " " + flat(fromAnswer[0]) : "")).map((w) => w.slice(0, 4));
     const sw = content(flat(s.text));
     const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
-    const found = (q.split(" ").length >= 3 || (fromAnswer && q.length >= 2)) && hay.includes(" " + q + " ");
-    if (!found || overlap < 0.4) unsupported.push({ text: s.text, problem: !c.evidence ? `no supporting evidence (${c.category})` : found ? `the quoted evidence does not support this sentence (${c.category})` : "quoted evidence not found in product data or merchant facts", category: c.category });
+    const found = quotes.length > 0 && quotes.every((x) => (x.split(" ").length >= 3 || (fromAnswer && x.length >= 2)) && hay.includes(" " + x + " "));
+    if (!found || overlap < 0.4) unsupported.push({ text: s.text, problem: !quotes.length ? `no supporting evidence (${c.category})` : found ? `the quoted evidence does not support this sentence (${c.category})` : "quoted evidence not found in product data or merchant facts", category: c.category });
   }
-  return { labels: raw.labels || [], unsupported, risky: [], leaks: raw.leaks || [], missing };
+  const leaks = (raw.leaks || []).filter((l) => !hay.includes(" " + flat(String(l.text || "")) + " ") && !hay.includes(" " + flat(String(l.text || "")).replace(/^(it|that)s? /, "") + " "));
+  return { labels: raw.labels || [], unsupported, risky: [], leaks, missing };
+}
+export function dedupeSentences(md) {
+  return md.split("\n").map((line) => { const parts = line.split(/(?<=[.!?])\s+/); const out = []; for (const p of parts) if (!out.length || norm(p).join(" ") !== norm(out[out.length - 1]).join(" ")) out.push(p); return out.join(" "); }).join("\n");
 }
 export function cleanStructure(md) {
+  md = dedupeSentences(md);
   let lines = md.split("\n").filter((l) => !/^\s*(?:[-*+]|\d+\.)\s*(?:\*\*\s*\*\*|\*\*|)\s*$/.test(l));
   for (let pass = 0; pass < 4; pass++) {
     const keep = [];
@@ -88,11 +94,11 @@ export function cleanStructure(md) {
   return renumber(lines.join("\n").replace(/\n{3,}/g, "\n\n").trim());
 }
 export function findRepeats(body) {
-  const sentences = body.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6);
+  const sentences = body.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 4);
   const seen = new Map(); const out = [];
   sentences.forEach((s, i) => {
     const w = norm(s);
-    for (const sh of shingles(w, 6)) {
+    for (const sh of shingles(w, Math.min(6, w.length))) {
       if (seen.has(sh) && seen.get(sh) !== i) { out.push({ text: s, problem: `repeats an earlier sentence ("${sh}")` }); return; }
       if (!seen.has(sh)) seen.set(sh, i);
     }

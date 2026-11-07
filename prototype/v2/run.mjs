@@ -84,11 +84,16 @@ const audit = async (art) => {
   res.unsupported.push(...res.missing.map((id) => ({ text: sentences.find((x) => x.id === id).text, problem: "fact-checker did not review this sentence" })));
   return res;
 };
+const LINK = /\[[^\]]+\]\(\{\{PRODUCT_URL\}\}\)/;
+const MASK = "⟦PRODUCT_LINK⟧";
 const apply = (art, edits) => {
   let n = 0;
+  const link = (art.body_markdown.match(LINK) || [null])[0];
+  art.body_markdown = art.body_markdown.replace(LINK, MASK);
   const swap = (s) => { for (const e of edits) if (e.find && !e.find.includes("{{PRODUCT_URL}}") && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
   art.tldr = swap(art.tldr); art.body_markdown = swap(art.body_markdown).replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n").replace(/ {2,}/g, " ").replace(/\n{3,}/g, "\n\n");
   art.body_markdown = cleanStructure(art.body_markdown);
+  if (link) art.body_markdown = art.body_markdown.replace(MASK, link);
   art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
   return n;
 };
@@ -103,7 +108,7 @@ for (let round = 1; round <= 2; round++) {
   const count = problems.unsupported.length + problems.risky.length + problems.leaks.length + repeats.length;
   if (!count) break;
   console.log(`  round ${round}: ${count} problem(s)`);
-  const fix = await call(fixerP, `ARTICLE\n${JSON.stringify({ tldr: article.tldr, body_markdown: article.body_markdown, faq: article.faq }, null, 1)}\n\nPROBLEMS\n${JSON.stringify(problems, null, 1)}\n\n${facts}`, 0);
+  const fix = await call(fixerP, `ARTICLE\n${JSON.stringify({ tldr: article.tldr, body_markdown: article.body_markdown.replace(LINK, MASK), faq: article.faq }, null, 1)}\n\nPROBLEMS\n${JSON.stringify(problems, null, 1)}\n\n${facts}`, 0);
   const applied = apply(article, fix.edits || []);
   console.log(`  applied ${applied} edit(s)`);
   report = await audit(article); history.push(report);
