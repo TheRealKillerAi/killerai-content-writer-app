@@ -85,3 +85,36 @@ export async function dedupeArticle(shop: string, id: string) {
   const article = { ...prev.article, body_markdown: cleanStructure(removeRepeats(prev.article.body_markdown)) };
   return saveEdits(shop, id, article);
 }
+
+export type ArticleListItem = {
+  id: string;
+  productId: string;
+  state: "writing" | "done" | "failed";
+  title: string;
+  status: string | null;
+  createdAt: string;
+};
+
+export async function listArticles(shop: string, productId?: string): Promise<ArticleListItem[]> {
+  const rows = await db.article.findMany({
+    where: { shop, ...(productId ? { productId } : {}) },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  return rows.map((r) => {
+    const result = r.result ? (JSON.parse(r.result) as ArticleResult) : null;
+    const angle = JSON.parse(r.angle) as Angle;
+    return {
+      id: r.id,
+      productId: r.productId,
+      state: r.state as ArticleListItem["state"],
+      title: result?.article.h1 || angle.working_title,
+      status: result?.status ?? null,
+      createdAt: r.createdAt.toISOString(),
+    };
+  });
+}
+
+export async function deleteArticle(shop: string, id: string) {
+  await db.article.deleteMany({ where: { id, shop } });
+}

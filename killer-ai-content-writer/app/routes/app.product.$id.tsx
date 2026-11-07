@@ -7,7 +7,7 @@ import { existingArticleTitles, getProduct } from "../lib/products.server";
 import { deleteFact, clearChosen, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
-import { startArticle } from "../lib/articles.server";
+import { listArticles, startArticle } from "../lib/articles.server";
 import { LlmError } from "../lib/pipeline/llm.server";
 import type { Angle, MerchantFacts, Question } from "../lib/pipeline/types";
 
@@ -30,7 +30,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const facts = await loadFacts(session.shop, params.id!);
   const savedAngles = await loadAngles(session.shop, params.id!);
   const chosen = await loadChosen(session.shop, params.id!);
-  return { product, facts, savedAngles, chosen };
+  const articles = await listArticles(session.shop, params.id!);
+  return { product, facts, savedAngles, chosen, articles };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -260,7 +261,7 @@ function QuestionForm({
 }
 
 export default function ProductPage() {
-  const { product, facts, savedAngles, chosen } = useLoaderData<typeof loader>();
+  const { product, facts, savedAngles, chosen, articles } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
@@ -323,6 +324,27 @@ export default function ProductPage() {
                 Check for missing facts
               </s-button>
             </s-stack>
+          </s-stack>
+        </s-section>
+      ) : null}
+
+      {articles.length ? (
+        <s-section heading="Articles you've written for this product">
+          <s-stack direction="block" gap="small">
+            {articles.map((a) => (
+              <s-stack key={a.id} direction="inline" gap="small" alignItems="center">
+                <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
+                {a.state === "writing" ? (
+                  <s-badge tone="info">Writing…</s-badge>
+                ) : a.state === "failed" ? (
+                  <s-badge tone="critical">Failed</s-badge>
+                ) : a.status === "READY FOR MERCHANT APPROVAL" ? (
+                  <s-badge tone="success">Ready</s-badge>
+                ) : (
+                  <s-badge tone="warning">Needs review</s-badge>
+                )}
+              </s-stack>
+            ))}
           </s-stack>
         </s-section>
       ) : null}

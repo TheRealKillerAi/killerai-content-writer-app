@@ -91,3 +91,21 @@ export async function existingArticleTitles(admin: Admin): Promise<string[]> {
     return []; // not fatal: angles still work, just without overlap checking
   }
 }
+
+export async function productTitles(admin: Admin, productIds: string[]): Promise<Record<string, string>> {
+  const ids = [...new Set(productIds)].slice(0, 100).map((id) => `gid://shopify/Product/${id}`);
+  if (!ids.length) return {};
+  try {
+    const data = await gql<{ nodes: ({ id: string; title: string } | null)[] }>(
+      admin,
+      `#graphql
+      query Titles($ids: [ID!]!) { nodes(ids: $ids) { ... on Product { id title } } }`,
+      { ids },
+    );
+    const out: Record<string, string> = {};
+    for (const n of data.nodes) if (n) out[n.id.split("/").pop()!] = n.title;
+    return out;
+  } catch {
+    return {};
+  }
+}
