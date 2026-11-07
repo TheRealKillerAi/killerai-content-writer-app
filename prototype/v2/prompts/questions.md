@@ -6,3 +6,4 @@ If it is low or ok, write up to 5 SHORT questions the owner could answer from th
 Return ONLY JSON: {"fact_budget":"low|ok|good","questions":[{"q":"","why":""}]}
 
 Never repeat, rephrase or narrow a question that already appears in MERCHANT FACTS, even if the answer was short or 'no'. If every useful question is answered, return an empty list.
+Items listed under UNKNOWN TO THE MERCHANT have already been asked and the owner does not know them: never ask them again.

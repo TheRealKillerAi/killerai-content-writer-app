@@ -15,12 +15,14 @@ const [anglesP, writerP, auditP, fixerP, questionsP, voice, existing] = await Pr
 );
 let answers = await readFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), "utf8").catch(() => "{}");
 const benchFiles = JSON.parse(await readFile(here("inputs/benchmarks.json"), "utf8"))[product.handle.slice(0, 40)] || [];
+const handle40 = product.handle.slice(0, 40);
+let unknown = JSON.parse(await readFile(here(`inputs/answers/${handle40}.unknown.json`), "utf8").catch(() => "[]"));
 const ref = await loadReference(benchFiles);
 const dir = `out/${product.handle.slice(0, 40)}`;
 await mkdir(here(`./${dir}/`), { recursive: true });
 const save = (name, obj) => writeFile(here(`./${dir}/${name}`), typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
 const pd = JSON.stringify(product, null, 2);
-const mkFacts = () => `PRODUCT DATA\n${pd}\n\nMERCHANT FACTS\n${answers}`;
+const mkFacts = () => `PRODUCT DATA\n${pd}\n\nMERCHANT FACTS\n${answers}\n\nUNKNOWN TO THE MERCHANT (do not cover, estimate or hint at these)\n${JSON.stringify(unknown)}`;
 let facts = mkFacts();
 let tokens = 0;
 const call = async (sys, user, t) => { const r = await chat([{ role: "system", content: sys }, { role: "user", content: user }], { temperature: t }); tokens += r.usage?.total_tokens || 0; return r.json; };
@@ -33,7 +35,7 @@ let idx = forced ?? a.angles.findIndex((x) => x.answerable_from_data >= 2 && !x.
 if (idx < 0) idx = 0;
 const angle = a.angles[idx];
 console.log(`Chosen (${forced !== null ? "your choice" : "most answerable"}): ${idx + 1}. ${angle.working_title}`);
-let gaps = angle.needs_info?.filter(Boolean) || [];
+let gaps = [...(angle.needs_info?.filter(Boolean) || []), ...unknown];
 if (gaps.length) console.log(`Facts the data lacks for this angle (article will avoid them):\n - ${gaps.join("\n - ")}`);
 
 if (!args.includes("--no-ask")) {
@@ -50,13 +52,16 @@ if (!args.includes("--no-ask")) {
       for (const x of qs) {
         let ans = "";
         try { ans = (await rl.question(`? ${x.q}\n  > `)).trim(); } catch { /* input closed: treat as skipped */ }
-        if (ans) got[x.q] = ans; else skipped.push(x.q);
+        if (ans && !/^(i\s*)?(don'?t|do not)\s+(know|have)|^unknown$|^not sure$|^n\/a$|^\?$/i.test(ans)) got[x.q] = ans; else skipped.push(x.q);
       }
       rl.close();
       await mkdir(here("inputs/answers/"), { recursive: true });
       await writeFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), JSON.stringify(got, null, 2));
-      answers = JSON.stringify(got, null, 2); facts = mkFacts();
-      gaps = skipped;
+      answers = JSON.stringify(got, null, 2);
+      unknown = [...new Set([...unknown, ...skipped])];
+      await writeFile(here(`inputs/answers/${handle40}.unknown.json`), JSON.stringify(unknown, null, 2));
+      facts = mkFacts();
+      gaps = [...(angle.needs_info?.filter(Boolean) || []), ...unknown];
     } else {
       console.log("Questions you could answer to improve it (run in a terminal to be asked):\n - " + qs.map((x) => x.q).join("\n - "));
     }
