@@ -66,23 +66,81 @@ function answerLabel(n: number) {
   return n >= 3 ? "Fully answerable from your product data" : n === 2 ? "Mostly answerable" : "Needs more facts from you";
 }
 
-function FactsList({ facts, onRemove }: { facts: MerchantFacts; onRemove: (q: string) => void }) {
+function FactsList({
+  facts,
+  onRemove,
+  onEdit,
+  saving,
+}: {
+  facts: MerchantFacts;
+  onRemove: (q: string) => void;
+  onEdit: (q: string, answer: string) => void;
+  saving: boolean;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
   const known = Object.entries(facts.known);
   if (!known.length && !facts.unknown.length) return null;
+
   return (
     <s-section heading="Facts you've told us">
-      <s-stack direction="block" gap="small">
+      <s-stack direction="block" gap="base">
         {known.map(([q, a]) => (
-          <s-stack key={q} direction="inline" gap="base" alignItems="center" justifyContent="space-between">
-            <s-text>{q} — <strong>{a}</strong></s-text>
-            <s-button variant="tertiary" onClick={() => onRemove(q)}>Remove</s-button>
-          </s-stack>
+          <s-box key={q} padding="base" borderWidth="base" borderRadius="base">
+            {editing === q ? (
+              <s-stack direction="block" gap="small">
+                <s-text><strong>{q}</strong></s-text>
+                <s-text-field
+                  label="Answer"
+                  labelAccessibilityVisibility="exclusive"
+                  value={draft}
+                  onInput={(e) => {
+                    const value = (e.currentTarget as unknown as { value: string }).value;
+                    setDraft(value);
+                  }}
+                />
+                <s-stack direction="inline" gap="small">
+                  <s-button
+                    variant="primary"
+                    {...(saving ? { loading: true } : {})}
+                    onClick={() => {
+                      if (draft.trim()) onEdit(q, draft);
+                      setEditing(null);
+                    }}
+                  >
+                    Save
+                  </s-button>
+                  <s-button onClick={() => setEditing(null)}>Cancel</s-button>
+                </s-stack>
+              </s-stack>
+            ) : (
+              <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
+                <s-text>{q} — <strong>{a}</strong></s-text>
+                <s-stack direction="inline" gap="small">
+                  <s-button
+                    onClick={() => {
+                      setDraft(a);
+                      setEditing(q);
+                    }}
+                  >
+                    Edit
+                  </s-button>
+                  <s-button tone="critical" onClick={() => onRemove(q)}>Remove</s-button>
+                </s-stack>
+              </s-grid>
+            )}
+          </s-box>
         ))}
         {facts.unknown.map((q) => (
-          <s-stack key={q} direction="inline" gap="base" alignItems="center" justifyContent="space-between">
-            <s-text>{q} — <em>you don't know (we won't cover this)</em></s-text>
-            <s-button variant="tertiary" onClick={() => onRemove(q)}>Ask again</s-button>
-          </s-stack>
+          <s-box key={q} padding="base" borderWidth="base" borderRadius="base">
+            <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
+              <s-stack direction="inline" gap="small" alignItems="center">
+                <s-badge tone="warning">Don't know</s-badge>
+                <s-text>{q} — we won't cover this</s-text>
+              </s-stack>
+              <s-button onClick={() => onRemove(q)}>Ask again</s-button>
+            </s-grid>
+          </s-box>
         ))}
       </s-stack>
     </s-section>
@@ -218,6 +276,13 @@ export default function ProductPage() {
       <FactsList
         facts={facts}
         onRemove={(question) => saveF.submit({ intent: "delete", question }, { method: "POST" })}
+        onEdit={(question, answer) =>
+          saveF.submit(
+            { intent: "save", items: JSON.stringify([{ question, answer, unknown: false }]) },
+            { method: "POST" },
+          )
+        }
+        saving={saveF.state !== "idle"}
       />
 
       {anglesBusy ? (
