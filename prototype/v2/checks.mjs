@@ -26,7 +26,9 @@ export function runChecks(a, ref) {
   if (h2 < 3) issues.push(`only ${h2} H2 headings`);
   const tl = a.tldr.split(/\s+/).filter(Boolean).length;
   if (tl < 25) issues.push(`TL;DR is only ${tl} words`);
-  if (/^#{2,6} .*\n+(?=#{2,6} |$)/m.test(a.body_markdown + "\n")) issues.push("an empty section heading");
+  const secs = sections(a.body_markdown);
+  if (secs.some((x) => x.words === 0)) issues.push("an empty section heading");
+  secs.filter((x) => x.words > 0 && x.words < 8).forEach((x) => issues.push(`thin section "${x.title}" (${x.words} words): check it still answers its heading`));
   if (/^\s*[-*]\s*(\*\*\s*\*\*)?\s*$/m.test(a.body_markdown)) issues.push("an empty bullet");
   if (a.faq.length < 3) issues.push(`only ${a.faq.length} FAQ items`);
   if (LEAKS.test(all)) issues.push(`leaked wording: "${all.match(LEAKS)[0]}"`);
@@ -54,7 +56,7 @@ export function splitSentences(a) {
   return out;
 }
 const NEEDS = new Set(["product_fact", "usage_step", "health_advice"]);
-export function verifyLabels(sentences, raw, factsText) {
+export function verifyLabels(sentences, raw, factsText, answersObj = {}) {
   const hay = " " + flat(factsText) + " ";
   const byId = new Map((raw.labels || []).map((l) => [l.id, l]));
   const unsupported = []; const missing = [];
@@ -64,10 +66,11 @@ export function verifyLabels(sentences, raw, factsText) {
     if (!NEEDS.has(c.category)) continue;
     const q = c.evidence ? flat(String(c.evidence)) : "";
     const content = (t) => t.split(" ").filter((w) => w.length >= 4 && !STOP.has(w));
-    const ev = content(q).map((w) => w.slice(0, 4));
+    const fromAnswer = Object.entries(answersObj).find(([, a]) => q && flat(String(a)).includes(q));
+    const ev = content(q + (fromAnswer ? " " + flat(fromAnswer[0]) : "")).map((w) => w.slice(0, 4));
     const sw = content(flat(s.text));
     const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
-    const found = q.split(" ").length >= 3 && hay.includes(" " + q + " ");
+    const found = (q.split(" ").length >= 3 || (fromAnswer && q.length >= 2)) && hay.includes(" " + q + " ");
     if (!found || overlap < 0.4) unsupported.push({ text: s.text, problem: !c.evidence ? `no supporting evidence (${c.category})` : found ? `the quoted evidence does not support this sentence (${c.category})` : "quoted evidence not found in product data or merchant facts", category: c.category });
   }
   return { labels: raw.labels || [], unsupported, risky: [], leaks: raw.leaks || [], missing };
@@ -82,7 +85,7 @@ export function cleanStructure(md) {
     }
     lines = keep;
   }
-  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return renumber(lines.join("\n").replace(/\n{3,}/g, "\n\n").trim());
 }
 export function findRepeats(body) {
   const sentences = body.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6);
@@ -95,4 +98,20 @@ export function findRepeats(body) {
     }
   });
   return out;
+}
+
+export function sections(md) {
+  const out = []; let cur = null;
+  for (const line of md.split("\n")) {
+    if (/^#{2,6}\s/.test(line)) { cur = { title: line.replace(/^#+\s*/, ""), words: 0 }; out.push(cur); }
+    else if (cur) cur.words += line.split(/\s+/).filter(Boolean).length;
+  }
+  return out;
+}
+export function renumber(md) {
+  let n = 0;
+  return md.split("\n").map((l) => { const m = l.match(/^(\s*)\d+\.\s(.*)$/); if (m) { n++; return `${m[1]}${n}. ${m[2]}`; } if (l.trim()) n = 0; return l; }).join("\n");
+}
+export function repairLink(md, name) {
+  return md.replace(/(?<!\()\{\{PRODUCT_URL\}\}(?!\))/g, `[${name}]({{PRODUCT_URL}})`);
 }

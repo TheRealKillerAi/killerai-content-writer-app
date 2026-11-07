@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { chat } from "./llm.mjs";
 import readline from "node:readline/promises";
 const judgeP = await readFile(new URL("./prompts/judge.md", import.meta.url), "utf8");
-import { runChecks, loadReference, articleText, splitSentences, verifyLabels, cleanStructure, findRepeats } from "./checks.mjs";
+import { runChecks, loadReference, articleText, splitSentences, verifyLabels, cleanStructure, findRepeats, repairLink } from "./checks.mjs";
 const here = (p) => new URL(p, import.meta.url);
 const args = process.argv.slice(2);
 const file = args.find((a) => a.endsWith(".json"));
@@ -74,19 +74,19 @@ const audit = async (art) => {
   const sentences = splitSentences(art);
   const listing = (ss) => ss.map((x) => `${x.id}: ${x.text}`).join("\n");
   let raw = await call(auditP, `${facts}\n\nSENTENCES\n${listing(sentences)}`, 0);
-  let res = verifyLabels(sentences, raw, facts);
+  let res = verifyLabels(sentences, raw, facts, JSON.parse(answers));
   if (res.missing.length) {
     const rest = sentences.filter((x) => res.missing.includes(x.id));
     const raw2 = await call(auditP, `${facts}\n\nSENTENCES\n${listing(rest)}`, 0);
     raw = { labels: [...(raw.labels || []), ...(raw2.labels || [])], leaks: raw.leaks || [] };
-    res = verifyLabels(sentences, raw, facts);
+    res = verifyLabels(sentences, raw, facts, JSON.parse(answers));
   }
   res.unsupported.push(...res.missing.map((id) => ({ text: sentences.find((x) => x.id === id).text, problem: "fact-checker did not review this sentence" })));
   return res;
 };
 const apply = (art, edits) => {
   let n = 0;
-  const swap = (s) => { for (const e of edits) if (e.find && !(e.find.includes("{{PRODUCT_URL}}") && !(e.replace || "").includes("{{PRODUCT_URL}}")) && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
+  const swap = (s) => { for (const e of edits) if (e.find && !e.find.includes("{{PRODUCT_URL}}") && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
   art.tldr = swap(art.tldr); art.body_markdown = swap(art.body_markdown).replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n").replace(/ {2,}/g, " ").replace(/\n{3,}/g, "\n\n");
   art.body_markdown = cleanStructure(art.body_markdown);
   art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
@@ -110,6 +110,10 @@ for (let round = 1; round <= 2; round++) {
 }
 
 console.log("4/5 Running code checks...");
+{
+  const name = product.title.split(/\s[–|-]\s/)[0];
+  article.body_markdown = repairLink(article.body_markdown, name);
+}
 for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {
   const t = await call("You shorten SEO fields. Return ONLY JSON {\"title_tag\":\"<=60 chars\",\"meta_description\":\"<=155 chars\"}. Keep the meaning and the key facts; do not add claims.", JSON.stringify({ title_tag: article.title_tag, meta_description: article.meta_description }), 0);
   article.title_tag = t.title_tag || article.title_tag; article.meta_description = t.meta_description || article.meta_description;
