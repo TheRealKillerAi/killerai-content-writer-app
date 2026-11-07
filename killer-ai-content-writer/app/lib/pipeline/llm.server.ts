@@ -18,6 +18,7 @@ export async function chatJson<T>(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+        max_tokens: 8000,
         temperature,
         response_format: { type: "json_object" },
         messages: [

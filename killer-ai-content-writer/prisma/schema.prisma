@@ -45,3 +45,18 @@ model MerchantFact {
   @@unique([shop, productId, question])
   @@index([shop, productId])
 }
+
+model Article {
+  id        String   @id @default(cuid())
+  shop      String
+  productId String
+  angle     String
+  state     String   @default("writing")
+  stage     String   @default("Starting")
+  result    String?
+  error     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shop, productId])
+}

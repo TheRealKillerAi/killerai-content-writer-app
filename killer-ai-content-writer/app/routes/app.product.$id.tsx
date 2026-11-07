@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData, useRouteError } from "react-router";
+import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
 import { deleteFact, loadFacts, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
+import { startArticle } from "../lib/articles.server";
 import { LlmError } from "../lib/pipeline/llm.server";
 import type { Angle, MerchantFacts, Question } from "../lib/pipeline/types";
 
 const gidFor = (id: string) => `gid://shopify/Product/${id}`;
 
 type ActionResult = {
-  intent: "angles" | "questions" | "save" | "delete";
+  intent: "angles" | "questions" | "save" | "delete" | "write";
   error: string | null;
   angles?: Angle[];
   angle?: Angle;
@@ -48,6 +49,11 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     const product = await getProduct(admin, gidFor(productId));
     if (!product) return { intent, error: "Product not found." };
     const facts = await loadFacts(session.shop, productId);
+    if (intent === "write") {
+      const angle = JSON.parse(String(form.get("angle"))) as Angle;
+      const id = await startArticle(session.shop, productId, product.facts, angle, facts);
+      throw redirect(`/app/article/${id}`);
+    }
     if (intent === "angles") {
       const existing = await existingArticleTitles(admin);
       const { angles } = await findAngles(product.facts, existing, facts.known);
@@ -57,6 +63,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     const { factBudget, questions } = await askQuestions(product.facts, angle, facts);
     return { intent, error: null, angle, factBudget, questions };
   } catch (e) {
+    if (e instanceof Response) throw e;
     const message = e instanceof LlmError ? e.message : "Something went wrong. Please try again.";
     return { intent, error: message };
   }
@@ -153,7 +160,11 @@ function QuestionForm({
   factBudget,
   saving,
   onSave,
+  onWrite,
+  writing,
 }: {
+  onWrite: () => void;
+  writing: boolean;
   angle: Angle;
   questions: Question[];
   factBudget: string;
@@ -166,8 +177,12 @@ function QuestionForm({
   if (!questions.length) {
     return (
       <s-banner tone="success" heading="You've given us enough to work with">
-        There is plenty of product information for "{angle.working_title}". The next step (writing the article) comes
-        next in the app.
+        There is plenty of product information for "{angle.working_title}".
+        <s-stack direction="inline">
+          <s-button variant="primary" {...(writing ? { loading: true } : {})} onClick={onWrite}>
+            Write this article
+          </s-button>
+        </s-stack>
       </s-banner>
     );
   }
@@ -213,6 +228,12 @@ function QuestionForm({
       >
         Save answers
       </s-button>
+      <s-stack direction="inline" gap="small" alignItems="center">
+        <s-button {...(writing ? { loading: true } : {})} onClick={onWrite}>
+          Skip and write with what we have
+        </s-button>
+        <s-text color="subdued">The article will be shorter and will leave out anything we have no facts for.</s-text>
+      </s-stack>
     </s-stack>
   );
 }
@@ -222,6 +243,7 @@ export default function ProductPage() {
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
+  const writeF = useFetcher<ActionResult>();
   const f = product.facts;
   const angles = anglesF.data?.angles ?? [];
   const anglesBusy = anglesF.state !== "idle";
@@ -356,6 +378,8 @@ export default function ProductPage() {
             questions={q.questions ?? []}
             factBudget={q.factBudget ?? "low"}
             saving={saveF.state !== "idle"}
+            writing={writeF.state !== "idle"}
+            onWrite={() => writeF.submit({ intent: "write", angle: JSON.stringify(q.angle) }, { method: "POST" })}
             onSave={(items) => saveF.submit({ intent: "save", items: JSON.stringify(items) }, { method: "POST" })}
           />
         </s-section>
