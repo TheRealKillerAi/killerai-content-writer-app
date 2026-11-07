@@ -1,11 +1,11 @@
 {
   "new": {
-    "reader_usefulness": 4,
-    "honesty_about_tradeoffs": 5,
-    "voice_and_tone": 4,
-    "structure_and_scannability": 5,
-    "search_intent_coverage": 5,
-    "caution_with_claims": 5
+    "reader_usefulness": 3,
+    "honesty_about_tradeoffs": 3,
+    "voice_and_tone": 2,
+    "structure_and_scannability": 3,
+    "search_intent_coverage": 3,
+    "caution_with_claims": 3
   },
   "benchmarks": [
     {
@@ -27,15 +27,15 @@
       "caution_with_claims": 3
     }
   ],
-  "verdict": "similar",
+  "verdict": "worse",
   "biggest_gaps": [
-    "The new article repeats the same facts (4 kg load, 1,000 washes, monthly sunlight recharge) multiple times across sections, creating some padding; the benchmarks integrate facts more naturally without redundancy.",
-    "The step-by-step section includes vague instructions like 'Add the ball to the wash, following any instructions that come with the product' and 'check any instructions that come with the product' for placement, which is unhelpful; the benchmarks give more concrete guidance where possible.",
-    "The new article lacks a clear 'what is different' comparison section like the cup benchmark's 'Menstrual cup vs pads and tampons' or the laundry benchmark's problem-solution framing, which helps readers understand the trade-offs versus conventional detergent."
+    "Empty/broken sections: 'What temperature should you use?' and a trade-off bullet are blank, leaving unanswered questions and a visible formatting error that undermines trust and usefulness.",
+    "Voice is thin and mechanical compared to benchmarks — no context, no 'why it matters', no real-world framing (e.g. what to expect on first loads, sensitive skin, scent/feel differences beyond one line).",
+    "Trade-offs and caution are underdeveloped: benchmarks name who it suits/doesn't, note heavy soiling limits, and avoid overpromising; the new article lists trade-offs but doesn't explain them or set expectations about cleaning performance."
   ],
   "what_new_does_well": [
-    "Maintains a cautious, honest tone about limitations (e.g., not covering stain treatment, not promising savings) and avoids overclaiming, similar to the cup benchmark.",
-    "Structured with clear headings, bullet points, and a step-by-step list that is easy to scan, matching the scannability of the benchmarks.",
-    "Addresses search intent thoroughly with a dedicated FAQ section and covers key user questions about usage, recharging, and suitability."
+    "Clear, scannable step-by-step structure with FAQ block that maps well to search intent.",
+    "Honest, plain-language trade-off section and a sensible 'try one load' invitation rather than hard sell.",
+    "Sticks to supplied product facts (4 kg, two balls for larger loads, monthly sunlight recharge) without inventing claims."
   ]
 }

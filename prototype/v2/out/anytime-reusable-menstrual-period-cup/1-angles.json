@@ -3,8 +3,8 @@
     {
       "target_query": "how to clean a menstrual cup",
       "intent": "informational",
-      "working_title": "How to Clean a Menstrual Cup: Daily Rinsing and Between-Cycle Sterilising",
-      "why_it_fits": "Cleaning is the biggest practical question for new cup users, and the merchant has supplied the exact manual steps plus pouch care, so we can answer it accurately without guessing.",
+      "working_title": "How to Clean a Menstrual Cup: Daily Care and Between-Cycle Sterilising",
+      "why_it_fits": "Cleaning is the top practical question for new cup users, and the merchant facts give exact daily steps and boiling instructions, so the store can answer honestly and thoroughly.",
       "answerable_from_data": 3,
       "needs_outside_evidence": false,
       "needs_info": [],
@@ -12,16 +12,15 @@
       "overlaps_existing": false
     },
     {
-      "target_query": "small or large menstrual cup how to choose",
+      "target_query": "menstrual cup small or large which size",
       "intent": "commercial",
-      "working_title": "Small or Large Menstrual Cup: How to Pick the Right Size",
-      "why_it_fits": "The product comes in two sizes with stated capacities, so we can explain the capacity difference and general selection logic; however, flow and anatomy guidance needs care and outside facts.",
-      "answerable_from_data": 1,
+      "working_title": "Small or Large Menstrual Cup: How to Pick Your Size",
+      "why_it_fits": "The product comes in two sizes with stated capacities, so a size-selection guide directly supports the buying decision without competing with the product page.",
+      "answerable_from_data": 2,
       "needs_outside_evidence": true,
       "needs_info": [
-        "Which size is recommended for lighter versus heavier flow days",
-        "Guidance on age, childbirth history or cervical position as size factors",
-        "Whether the merchant recommends seeing a health professional for sizing concerns"
+        "General guidance on how flow volume and cervix position relate to size choice (outside the product data)",
+        "Whether the merchant recommends a particular size for teens, post-birth users, or heavy flow"
       ],
       "risk": "high",
       "overlaps_existing": false
@@ -30,50 +29,47 @@
       "target_query": "how long can you leave a menstrual cup in",
       "intent": "informational",
       "working_title": "How Long Can You Leave a Menstrual Cup In? The 8-Hour Rule Explained",
-      "why_it_fits": "The product data states up to eight hours before removal and cleaning, which directly answers a common safety-adjacent question; we can frame it around the stated limit and general hygiene basics.",
-      "answerable_from_data": 2,
-      "needs_outside_evidence": false,
-      "needs_info": [
-        "Whether the merchant advises emptying more often on heavy flow days"
-      ],
-      "risk": "high",
-      "overlaps_existing": false
-    },
-    {
-      "target_query": "can you swim or exercise with a menstrual cup",
-      "intent": "informational",
-      "working_title": "Swimming and Exercise With a Menstrual Cup: What to Expect",
-      "why_it_fits": "The product data explicitly says it is suitable for swimming and exercise when correctly inserted, so we can answer the core question and cover practical preparation.",
-      "answerable_from_data": 2,
-      "needs_outside_evidence": false,
-      "needs_info": [
-        "Any merchant advice on changing the cup at public pools or gyms"
-      ],
-      "risk": "high",
-      "overlaps_existing": false
-    },
-    {
-      "target_query": "how long does a menstrual cup last",
-      "intent": "informational",
-      "working_title": "How Long Does a Menstrual Cup Last? The 5 to 10 Year Lifespan Explained",
-      "why_it_fits": "The product data gives a typical lifespan of 5 to 10 years with proper care and the cleaning routine that supports it, so we can explain what 'proper care' means in practice.",
+      "why_it_fits": "The data states up to eight hours before removal and cleaning, which answers a common safety-adjacent question directly.",
       "answerable_from_data": 3,
       "needs_outside_evidence": false,
       "needs_info": [],
-      "risk": "normal",
+      "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "is a menstrual cup worth it compared to pads and tampons",
-      "intent": "commercial",
-      "working_title": "Is a Menstrual Cup Worth It? Weighing Up Reusable Versus Disposable Period Products",
-      "why_it_fits": "This is a high-intent comparison angle the store can answer honestly on waste and repeat purchases, but a full 'worth it' verdict needs cost and lifespan maths the product data only partly supplies.",
+      "target_query": "can you swim with a menstrual cup",
+      "intent": "informational",
+      "working_title": "Can You Swim and Exercise With a Menstrual Cup?",
+      "why_it_fits": "The product data explicitly says the cup is suitable for swimming and exercise when correctly inserted, so the article can answer from data plus general low-risk advice.",
+      "answerable_from_data": 3,
+      "needs_outside_evidence": false,
+      "needs_info": [],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "how often should you replace a menstrual cup",
+      "intent": "informational",
+      "working_title": "How Often Should You Replace a Menstrual Cup?",
+      "why_it_fits": "The data gives a 5 to 10 year typical lifespan with proper care, which is a strong reusable-versus-disposable angle, though the merchant's replacement-signs answer was incomplete.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": true,
+      "needs_info": [
+        "Merchant confirmation of signs that mean replacing sooner (cracks, odour, discolouration) — the supplied answer did not address this"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "how to sterilise a menstrual cup without a pot",
+      "intent": "informational",
+      "working_title": "How to Sterilise a Menstrual Cup Without Boiling a Pot",
+      "why_it_fits": "The merchant says the manual covers non-pot sterilising methods, so this addresses a real practical barrier to cup use, but the specific methods were not supplied.",
       "answerable_from_data": 1,
       "needs_outside_evidence": true,
       "needs_info": [
-        "The retail price of the cup and of typical disposable products to compare costs",
-        "How many disposables an average cycle uses, sourced or clearly stated as an estimate",
-        "Confirmation of the cup's lifespan assumption for any cost-per-year calculation"
+        "The exact microwave, sterilising tablet or steamer instructions stated in the manual",
+        "Any timing or safety caveats the manual gives for these methods"
       ],
       "risk": "high",
       "overlaps_existing": false

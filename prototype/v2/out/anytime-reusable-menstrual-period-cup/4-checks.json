@@ -1,13 +1,13 @@
 {
-  "words": 776,
-  "h2": 9,
-  "productLinks": 1,
+  "words": 812,
+  "h2": 10,
+  "productLinks": 0,
   "issues": [
-    "meta_description is 173 chars (max 155)"
+    "expected exactly 1 product link token, found 0"
   ],
   "similarity": {
-    "sharedSevenWordRuns": 13,
-    "example": "mild unscented water based soap clear the"
+    "sharedSevenWordRuns": 8,
+    "example": "in boiling water for three to five"
   },
   "status": "NEEDS REVIEW"
 }

@@ -1,0 +1,25 @@
+{
+  "fact_budget": "ok",
+  "questions": [
+    {
+      "q": "Does the leaflet say whether the ball goes in the drum with the clothes or in the detergent drawer?",
+      "why": "The how-to guide's core step depends on placement, and the data doesn't specify it."
+    },
+    {
+      "q": "What wash temperature range does the packaging recommend (e.g. 30–60°C)?",
+      "why": "Temperature guidance is essential for a step-by-step usage article and is missing from the data."
+    },
+    {
+      "q": "What does the leaflet advise for heavily soiled loads or stains — pre-treat, extra ball, or a booster?",
+      "why": "Readers with tough stains need a concrete answer; the data only covers regular loads."
+    },
+    {
+      "q": "Does the packaging list anything to avoid (e.g. wool, silk, delicates, bleach, certain cycles)?",
+      "why": "Warnings and exclusions are high-value practical facts the article currently lacks."
+    },
+    {
+      "q": "What does the leaflet say about when to replace the ball or how to dispose of it at end of life?",
+      "why": "The 1,000-wash limit and recyclable claim need practical replacement/disposal detail for the article."
+    }
+  ]
+}

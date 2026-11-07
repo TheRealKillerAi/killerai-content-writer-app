@@ -2,24 +2,24 @@
   "fact_budget": "ok",
   "questions": [
     {
-      "q": "What are the exact dimensions (diameter and length, including stem) of the Small and Large cups?",
-      "why": "Size specs help readers confirm fit and compare against other brands, which the current data lacks."
+      "q": "What does the manual say about sterilising without a pot — microwave, sterilising tablets, or a cup steamer — and for how long?",
+      "why": "The angle is cleaning and sterilising; the merchant facts confirm guidance exists but not what it says, so the article can't yet explain the no-pot method."
     },
     {
-      "q": "Does the instruction manual specify how often to replace the cup, and any signs (cracks, odour, discolouration) that mean it should be replaced sooner?",
-      "why": "The 5–10 year lifespan claim needs concrete replacement triggers for a credible cleaning/care article."
+      "q": "How often does the manual say to replace the cup, and which signs (cracks, odour, discolouration) mean replacing it sooner?",
+      "why": "The replacement answer in merchant facts appears to be a capacity figure, not replacement guidance, so end-of-life advice is still missing for the cleaning article."
     },
     {
-      "q": "What exactly is included in the box (cup, pouch, manual, anything else)?",
-      "why": "Confirms what buyers receive, useful for a 'what's in the pack' section."
+      "q": "Besides mild unscented water-based soap, does the leaflet list anything to avoid — oil-based, fragranced or antibacterial soaps, or harsh cleaners?",
+      "why": "Cleaning articles need a clear 'what not to use' section; the facts only give the soap to use, not the warnings."
     },
     {
-      "q": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?",
-      "why": "Boiling is covered, but readers often ask about alternative sterilising methods."
+      "q": "What exact items are in the box — cup, cotton pouch, instruction manual — and is anything else included?",
+      "why": "The 'thats it' answer is unclear; a precise contents list supports the setup section of the article."
     },
     {
-      "q": "Are there any stated limits on soap or cleaning products to avoid (e.g. oil-based, fragranced, antibacterial), and any warnings about harsh cleaners?",
-      "why": "Adds concrete 'what not to use' facts that strengthen the cleaning guidance."
+      "q": "Does the manual give any warnings about insertion, removal or wearing time beyond the eight-hour limit, such as not wearing it overnight or during certain activities?",
+      "why": "Safety warnings belong in a cleaning and care guide and are not covered in the current facts."
     }
   ]
 }

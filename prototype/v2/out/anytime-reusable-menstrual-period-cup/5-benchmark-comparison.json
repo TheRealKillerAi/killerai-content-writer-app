@@ -2,9 +2,9 @@
   "new": {
     "reader_usefulness": 4,
     "honesty_about_tradeoffs": 3,
-    "voice_and_tone": 3,
-    "structure_and_scannability": 4,
-    "search_intent_coverage": 4,
+    "voice_and_tone": 4,
+    "structure_and_scannability": 5,
+    "search_intent_coverage": 5,
     "caution_with_claims": 4
   },
   "benchmarks": [
@@ -18,15 +18,15 @@
       "caution_with_claims": 5
     }
   ],
-  "verdict": "worse",
+  "verdict": "similar",
   "biggest_gaps": [
-    "Repetition and padding: the daily-routine section restates the same three points (cold water, mild unscented soap, rinse residue) three times in a row; tighten to one clear instruction set and use the space for something new.",
-    "Vagueness where the benchmark is concrete: 'What should you avoid?' and the no-pot sterilising answer both defer to 'the instructions' instead of naming the cleaners the owner's care guide warns against (bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soap, harsh alcohol) — if that data wasn't supplied, say so plainly rather than gesturing at it.",
-    "Missing the trade-off framing that makes the benchmark useful: no acknowledgement that cleaning requires access to clean water/private facilities, that heavier flow may mean emptying before eight hours, or that a cup isn't for everyone — add a short 'what this routine asks of you' note."
+    "The new article lacks the benchmark's explicit acknowledgment that a menstrual cup isn't for everyone and that a learning curve is normal; it could add a sentence about comfort with insertion/removal and that it's okay to use other products.",
+    "The new article doesn't mention that cleaning requires access to clean water and a private place, which is a practical trade-off the benchmark covers.",
+    "The new article's FAQ section is good but could include a question about whether the cup can be used with an IUD or if there are health considerations, as the benchmark does."
   ],
   "what_new_does_well": [
-    "Clear two-routine structure (daily wash vs between-cycle sterilise) that maps directly to the search intent and is easy to scan.",
-    "Good safety and caution language: stop if pain, general-information disclaimer, and repeated 'follow the included instructions' framing.",
-    "Accurate use of supplied product facts (capacities, eight-hour wear, swimming/exercise, 5–10 year lifespan, cotton machine-washable pouch) without inventing claims."
+    "Clear, step-by-step cleaning instructions with a logical flow from daily care to sterilising to storage.",
+    "Strong structure with headings, bullet points, and a FAQ that directly answers common search queries.",
+    "Appropriate caution about avoiding certain cleaners and seeking medical advice for pain or discomfort."
   ]
 }
