@@ -1,5 +1,5 @@
 import db from "../db.server";
-import type { MerchantFacts } from "./pipeline/types";
+import type { Angle, MerchantFacts } from "./pipeline/types";
 
 export async function loadFacts(shop: string, productId: string): Promise<MerchantFacts> {
   const rows = await db.merchantFact.findMany({ where: { shop, productId } });
@@ -27,4 +27,18 @@ export async function saveFacts(
 
 export async function deleteFact(shop: string, productId: string, question: string) {
   await db.merchantFact.deleteMany({ where: { shop, productId, question } });
+}
+
+export async function loadAngles(shop: string, productId: string): Promise<Angle[]> {
+  const row = await db.productAngles.findUnique({ where: { shop_productId: { shop, productId } } });
+  return row ? (JSON.parse(row.angles) as Angle[]) : [];
+}
+
+export async function saveAngles(shop: string, productId: string, angles: Angle[]) {
+  const data = { angles: JSON.stringify(angles) };
+  await db.productAngles.upsert({
+    where: { shop_productId: { shop, productId } },
+    create: { shop, productId, ...data },
+    update: data,
+  });
 }

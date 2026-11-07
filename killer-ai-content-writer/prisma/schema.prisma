@@ -60,3 +60,12 @@ model Article {
 
   @@index([shop, productId])
 }
+
+model ProductAngles {
+  shop      String
+  productId String
+  angles    String
+  updatedAt DateTime @updatedAt
+
+  @@id([shop, productId])
+}

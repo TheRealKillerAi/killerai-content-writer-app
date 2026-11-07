@@ -4,7 +4,7 @@ import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
-import { deleteFact, loadFacts, saveFacts } from "../lib/facts.server";
+import { deleteFact, loadAngles, loadFacts, saveAngles, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
 import { startArticle } from "../lib/articles.server";
@@ -28,7 +28,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const product = await getProduct(admin, gidFor(params.id!));
   if (!product) throw new Response("Product not found", { status: 404 });
   const facts = await loadFacts(session.shop, params.id!);
-  return { product, facts };
+  const savedAngles = await loadAngles(session.shop, params.id!);
+  return { product, facts, savedAngles };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -57,6 +58,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     if (intent === "angles") {
       const existing = await existingArticleTitles(admin);
       const { angles } = await findAngles(product.facts, existing, facts.known);
+      await saveAngles(session.shop, productId, angles);
       return { intent, error: null, angles };
     }
     const angle = JSON.parse(String(form.get("angle"))) as Angle;
@@ -239,13 +241,13 @@ function QuestionForm({
 }
 
 export default function ProductPage() {
-  const { product, facts } = useLoaderData<typeof loader>();
+  const { product, facts, savedAngles } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
   const writeF = useFetcher<ActionResult>();
   const f = product.facts;
-  const angles = anglesF.data?.angles ?? [];
+  const angles = anglesF.data?.angles ?? savedAngles;
   const anglesBusy = anglesF.state !== "idle";
   const questionsBusy = questionsF.state !== "idle";
   const anglesRef = useRef<HTMLDivElement>(null);
@@ -276,7 +278,7 @@ export default function ProductPage() {
         {...(anglesBusy ? { loading: true } : {})}
         onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
       >
-        Find article angles
+        {angles.length ? "Refresh article angles" : "Find article angles"}
       </s-button>
 
       <s-section heading="What we know about this product">
