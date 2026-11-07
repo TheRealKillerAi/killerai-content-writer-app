@@ -1,0 +1,109 @@
+{
+  "product_claims": [
+    {
+      "claim": "The Anytime Reusable Menstrual Cup comes in two sizes: Small holds roughly 15 ml and Large holds approximately 28–30 ml.",
+      "evidence": "Choose Small, which holds roughly 15 ml, or Large, which holds approximately 28–30 ml."
+    },
+    {
+      "claim": "Both are made from medical-grade silicone and collect flow rather than absorbing it.",
+      "evidence": "made from medical-grade silicone and collects flow rather than absorbing it"
+    },
+    {
+      "claim": "Each cup comes with a storage pouch and an instruction manual.",
+      "evidence": "Each cup includes a storage pouch and instruction manual."
+    },
+    {
+      "claim": "The cup can be used for up to eight hours before removing and cleaning.",
+      "evidence": "Use for up to eight hours before removing and cleaning."
+    },
+    {
+      "claim": "It is reusable for a typical lifespan of 5 to 10 years with proper care.",
+      "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+    },
+    {
+      "claim": "It can also be used for swimming and exercise when correctly inserted.",
+      "evidence": "Suitable for swimming and exercise when correctly inserted."
+    },
+    {
+      "claim": "A reusable cup can reduce repeat purchases and ongoing period waste.",
+      "evidence": "helping reduce repeat purchases and ongoing period waste"
+    }
+  ],
+  "unsupported": [
+    {
+      "text": "If you usually need to change pads or tampons frequently, the larger capacity of the Large may be worth considering.",
+      "problem": "PRODUCT DATA does not state any guidance linking pad/tampon change frequency to cup size choice",
+      "fix": "If you have heavier days, the larger capacity of the Large may be worth considering."
+    },
+    {
+      "text": "You can try one size and, if it does not suit you, try the other. Many people end up owning both.",
+      "problem": "PRODUCT DATA does not state that you can try/switch sizes or that people own both",
+      "fix": "You may wish to consider the other size if one does not suit you."
+    },
+    {
+      "text": "Some people keep both sizes on hand and use the Small on lighter days and the Large on heavier ones.",
+      "problem": "PRODUCT DATA does not state or imply using both sizes across different days",
+      "fix": "Some people may prefer a larger capacity for heavier days and a smaller one for lighter days."
+    },
+    {
+      "text": "A reusable cup is a single purchase rather than a repeat one, but the initial outlay may be higher than a box of disposables.",
+      "problem": "PRODUCT DATA does not state pricing or cost comparisons with disposables",
+      "fix": "remove"
+    },
+    {
+      "text": "You can choose the size that matches your flow and comfort preferences, and remember that you do not have to choose one product forever. Many people try a cup, take a break, or use it alongside other period products.",
+      "problem": "PRODUCT DATA does not state that the cup can be used alongside other period products or that users take breaks",
+      "fix": "You can choose the size that matches your flow and comfort preferences."
+    },
+    {
+      "text": "Yes, you can use one cup throughout your period, emptying and cleaning it as needed.",
+      "problem": "PRODUCT DATA does not explicitly state one cup can be used throughout an entire period",
+      "fix": "The cup can be reused throughout your cycle, emptying and cleaning it as needed."
+    }
+  ],
+  "risky": [
+    {
+      "text": "If you experience persistent discomfort or leaking, it is worth reviewing the instruction manual and considering whether the other size might suit you better. If problems continue, speak to a qualified health professional.",
+      "problem": "PRODUCT DATA does not provide troubleshooting guidance for discomfort or leaking",
+      "fix": "If you experience persistent discomfort or leaking, review the instruction manual and speak to a qualified health professional."
+    },
+    {
+      "text": "If the cup feels uncomfortable, review the instruction manual that comes with it. If discomfort continues, speak to a qualified health professional. Comfort is important, and a different size or product may suit you better.",
+      "problem": "PRODUCT DATA does not provide guidance on discomfort or suggest switching products",
+      "fix": "If the cup feels uncomfortable, review the instruction manual. If discomfort continues, speak to a qualified health professional."
+    },
+    {
+      "text": "The cup needs to be cleaned between uses, following the instructions supplied with it.",
+      "problem": "PRODUCT DATA mentions cleaning but does not specify cleaning between uses",
+      "fix": "The cup can be cleaned and reused, following the instructions supplied with it."
+    }
+  ],
+  "leaks": [
+    {
+      "text": "[Anytime Reusable Menstrual Cup]({{PRODUCT_URL}})",
+      "problem": "Unrendered placeholder {{PRODUCT_URL}} visible to readers",
+      "fix": "Replace with the actual product URL or remove the link markup."
+    },
+    {
+      "text": "This product's information does not make specific recommendations based on those factors, so we are not going to invent them here.",
+      "problem": "Undermines the product and reveals editorial process",
+      "fix": "remove"
+    },
+    {
+      "text": "We are deliberately not putting a dollar figure on that, as prices vary.",
+      "problem": "Reveals editorial process and undermines the product",
+      "fix": "remove"
+    },
+    {
+      "text": "according to the product information",
+      "problem": "Meta-reference to source material rather than stating the fact directly",
+      "fix": "remove the phrase and state the lifespan directly."
+    },
+    {
+      "text": "Product information for the Anytime Reusable Menstrual Cup (capacities, materials, lifespan, included items).",
+      "problem": "Sources section references internal product data, revealing how the article was made",
+      "fix": "remove"
+    }
+  ],
+  "verdict": "revise"
+}

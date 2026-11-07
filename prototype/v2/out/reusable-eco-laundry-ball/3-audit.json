@@ -1,0 +1,98 @@
+{
+  "product_claims": [
+    {
+      "claim": "This one uses natural minerals to clean a 4 kg wash without added detergent, fragrance or fabric softener",
+      "evidence": "This refillable Eco Laundry Ball uses natural minerals for a 4 kg wash without added detergent, fragrance or fabric softener"
+    },
+    {
+      "claim": "is reusable for up to 1,000 washes",
+      "evidence": "Reusable for up to 1,000 washes."
+    },
+    {
+      "claim": "This one is refillable and contains natural minerals",
+      "evidence": "Refillable design for repeat use. / Natural minerals clean without added detergent, fragrance or fabric softener."
+    },
+    {
+      "claim": "You place one ball in the drum for a 4 kg wash",
+      "evidence": "One ball for a 4 kg wash."
+    },
+    {
+      "claim": "This one needs to be recharged in sunlight for a few hours each month with regular use",
+      "evidence": "Recharge in sunlight for a few hours each month with regular use."
+    },
+    {
+      "claim": "the outer ball is recyclable where suitable facilities accept it",
+      "evidence": "Recyclable outer ball where suitable facilities accept it."
+    },
+    {
+      "claim": "One ball is intended for a 4 kg wash",
+      "evidence": "One ball for a 4 kg wash."
+    }
+  ],
+  "unsupported": [
+    {
+      "text": "The minerals are what do the cleaning, according to the instructions for this product.",
+      "problem": "PRODUCT DATA does not mention any instructions document or that minerals are 'what do the cleaning' per instructions; it only states natural minerals clean.",
+      "fix": "The natural minerals are what do the cleaning."
+    },
+    {
+      "text": "If you are used to seeing suds, it helps to know that this ball is not designed to produce them.",
+      "problem": "PRODUCT DATA does not state anything about suds or foam production.",
+      "fix": "remove"
+    },
+    {
+      "text": "The absence of foam does not mean nothing is happening; it simply works differently from detergent.",
+      "problem": "PRODUCT DATA makes no claim about foam or comparison of mechanism to detergent.",
+      "fix": "remove"
+    },
+    {
+      "text": "Always follow the instructions supplied with the product for correct use, including how to recharge it and any guidance on water temperature or load size.",
+      "problem": "PRODUCT DATA does not mention supplied instructions or water temperature guidance.",
+      "fix": "Follow the product's usage guidance for correct use and recharging."
+    },
+    {
+      "text": "If you routinely wash much larger loads, you will need to follow the product instructions for how to handle that.",
+      "problem": "PRODUCT DATA gives no guidance for larger loads or instructions for handling them.",
+      "fix": "If you routinely wash much larger loads, this ball is sized for a 4 kg wash."
+    },
+    {
+      "text": "For heavily soiled items, you may still need a pre-treatment or dedicated stain product.",
+      "problem": "PRODUCT DATA does not address heavy soiling or pre-treatment.",
+      "fix": "remove"
+    },
+    {
+      "text": "Check the care label for delicate items and follow the product instructions.",
+      "problem": "PRODUCT DATA does not mention delicate fabrics or care labels.",
+      "fix": "remove"
+    },
+    {
+      "text": "The instructions supplied with the product explain how.",
+      "problem": "PRODUCT DATA does not reference supplied instructions.",
+      "fix": "Recharge it in sunlight for a few hours each month with regular use."
+    },
+    {
+      "text": "If you are unsure about a particular load, check the instructions supplied with the product.",
+      "problem": "PRODUCT DATA does not reference supplied instructions.",
+      "fix": "remove"
+    },
+    {
+      "text": "As with any change to your laundry routine, start by reading the instructions supplied with the product so you know exactly how to use and care for it.",
+      "problem": "PRODUCT DATA does not mention supplied instructions.",
+      "fix": "remove"
+    },
+    {
+      "text": "It is not a substitute for the instructions supplied with the product or for advice from a qualified professional.",
+      "problem": "PRODUCT DATA does not reference supplied instructions or professional advice.",
+      "fix": "remove"
+    }
+  ],
+  "risky": [],
+  "leaks": [
+    {
+      "text": "the [Reusable Eco Laundry Ball]({{PRODUCT_URL}})",
+      "problem": "Unrendered placeholder {{PRODUCT_URL}} visible to readers.",
+      "fix": "the Reusable Eco Laundry Ball"
+    }
+  ],
+  "verdict": "revise"
+}

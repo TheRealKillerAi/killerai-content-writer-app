@@ -1,0 +1,71 @@
+{
+  "angles": [
+    {
+      "target_query": "how to choose the right size menstrual cup",
+      "intent": "informational",
+      "working_title": "Small or Large? How to Choose the Right Menstrual Cup Size",
+      "why_it_fits": "The product comes in two sizes with clearly stated capacities (roughly 15 ml vs 28–30 ml), so a size-selection guide can be answered from product data plus general advice on flow and comfort.",
+      "needs_info": [
+        "General guidance on how flow heaviness and anatomy may influence size choice (kept general and non-medical)"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "how long can you leave a menstrual cup in",
+      "intent": "informational",
+      "working_title": "How Long Can You Leave a Menstrual Cup In? The 8-Hour Rule Explained",
+      "why_it_fits": "The product data states use for up to eight hours before removing and cleaning, so an article on wear time and cleaning routine fits directly.",
+      "needs_info": [
+        "General cleaning and sterilising routine guidance (boiling, cup wash)",
+        "When to empty more frequently on heavy days"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "can you swim and exercise with a menstrual cup",
+      "intent": "informational",
+      "working_title": "Swimming, Gym and Periods: Can You Exercise With a Menstrual Cup?",
+      "why_it_fits": "The listing states the cup is suitable for swimming and exercise when correctly inserted, which is a common practical question.",
+      "needs_info": [
+        "General tips on insertion confidence and checking the seal before activity"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "how much waste do disposable period products create",
+      "intent": "informational",
+      "working_title": "Pads, Tampons and Landfill: The Waste Case for a Reusable Cup",
+      "why_it_fits": "The product is tagged eco-friendly, plastic free and reusable with a 5–10 year lifespan, so a waste-comparison article is supportable with general, low-risk framing.",
+      "needs_info": [
+        "General Australian context on disposable period product waste (sources to cite)"
+      ],
+      "risk": "normal",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "is a menstrual cup worth it compared to pads and tampons",
+      "intent": "commercial",
+      "working_title": "Is a Menstrual Cup Worth It? Reusable vs Disposable Period Products",
+      "why_it_fits": "The listing highlights reduced repeat purchases, a 5–10 year lifespan and included pouch and manual, which supports an honest cost-and-convenience comparison.",
+      "needs_info": [
+        "General cost comparison framing without quoting specific competitor prices"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "how to clean and store a menstrual cup",
+      "intent": "informational",
+      "working_title": "How to Clean and Store a Menstrual Cup So It Lasts",
+      "why_it_fits": "The product includes a storage pouch and instruction manual and claims a 5–10 year lifespan with proper care, so a care-and-storage guide is a natural fit.",
+      "needs_info": [
+        "General sterilising methods and safe storage advice between cycles"
+      ],
+      "risk": "high",
+      "overlaps_existing": false
+    }
+  ]
+}

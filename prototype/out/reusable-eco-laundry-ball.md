@@ -5,7 +5,7 @@
 - **Meta description:** A refillable reusable laundry ball that cleans a 4 kg wash with natural minerals — no added detergent, fragrance or softener. Up to 1,000 washes.
 - **URL handle:** reusable-eco-laundry-ball
 
-## ARTICLE
+## ARTICLEgit pull
 
 # Reusable Eco Laundry Ball: A Simpler Way to Wash Everyday Loads
 
