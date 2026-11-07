@@ -130,16 +130,18 @@ function QuestionForm({
               labelAccessibilityVisibility="exclusive"
               disabled={!!unknown[i]}
               value={answers[i] ?? ""}
-              onInput={(e) =>
-                setAnswers((a) => ({ ...a, [i]: (e.currentTarget as unknown as { value: string }).value }))
-              }
+              onInput={(e) => {
+                const value = (e.currentTarget as unknown as { value: string }).value;
+                setAnswers((a) => ({ ...a, [i]: value }));
+              }}
             />
             <s-checkbox
               label="I don't know"
               checked={!!unknown[i]}
-              onChange={(e) =>
-                setUnknown((u) => ({ ...u, [i]: (e.currentTarget as unknown as { checked: boolean }).checked }))
-              }
+              onChange={(e) => {
+                const checked = (e.currentTarget as unknown as { checked: boolean }).checked;
+                setUnknown((u) => ({ ...u, [i]: checked }));
+              }}
             />
           </s-stack>
         </s-box>
