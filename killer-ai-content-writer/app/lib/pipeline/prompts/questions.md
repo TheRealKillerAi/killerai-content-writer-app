@@ -7,3 +7,5 @@ Return ONLY JSON: {"fact_budget":"low|ok|good","questions":[{"q":"","why":""}]}
 
 Never repeat, rephrase or narrow a question that already appears in MERCHANT FACTS, even if the answer was short or 'no'. If every useful question is answered, return an empty list.
 Items listed under UNKNOWN TO THE MERCHANT have already been asked and the owner does not know them: never ask them again.
+
+Articles never state prices, discounts or running costs, so never ask for them and never list price or cost information in needs_info or questions.

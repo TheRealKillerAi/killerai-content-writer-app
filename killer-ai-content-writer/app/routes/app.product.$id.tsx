@@ -219,7 +219,7 @@ export default function ProductPage() {
         </s-banner>
       ) : null}
 
-      <div ref={anglesRef} />
+      <div ref={anglesRef} style={{ scrollMarginTop: 90 }} />
       {anglesF.data?.error ? (
         <s-banner tone="critical" heading="We couldn't find angles">{anglesF.data.error}</s-banner>
       ) : null}
@@ -269,7 +269,7 @@ export default function ProductPage() {
         </s-banner>
       ) : null}
 
-      <div ref={questionsRef} />
+      <div ref={questionsRef} style={{ scrollMarginTop: 90 }} />
       {q?.error ? <s-banner tone="critical" heading="We couldn't prepare the questions">{q.error}</s-banner> : null}
       {q?.angle && !q.error ? (
         <s-section heading={`Before we write: ${q.angle.working_title}`}>

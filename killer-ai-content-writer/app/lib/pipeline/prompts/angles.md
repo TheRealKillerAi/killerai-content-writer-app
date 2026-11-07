@@ -13,3 +13,5 @@ Rules
 
 Return ONLY JSON: {"angles":[{"target_query":"","intent":"informational|commercial","working_title":"","why_it_fits":"","answerable_from_data":0,"needs_outside_evidence":false,"needs_info":[""],"risk":"normal|high","overlaps_existing":false}]}
 Give exactly 6 angles, best first.
+
+Articles never state prices, discounts or running costs, so never ask for them and never list price or cost information in needs_info or questions.
