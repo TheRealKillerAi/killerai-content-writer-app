@@ -29,3 +29,33 @@ export function runChecks(a, ref) {
   if (/\$\s?\d/.test(all)) issues.push("mentions a price");
   return { words, h2, productLinks, issues, similarity };
 }
+
+// Evidence verification: the model must quote its evidence; code confirms the quote really exists.
+const flat = (t) => t.replace(/<[^>]+>/g, " ").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+const STOP = new Set('with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using'.split(' '));
+export function verifyClaims(raw, factsText) {
+  const hay = " " + flat(factsText) + " ";
+  const unsupported = [];
+  for (const c of raw.claims || []) {
+    const q = c.evidence ? flat(String(c.evidence)) : "";
+    const content = (t) => t.split(" ").filter((w) => w.length >= 4 && !STOP.has(w));
+    const ev = content(q).map((w) => w.slice(0, 4));
+    const sw = content(flat(String(c.sentence || "")));
+    const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
+    const ok = q.split(" ").length >= 3 && hay.includes(" " + q + " ") && overlap >= 0.4;
+    if (!ok) unsupported.push({ text: c.sentence, problem: !c.evidence ? "no supporting evidence" : hay.includes(" " + q + " ") ? "the quoted evidence does not support this sentence" : "quoted evidence not found in product data or merchant facts", category: c.category });
+  }
+  return { claims: raw.claims || [], unsupported, risky: [], leaks: raw.leaks || [] };
+}
+export function findRepeats(body) {
+  const sentences = body.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6);
+  const seen = new Map(); const out = [];
+  sentences.forEach((s, i) => {
+    const w = norm(s);
+    for (const sh of shingles(w, 6)) {
+      if (seen.has(sh) && seen.get(sh) !== i) { out.push({ text: s, problem: `repeats an earlier sentence ("${sh}")` }); return; }
+      if (!seen.has(sh)) seen.set(sh, i);
+    }
+  });
+  return out;
+}

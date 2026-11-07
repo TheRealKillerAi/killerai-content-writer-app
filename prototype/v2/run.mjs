@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { chat } from "./llm.mjs";
 import readline from "node:readline/promises";
 const judgeP = await readFile(new URL("./prompts/judge.md", import.meta.url), "utf8");
-import { runChecks, loadReference, articleText } from "./checks.mjs";
+import { runChecks, loadReference, articleText, verifyClaims, findRepeats } from "./checks.mjs";
 const here = (p) => new URL(p, import.meta.url);
 const args = process.argv.slice(2);
 const file = args.find((a) => a.endsWith(".json"));
@@ -65,11 +65,11 @@ if (!args.includes("--no-ask")) {
 
 console.log("2/5 Writing...");
 const write = () => call(writerP, `VOICE GUIDE\n${voice}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(angle)}\n\nSOURCES PROVIDED\nnone`, 0.6);
-const audit = (art) => call(auditP, `${facts}\n\nARTICLE\n# ${art.h1}\n${art.tldr}\n${art.body_markdown}\n${art.faq.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n")}`, 0);
+const audit = async (art) => verifyClaims(await call(auditP, `${facts}\n\nARTICLE\n# ${art.h1}\n${art.tldr}\n${art.body_markdown}\n${art.faq.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n")}`, 0), facts);
 const apply = (art, edits) => {
   let n = 0;
   const swap = (s) => { for (const e of edits) if (e.find && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
-  art.tldr = swap(art.tldr); art.body_markdown = swap(art.body_markdown);
+  art.tldr = swap(art.tldr); art.body_markdown = swap(art.body_markdown).replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n").replace(/ {2,}/g, " ").replace(/\n{3,}/g, "\n\n");
   art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
   return n;
 };
@@ -79,8 +79,9 @@ console.log("3/5 Auditing and fixing (up to 2 rounds)...");
 let report = await audit(article);
 const history = [report];
 for (let round = 1; round <= 2; round++) {
-  const problems = { unsupported: report.unsupported, risky: report.risky, leaks: report.leaks };
-  const count = problems.unsupported.length + problems.risky.length + problems.leaks.length;
+  const repeats = findRepeats(article.body_markdown);
+  const problems = { unsupported: report.unsupported, risky: report.risky, leaks: report.leaks, repetition: repeats };
+  const count = problems.unsupported.length + problems.risky.length + problems.leaks.length + repeats.length;
   if (!count) break;
   console.log(`  round ${round}: ${count} problem(s)`);
   const fix = await call(fixerP, `ARTICLE\n${JSON.stringify({ tldr: article.tldr, body_markdown: article.body_markdown, faq: article.faq }, null, 1)}\n\nPROBLEMS\n${JSON.stringify(problems, null, 1)}\n\n${facts}`, 0);
@@ -90,8 +91,12 @@ for (let round = 1; round <= 2; round++) {
 }
 
 console.log("4/5 Running code checks...");
+for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {
+  const t = await call("You shorten SEO fields. Return ONLY JSON {\"title_tag\":\"<=60 chars\",\"meta_description\":\"<=155 chars\"}. Keep the meaning and the key facts; do not add claims.", JSON.stringify({ title_tag: article.title_tag, meta_description: article.meta_description }), 0);
+  article.title_tag = t.title_tag || article.title_tag; article.meta_description = t.meta_description || article.meta_description;
+}
 const checks = runChecks(article, ref);
-const remaining = report.unsupported.length + report.risky.length + report.leaks.length;
+const remaining = report.unsupported.length + report.risky.length + report.leaks.length + findRepeats(article.body_markdown).length;
 const status = remaining === 0 && checks.issues.length === 0 ? "READY FOR MERCHANT APPROVAL" : "NEEDS REVIEW";
 await save("2-article.json", article);
 await save("3-audit.json", { final: report, history });
