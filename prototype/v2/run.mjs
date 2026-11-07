@@ -53,6 +53,7 @@ if (!args.includes("--no-ask")) {
         if (ans) got[x.q] = ans; else skipped.push(x.q);
       }
       rl.close();
+      await mkdir(here("inputs/answers/"), { recursive: true });
       await writeFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), JSON.stringify(got, null, 2));
       answers = JSON.stringify(got, null, 2); facts = mkFacts();
       gaps = skipped;
