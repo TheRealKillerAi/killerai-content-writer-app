@@ -1,13 +1,11 @@
 {
-  "words": 616,
-  "h2": 9,
+  "words": 574,
+  "h2": 8,
   "productLinks": 1,
-  "issues": [
-    "an empty section heading"
-  ],
+  "issues": [],
   "similarity": {
     "sharedSevenWordRuns": 9,
-    "example": "in sunlight for a few hours each"
+    "example": "without added detergent fragrance or fabric softener"
   },
   "status": "NEEDS REVIEW"
 }

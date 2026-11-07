@@ -2,8 +2,8 @@
   "new": {
     "reader_usefulness": 4,
     "honesty_about_tradeoffs": 3,
-    "voice_and_tone": 4,
-    "structure_and_scannability": 4,
+    "voice_and_tone": 3,
+    "structure_and_scannability": 5,
     "search_intent_coverage": 4,
     "caution_with_claims": 4
   },
@@ -20,13 +20,13 @@
   ],
   "verdict": "similar",
   "biggest_gaps": [
-    "The new article's 'Why does the cup need both a wash and a sterilise?' section is vague and doesn't explain the purpose of each step, unlike the benchmark's clear explanation of trade-offs.",
-    "The new article lacks a balanced comparison of cup use versus other period products, which the benchmark includes to help readers make an informed choice.",
-    "The new article's 'How do I sterilise between cycles?' section is incomplete—it only says 'That's worth reading before you need it' without actually describing the sterilising process, which is a key search intent."
+    "Trade-offs are thin: the new article mentions a learning curve but doesn't explain the practical costs of cup care (access to clean water/private washing facilities, cleaning becoming part of the routine, heavier days needing earlier emptying) the way the benchmark does.",
+    "Voice is more list-and-answer than the benchmark's reassuring, reader-directed tone; add a short framing paragraph that acknowledges cleaning can feel like a chore and that a mix of products is fine.",
+    "Caution could be broadened: the benchmark flags IUD/pelvic pain and advises checking with a health professional before use, not only stopping if pain occurs; mirror that pre-use caution."
   ],
   "what_new_does_well": [
-    "The new article is tightly focused on cleaning and sterilising, directly addressing search intent with clear, step-by-step instructions.",
-    "It includes a concise FAQ section that answers common questions, improving scannability and reader usefulness.",
-    "The tone is supportive and cautious, with appropriate disclaimers and encouragement to follow product instructions."
+    "Clean, scannable structure with clear daily vs between-cycle sections and a useful FAQ block that matches search intent.",
+    "Accurately sticks to supplied product facts (capacities, 8-hour wear, materials, lifespan, colours) without inventing claims.",
+    "Good caution on what to avoid and a clear not-medical-advice disclaimer."
   ]
 }

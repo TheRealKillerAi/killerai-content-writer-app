@@ -1,24 +1,10 @@
 {
   "angles": [
     {
-      "target_query": "do laundry balls actually clean clothes",
-      "intent": "informational",
-      "working_title": "Do Laundry Balls Actually Clean Clothes? What You Need to Know",
-      "why_it_fits": "Addresses a common sceptical question about laundry balls, using product data on how they work (natural minerals, no detergent) and merchant facts on pre-treating stains and using two balls for larger loads. Avoids competing with the product page.",
-      "answerable_from_data": 2,
-      "needs_outside_evidence": true,
-      "needs_info": [
-        "Independent evidence on the cleaning efficacy of mineral-based laundry balls compared to detergent",
-        "What types of stains or soils the ball is less effective on"
-      ],
-      "risk": "normal",
-      "overlaps_existing": false
-    },
-    {
       "target_query": "how to use a laundry ball",
       "intent": "informational",
       "working_title": "How to Use a Laundry Ball: A Simple Guide for Everyday Loads",
-      "why_it_fits": "Explains placement (in the drum with clothes), load size (one ball for 4 kg, two for larger), temperature (cold wash), recharging in sunlight, and pre-treating stains, all from product data and merchant facts.",
+      "why_it_fits": "Explains the basic usage of the product, which is a common question for new users. The product data and merchant facts provide enough detail on placement, load size, temperature, and recharging.",
       "answerable_from_data": 3,
       "needs_outside_evidence": false,
       "needs_info": [],
@@ -26,15 +12,29 @@
       "overlaps_existing": false
     },
     {
+      "target_query": "do laundry balls actually clean clothes",
+      "intent": "informational",
+      "working_title": "Do Laundry Balls Actually Clean Clothes? What You Need to Know",
+      "why_it_fits": "Addresses scepticism about the effectiveness of laundry balls. The product data states it uses natural minerals and cleans without detergent, but independent evidence is needed for a balanced answer.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
+      "needs_info": [
+        "Independent studies or tests on the cleaning efficacy of mineral-based laundry balls",
+        "Comparison to detergent performance"
+      ],
+      "risk": "normal",
+      "overlaps_existing": false
+    },
+    {
       "target_query": "laundry ball vs detergent",
       "intent": "commercial",
       "working_title": "Laundry Ball vs Detergent: Which Is Right for Your Wash?",
-      "why_it_fits": "Compares the reusable ball (no detergent, up to 1,000 washes, cold wash) with conventional detergent, using product data and general knowledge. Helps shoppers decide without targeting the product name.",
+      "why_it_fits": "Compares the product to traditional detergent, a common consideration for shoppers. The product data highlights differences (no added detergent, fragrance, softener) but outside facts on cost, performance, and environmental impact are needed.",
       "answerable_from_data": 2,
       "needs_outside_evidence": true,
       "needs_info": [
-        "Cost per wash comparison with typical detergent",
-        "Effectiveness on different fabric types and soil levels",
+        "Cost per wash comparison",
+        "Cleaning performance comparison",
         "Environmental impact comparison (e.g., packaging, chemicals)"
       ],
       "risk": "normal",
@@ -44,12 +44,13 @@
       "target_query": "are laundry balls worth it",
       "intent": "commercial",
       "working_title": "Are Laundry Balls Worth It? A Practical Look at the Pros and Cons",
-      "why_it_fits": "Weighs up the benefits (reusable for 1,000 washes, no detergent, refillable) against limitations (cold wash only, pre-treat stains, two balls for larger loads) using product data and merchant facts.",
-      "answerable_from_data": 2,
+      "why_it_fits": "Helps consumers decide if the product is a good investment. The product data gives features like up to 1,000 washes, but a full value assessment needs cost and performance evidence.",
+      "answerable_from_data": 1,
       "needs_outside_evidence": true,
       "needs_info": [
-        "Actual cost savings compared to detergent over 1,000 washes",
-        "User satisfaction or performance data from real-world use"
+        "Cost savings analysis",
+        "Effectiveness evidence",
+        "User testimonials or reviews"
       ],
       "risk": "normal",
       "overlaps_existing": false
@@ -58,7 +59,7 @@
       "target_query": "how many laundry balls per load",
       "intent": "informational",
       "working_title": "How Many Laundry Balls Should You Use Per Load?",
-      "why_it_fits": "Directly answers the question using merchant facts: one ball for a 4 kg wash, two balls for loads over 4 kg. Simple and helpful.",
+      "why_it_fits": "Clarifies dosage based on load size. The product data and merchant facts specify one ball for a 4 kg wash and two for larger loads, making it fully answerable.",
       "answerable_from_data": 3,
       "needs_outside_evidence": false,
       "needs_info": [],
@@ -66,15 +67,13 @@
       "overlaps_existing": false
     },
     {
-      "target_query": "laundry ball for cold wash",
+      "target_query": "how to wash clothes with laundry balls",
       "intent": "informational",
-      "working_title": "Cold Wash Laundry Balls: What You Need to Know",
-      "why_it_fits": "Explains that the ball is designed for cold washes, how to get the best results (pre-treat stains, correct load size), and why cold washing might be beneficial. Uses product data and merchant facts.",
-      "answerable_from_data": 2,
-      "needs_outside_evidence": true,
-      "needs_info": [
-        "General benefits of cold washing (energy savings, fabric care) – can be sourced from general knowledge, but may need citations"
-      ],
+      "working_title": "How to Wash Clothes with Laundry Balls: Step-by-Step",
+      "why_it_fits": "Provides a practical guide for using the product. The product data and merchant facts cover placement, temperature, load size, and recharging, so it can be fully answered.",
+      "answerable_from_data": 3,
+      "needs_outside_evidence": false,
+      "needs_info": [],
       "risk": "normal",
       "overlaps_existing": false
     }

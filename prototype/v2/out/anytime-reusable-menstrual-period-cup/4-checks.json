@@ -1,13 +1,11 @@
 {
-  "words": 814,
-  "h2": 10,
+  "words": 529,
+  "h2": 7,
   "productLinks": 1,
-  "issues": [
-    "an empty section heading"
-  ],
+  "issues": [],
   "similarity": {
-    "sharedSevenWordRuns": 28,
-    "example": "mild unscented water based soap clear the"
+    "sharedSevenWordRuns": 18,
+    "example": "soap clear the suction holes and rinse"
   },
-  "status": "NEEDS REVIEW"
+  "status": "READY FOR MERCHANT APPROVAL"
 }

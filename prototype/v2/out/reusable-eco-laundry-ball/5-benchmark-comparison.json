@@ -1,9 +1,9 @@
 {
   "new": {
-    "reader_usefulness": 4,
+    "reader_usefulness": 3,
     "honesty_about_tradeoffs": 4,
-    "voice_and_tone": 4,
-    "structure_and_scannability": 5,
+    "voice_and_tone": 3,
+    "structure_and_scannability": 4,
     "search_intent_coverage": 4,
     "caution_with_claims": 4
   },
@@ -20,22 +20,22 @@
     {
       "name": "voice/benchmark-laundry-post.txt",
       "reader_usefulness": 4,
-      "honesty_about_tradeoffs": 3,
+      "honesty_about_tradeoffs": 4,
       "voice_and_tone": 5,
       "structure_and_scannability": 4,
       "search_intent_coverage": 4,
       "caution_with_claims": 3
     }
   ],
-  "verdict": "similar",
+  "verdict": "worse",
   "biggest_gaps": [
-    "The new article is a how-to but never explains the 'why' behind steps (e.g. why cold wash, why pre-treat, why drum not drawer beyond 'too big') — the cup benchmark consistently explains the reasoning behind each instruction, which builds trust and usefulness.",
-    "Trade-offs section is thin and generic ('first few loads may feel odd'); the benchmarks name concrete scenarios (heavily soiled footy gear, oil stains, sensitive skin, hard water) so readers can self-qualify. Add specific load types where the ball underperforms.",
-    "No sourcing or caution framing. The cup benchmark cites a systematic review and TGA guidance and adds a 'general information only, not medical advice' line; the laundry benchmark at least quantifies the problem (10–13 bottles/year). The new article asserts 'natural minerals clean' with no supporting context or caveat about what 'natural minerals' means."
+    "Duplicated content: 'Pre-treat stains before the wash.' appears twice in the stains section, and the entire FAQ block repeats the body copy verbatim — cut the duplication and make the FAQ add new value or remove it.",
+    "Thin, mechanical sections: several headings are answered in one flat sentence with no context (e.g. temperature, load size). The benchmarks explain the 'why' and give practical framing; add a sentence of reasoning or a concrete example per section.",
+    "Broken/awkward product link text ('refillable Eco Laundry Ball' duplicated) and a flat CTA ('There's no rush') that undersells without adding useful guidance — fix the link copy and make the close more purposeful."
   ],
   "what_new_does_well": [
-    "Excellent scannability: question-based H2s, a clean one-ball/two-ball table, and a FAQ block that directly mirrors likely search queries.",
-    "Honest, non-pushy framing — explicitly says the product may not suit people who want fragrance/softener and that this 'is fine', matching the benchmarks' no-pressure tone.",
-    "Accurate, disciplined use of supplied product facts (4 kg, 1,000 washes, sunlight recharge, recyclable outer ball) without inventing claims or dollar savings."
+    "Clear, honest trade-off section ('Is a laundry ball for everyone? No.') that names limitations like cold-wash-only, stain pre-treatment and the monthly sun recharge.",
+    "Good scannable structure with question-based headings that map to real search intent (where it goes, load size, temperature, maintenance, disposal).",
+    "Concise, direct answers with no vague padding and appropriate caution language in the disclaimer."
   ]
 }
