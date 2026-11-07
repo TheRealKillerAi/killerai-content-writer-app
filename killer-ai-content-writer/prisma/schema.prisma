@@ -32,3 +32,16 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+model MerchantFact {
+  id        String   @id @default(cuid())
+  shop      String
+  productId String
+  question  String
+  answer    String
+  unknown   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([shop, productId, question])
+  @@index([shop, productId])
+}

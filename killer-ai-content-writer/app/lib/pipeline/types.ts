@@ -19,3 +19,11 @@ export type Angle = {
   risk: "normal" | "high";
   overlaps_existing: boolean;
 };
+
+export interface Question { q: string; why: string }
+export interface MerchantFacts {
+  /** question -> answer, trusted facts */
+  known: Record<string, string>;
+  /** questions the merchant said they don't know; never asked again, never covered */
+  unknown: string[];
+}
