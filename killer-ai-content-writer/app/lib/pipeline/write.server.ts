@@ -1,7 +1,7 @@
 import writerPrompt from "./prompts/writer.md?raw";
 import auditorPrompt from "./prompts/auditor.md?raw";
 import fixerPrompt from "./prompts/fixer.md?raw";
-import voice from "./voice/default.md?raw";
+import { DEFAULT_SETTINGS, settingsContext, voiceGuide, type AppSettings } from "../settings";
 import { chatJson } from "./llm.server";
 import {
   cleanStructure,
@@ -24,6 +24,7 @@ export async function writeArticle(
   angle: Angle,
   merchant: MerchantFacts,
   progress: Progress = () => {},
+  settings: AppSettings = DEFAULT_SETTINGS,
 ): Promise<ArticleResult> {
   let tokens = 0;
   const call = async <T>(system: string, user: string, temperature: number): Promise<T> => {
@@ -42,7 +43,7 @@ export async function writeArticle(
   await progress("Writing the article");
   const article = await call<Article>(
     writerPrompt,
-    `VOICE GUIDE\n${voice}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(
+    `VOICE GUIDE\n${voiceGuide(settings)}\n\n${settingsContext(settings, "content")}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(
       angle,
     )}\n\nSOURCES PROVIDED\nnone`,
     0.6,

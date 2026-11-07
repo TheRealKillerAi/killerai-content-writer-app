@@ -70,3 +70,9 @@ model ProductAngles {
 
   @@id([shop, productId])
 }
+
+model ShopSettings {
+  shop      String   @id
+  data      String
+  updatedAt DateTime @updatedAt
+}

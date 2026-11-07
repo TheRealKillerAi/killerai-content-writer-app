@@ -1,0 +1,47 @@
+import db from "../db.server";
+import { DEFAULT_SETTINGS, type AppSettings } from "./settings";
+
+export async function loadSettings(shop: string): Promise<AppSettings> {
+  const row = await db.shopSettings.findUnique({ where: { shop } });
+  if (!row) return { ...DEFAULT_SETTINGS };
+  try {
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(row.data) as Partial<AppSettings>) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+const text = (f: FormData, k: string, max: number) => String(f.get(k) ?? "").trim().slice(0, max);
+const flag = (f: FormData, k: string) => f.get(k) !== null;
+
+export function settingsFromForm(f: FormData): AppSettings {
+  const maxWords = Number(f.get("maxWords"));
+  return {
+    brandDescription: text(f, "brandDescription", 2500),
+    wordsToUse: text(f, "wordsToUse", 500),
+    wordsToAvoid: text(f, "wordsToAvoid", 500),
+    neverMention: text(f, "neverMention", 1000),
+    businessName: text(f, "businessName", 120),
+    whatYouSell: text(f, "whatYouSell", 400),
+    audience: text(f, "audience", 400),
+    blogId: text(f, "blogId", 80),
+    defaultAuthor: text(f, "defaultAuthor", 80),
+    publishMode: f.get("publishMode") === "live" ? "live" : "draft",
+    keywordsAsTags: flag(f, "keywordsAsTags"),
+    linkToOtherArticles: flag(f, "linkToOtherArticles"),
+    articleTemplate: text(f, "articleTemplate", 80),
+    language: "en-AU",
+    maxWords: [600, 1000, 1500].includes(maxWords) ? maxWords : null,
+    toc: flag(f, "toc"),
+    articleSchema: flag(f, "articleSchema"),
+    faqSchema: flag(f, "faqSchema"),
+    breadcrumbSchema: flag(f, "breadcrumbSchema"),
+    customIdeasPrompt: text(f, "customIdeasPrompt", 1500),
+    customContentPrompt: text(f, "customContentPrompt", 1500),
+  };
+}
+
+export async function saveSettings(shop: string, settings: AppSettings) {
+  const data = JSON.stringify(settings);
+  await db.shopSettings.upsert({ where: { shop }, create: { shop, data }, update: { data } });
+}

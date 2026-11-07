@@ -1,6 +1,7 @@
 import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
+import type { AppSettings } from "./settings";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
 import type { Angle, Article, ArticleResult, MerchantFacts, ProductFacts } from "./pipeline/types";
 
@@ -11,13 +12,14 @@ export async function startArticle(
   product: ProductFacts,
   angle: Angle,
   merchant: MerchantFacts,
+  settings: AppSettings,
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle) } });
   void (async () => {
     try {
       const result = await writeArticle(product, angle, merchant, async (stage) => {
         await db.article.update({ where: { id: row.id }, data: { stage } });
-      });
+      }, settings);
       await db.article.update({
         where: { id: row.id },
         data: { state: "done", stage: "Done", result: JSON.stringify(result) },

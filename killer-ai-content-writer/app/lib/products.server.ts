@@ -109,3 +109,35 @@ export async function productTitles(admin: Admin, productIds: string[]): Promise
     return {};
   }
 }
+
+export type BlogRow = { id: string; title: string };
+
+export async function listBlogs(admin: Admin): Promise<BlogRow[]> {
+  try {
+    const data = await gql<{ blogs: { nodes: BlogRow[] } }>(
+      admin,
+      `#graphql
+      query Blogs { blogs(first: 20) { nodes { id title } } }`,
+    );
+    return data.blogs.nodes;
+  } catch {
+    return [];
+  }
+}
+
+/** Plain text of the store's most recent blog articles, used to learn the brand voice. */
+export async function recentArticleTexts(admin: Admin, count = 6): Promise<string[]> {
+  try {
+    const data = await gql<{ articles: { nodes: { title: string; body: string }[] } }>(
+      admin,
+      `#graphql
+      query Recent($n: Int!) { articles(first: $n, sortKey: PUBLISHED_AT, reverse: true) { nodes { title body } } }`,
+      { n: count },
+    );
+    return data.articles.nodes
+      .map((a) => `${a.title}\n${a.body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`.slice(0, 3500))
+      .filter((t) => t.length > 300);
+  } catch {
+    return [];
+  }
+}
