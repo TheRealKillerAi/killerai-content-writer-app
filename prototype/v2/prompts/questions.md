@@ -4,3 +4,5 @@ Decide the FACT BUDGET: how many supported, angle-relevant facts exist (low = a 
 If it is low or ok, write up to 5 SHORT questions the owner could answer from their packaging, supplier sheet or instruction leaflet, whose answers would most improve this article. Do not ask for opinions, marketing copy, or things already in the data. Prefer concrete facts (sizes, care steps, materials, what is included, limits). Always include, when relevant, whether the leaflet lists things to avoid or warnings, and what it says about replacement or end of life. Do not ask about anything already answered in MERCHANT FACTS.
 
 Return ONLY JSON: {"fact_budget":"low|ok|good","questions":[{"q":"","why":""}]}
+
+Never repeat, rephrase or narrow a question that already appears in MERCHANT FACTS, even if the answer was short or 'no'. If every useful question is answered, return an empty list.

@@ -24,6 +24,10 @@ export function runChecks(a, ref) {
   if (otherLinks) issues.push(`${otherLinks} unexpected link(s)`);
   if (/^## Sources/im.test(a.body_markdown)) issues.push("has a Sources section but no sources were provided");
   if (h2 < 3) issues.push(`only ${h2} H2 headings`);
+  const tl = a.tldr.split(/\s+/).filter(Boolean).length;
+  if (tl < 25) issues.push(`TL;DR is only ${tl} words`);
+  if (/^#{2,6} .*\n+(?=#{2,6} |$)/m.test(a.body_markdown + "\n")) issues.push("an empty section heading");
+  if (/^\s*[-*]\s*(\*\*\s*\*\*)?\s*$/m.test(a.body_markdown)) issues.push("an empty bullet");
   if (a.faq.length < 3) issues.push(`only ${a.faq.length} FAQ items`);
   if (LEAKS.test(all)) issues.push(`leaked wording: "${all.match(LEAKS)[0]}"`);
   if (/\$\s?\d/.test(all)) issues.push("mentions a price");
@@ -33,19 +37,52 @@ export function runChecks(a, ref) {
 // Evidence verification: the model must quote its evidence; code confirms the quote really exists.
 const flat = (t) => t.replace(/<[^>]+>/g, " ").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 const STOP = new Set('with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using'.split(' '));
-export function verifyClaims(raw, factsText) {
+export function splitSentences(a) {
+  const out = []; let n = 0;
+  const sents = (line) => line.split(/(?<=[.!?])\s+(?=[A-Z0-9*_"(])/);
+  const add = (text, where) => {
+    text = text.trim();
+    if (!text || text.includes("{{PRODUCT_URL}}") || /\?\**$/.test(text) || text.split(/\s+/).length < 4) return;
+    out.push({ id: "S" + ++n, text, where });
+  };
+  sents(a.tldr).forEach((t) => add(t, "tldr"));
+  for (const line of a.body_markdown.split("\n")) {
+    if (/^#{1,6}\s/.test(line)) continue;
+    sents(line.replace(/^\s*(?:[-*+]\s+|\d+\.\s+|>\s*)/, "")).forEach((t) => add(t, "body"));
+  }
+  a.faq.forEach((f) => sents(f.a).forEach((t) => add(t, "faq")));
+  return out;
+}
+const NEEDS = new Set(["product_fact", "usage_step", "health_advice"]);
+export function verifyLabels(sentences, raw, factsText) {
   const hay = " " + flat(factsText) + " ";
-  const unsupported = [];
-  for (const c of raw.claims || []) {
+  const byId = new Map((raw.labels || []).map((l) => [l.id, l]));
+  const unsupported = []; const missing = [];
+  for (const s of sentences) {
+    const c = byId.get(s.id);
+    if (!c) { missing.push(s.id); continue; }
+    if (!NEEDS.has(c.category)) continue;
     const q = c.evidence ? flat(String(c.evidence)) : "";
     const content = (t) => t.split(" ").filter((w) => w.length >= 4 && !STOP.has(w));
     const ev = content(q).map((w) => w.slice(0, 4));
-    const sw = content(flat(String(c.sentence || "")));
+    const sw = content(flat(s.text));
     const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
-    const ok = q.split(" ").length >= 3 && hay.includes(" " + q + " ") && overlap >= 0.4;
-    if (!ok) unsupported.push({ text: c.sentence, problem: !c.evidence ? "no supporting evidence" : hay.includes(" " + q + " ") ? "the quoted evidence does not support this sentence" : "quoted evidence not found in product data or merchant facts", category: c.category });
+    const found = q.split(" ").length >= 3 && hay.includes(" " + q + " ");
+    if (!found || overlap < 0.4) unsupported.push({ text: s.text, problem: !c.evidence ? `no supporting evidence (${c.category})` : found ? `the quoted evidence does not support this sentence (${c.category})` : "quoted evidence not found in product data or merchant facts", category: c.category });
   }
-  return { claims: raw.claims || [], unsupported, risky: [], leaks: raw.leaks || [] };
+  return { labels: raw.labels || [], unsupported, risky: [], leaks: raw.leaks || [], missing };
+}
+export function cleanStructure(md) {
+  let lines = md.split("\n").filter((l) => !/^\s*(?:[-*+]|\d+\.)\s*(?:\*\*\s*\*\*|\*\*|)\s*$/.test(l));
+  for (let pass = 0; pass < 4; pass++) {
+    const keep = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (/^#{1,6}\s/.test(lines[i])) { let k = i + 1; while (k < lines.length && !lines[k].trim()) k++; if (k >= lines.length || /^#{1,6}\s/.test(lines[k])) continue; }
+      keep.push(lines[i]);
+    }
+    lines = keep;
+  }
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 export function findRepeats(body) {
   const sentences = body.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6);

@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { chat } from "./llm.mjs";
 import readline from "node:readline/promises";
 const judgeP = await readFile(new URL("./prompts/judge.md", import.meta.url), "utf8");
-import { runChecks, loadReference, articleText, verifyClaims, findRepeats } from "./checks.mjs";
+import { runChecks, loadReference, articleText, splitSentences, verifyLabels, cleanStructure, findRepeats } from "./checks.mjs";
 const here = (p) => new URL(p, import.meta.url);
 const args = process.argv.slice(2);
 const file = args.find((a) => a.endsWith(".json"));
@@ -44,7 +44,7 @@ if (!args.includes("--no-ask")) {
   const qs = (q.questions || []).slice(0, 5);
   if (qs.length && q.fact_budget !== "good") {
     if (process.stdin.isTTY) {
-      console.log("\nA few questions (press Enter to skip any). Your answers become trusted product facts:\n");
+      console.log("\nA few questions. Answer in ONE line (no line breaks) or press Enter to skip. Your answers become trusted product facts, so only say what you are sure of:\n");
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
       const got = JSON.parse(answers); const skipped = [];
       for (const x of qs) {
@@ -65,11 +65,25 @@ if (!args.includes("--no-ask")) {
 
 console.log("2/5 Writing...");
 const write = () => call(writerP, `VOICE GUIDE\n${voice}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(angle)}\n\nSOURCES PROVIDED\nnone`, 0.6);
-const audit = async (art) => verifyClaims(await call(auditP, `${facts}\n\nARTICLE\n# ${art.h1}\n${art.tldr}\n${art.body_markdown}\n${art.faq.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n")}`, 0), facts);
+const audit = async (art) => {
+  const sentences = splitSentences(art);
+  const listing = (ss) => ss.map((x) => `${x.id}: ${x.text}`).join("\n");
+  let raw = await call(auditP, `${facts}\n\nSENTENCES\n${listing(sentences)}`, 0);
+  let res = verifyLabels(sentences, raw, facts);
+  if (res.missing.length) {
+    const rest = sentences.filter((x) => res.missing.includes(x.id));
+    const raw2 = await call(auditP, `${facts}\n\nSENTENCES\n${listing(rest)}`, 0);
+    raw = { labels: [...(raw.labels || []), ...(raw2.labels || [])], leaks: raw.leaks || [] };
+    res = verifyLabels(sentences, raw, facts);
+  }
+  res.unsupported.push(...res.missing.map((id) => ({ text: sentences.find((x) => x.id === id).text, problem: "fact-checker did not review this sentence" })));
+  return res;
+};
 const apply = (art, edits) => {
   let n = 0;
-  const swap = (s) => { for (const e of edits) if (e.find && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
+  const swap = (s) => { for (const e of edits) if (e.find && !(e.find.includes("{{PRODUCT_URL}}") && !(e.replace || "").includes("{{PRODUCT_URL}}")) && s.includes(e.find)) { s = s.replace(e.find, e.replace ?? ""); n++; } return s; };
   art.tldr = swap(art.tldr); art.body_markdown = swap(art.body_markdown).replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n").replace(/ {2,}/g, " ").replace(/\n{3,}/g, "\n\n");
+  art.body_markdown = cleanStructure(art.body_markdown);
   art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
   return n;
 };
