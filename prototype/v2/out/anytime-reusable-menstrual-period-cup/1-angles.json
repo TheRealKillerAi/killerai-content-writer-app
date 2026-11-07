@@ -1,68 +1,83 @@
 {
   "angles": [
     {
-      "target_query": "how to choose the right size menstrual cup",
+      "target_query": "how to choose a menstrual cup size",
       "intent": "informational",
       "working_title": "Small or Large? How to Choose the Right Menstrual Cup Size",
-      "why_it_fits": "The product comes in two sizes with clearly stated capacities (roughly 15 ml vs 28–30 ml), so a size-selection guide can be answered from product data plus general advice on flow and comfort.",
+      "why_it_fits": "The product data gives explicit capacity figures for Small (~15 ml) and Large (~28–30 ml), so we can explain the trade-offs between the two sizes honestly.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": true,
       "needs_info": [
-        "General guidance on how flow heaviness and anatomy may influence size choice (kept general and non-medical)"
+        "General guidance on how flow volume, cervix position, age or having given birth typically influence size choice — this is general menstrual health advice not present in the product data and should be sourced or kept very general"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "how long can you leave a menstrual cup in",
+      "target_query": "how long can you wear a menstrual cup before emptying",
       "intent": "informational",
-      "working_title": "How Long Can You Leave a Menstrual Cup In? The 8-Hour Rule Explained",
-      "why_it_fits": "The product data states use for up to eight hours before removing and cleaning, so an article on wear time and cleaning routine fits directly.",
+      "working_title": "How Long Can You Wear a Menstrual Cup? The 8-Hour Rule Explained",
+      "why_it_fits": "The listing states use for up to eight hours before removing and cleaning, so the article can explain that guideline and what it means day to day.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "General cleaning and sterilising routine guidance (boiling, cup wash)",
-        "When to empty more frequently on heavy days"
+        "General hygiene and safety guidance on emptying/cleaning frequency, and what to do on heavier days, to avoid overstating the eight-hour figure"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "can you swim and exercise with a menstrual cup",
+      "target_query": "can you swim or exercise with a menstrual cup",
       "intent": "informational",
-      "working_title": "Swimming, Gym and Periods: Can You Exercise With a Menstrual Cup?",
-      "why_it_fits": "The listing states the cup is suitable for swimming and exercise when correctly inserted, which is a common practical question.",
+      "working_title": "Swimming, Gym and Sport With a Menstrual Cup: What to Expect",
+      "why_it_fits": "The product data states the cup is suitable for swimming and exercise when correctly inserted, which supports a practical article on active use.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "General tips on insertion confidence and checking the seal before activity"
+        "General advice on insertion confidence and changing/cleaning when out and about, which is not in the product data"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "how much waste do disposable period products create",
+      "target_query": "how to clean and care for a menstrual cup",
       "intent": "informational",
-      "working_title": "Pads, Tampons and Landfill: The Waste Case for a Reusable Cup",
-      "why_it_fits": "The product is tagged eco-friendly, plastic free and reusable with a 5–10 year lifespan, so a waste-comparison article is supportable with general, low-risk framing.",
+      "working_title": "How to Clean and Store a Menstrual Cup So It Lasts",
+      "why_it_fits": "The listing mentions a 5–10 year lifespan with proper care and includes a storage pouch, so a care-and-storage article is directly supported.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
       "needs_info": [
-        "General Australian context on disposable period product waste (sources to cite)"
+        "Recommended cleaning method (boiling, cup wash, sterilising) and storage best practice — not stated in the product data and needs merchant or general guidance",
+        "Whether the included instruction manual specifies a particular cleaning routine"
       ],
-      "risk": "normal",
+      "risk": "high",
       "overlaps_existing": false
     },
     {
       "target_query": "is a menstrual cup worth it compared to pads and tampons",
       "intent": "commercial",
-      "working_title": "Is a Menstrual Cup Worth It? Reusable vs Disposable Period Products",
-      "why_it_fits": "The listing highlights reduced repeat purchases, a 5–10 year lifespan and included pouch and manual, which supports an honest cost-and-convenience comparison.",
+      "working_title": "Is a Reusable Menstrual Cup Worth It? Weighing Up Cost and Waste",
+      "why_it_fits": "The description contrasts repeat purchases of disposables with a 5–10 year reusable lifespan, giving an honest basis for a value comparison.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
       "needs_info": [
-        "General cost comparison framing without quoting specific competitor prices"
+        "The product's own price, so any cost comparison is accurate",
+        "Typical Australian prices for pads and tampons to compare against",
+        "Any specific waste or savings figures must come from cited sources, not be invented"
       ],
       "risk": "high",
       "overlaps_existing": false
     },
     {
-      "target_query": "how to clean and store a menstrual cup",
+      "target_query": "what is a menstrual cup made of and is silicone safe",
       "intent": "informational",
-      "working_title": "How to Clean and Store a Menstrual Cup So It Lasts",
-      "why_it_fits": "The product includes a storage pouch and instruction manual and claims a 5–10 year lifespan with proper care, so a care-and-storage guide is a natural fit.",
+      "working_title": "Medical-Grade Silicone Menstrual Cups: What That Actually Means",
+      "why_it_fits": "The product is explicitly medical-grade silicone, so the article can explain the material honestly without making health claims beyond the listing.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
       "needs_info": [
-        "General sterilising methods and safe storage advice between cycles"
+        "What 'medical-grade silicone' means as a material standard, and any certification the merchant holds",
+        "General safety information about silicone versus other cup materials, sourced rather than assumed"
       ],
       "risk": "high",
       "overlaps_existing": false

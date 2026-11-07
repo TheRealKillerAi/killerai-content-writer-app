@@ -1,0 +1,32 @@
+{
+  "new": {
+    "reader_usefulness": 4,
+    "honesty_about_tradeoffs": 4,
+    "voice_and_tone": 3,
+    "structure_and_scannability": 4,
+    "search_intent_coverage": 5,
+    "caution_with_claims": 4
+  },
+  "benchmarks": [
+    {
+      "name": "voice/benchmark-cup-post.txt",
+      "reader_usefulness": 5,
+      "honesty_about_tradeoffs": 5,
+      "voice_and_tone": 5,
+      "structure_and_scannability": 5,
+      "search_intent_coverage": 5,
+      "caution_with_claims": 5
+    }
+  ],
+  "verdict": "worse",
+  "biggest_gaps": [
+    "Repetition and padding: the eight-hour point is restated many times (short answer, why eight hours, real life, FAQ) and whole sentences repeat verbatim (e.g. 'suitable for swimming and exercise when correctly inserted' twice in one section, 'Follow the supplied instructions' stacked). Tighten to one clear statement per section.",
+    "Voice is flatter and more mechanical than the benchmark's warm, reader-directed tone; the benchmark addresses the reader's real worries ('Is it hard to use?', 'what happens if it does not feel right') while the new article reads like a spec sheet. Add a short empathetic framing paragraph up front.",
+    "Missing the broader context the benchmark provides: comparison of cup vs pad vs tampon mechanics, cleaning routine detail, and 'you don't have to choose one product forever' reassurance are thin or absent, so search intent around 'is a cup right for me' is only partly served."
+  ],
+  "what_new_does_well": [
+    "Directly answers the core query (8-hour wear time) with clear capacity figures and honest 'maximum not target' framing.",
+    "Good trade-off section (learning curve, cleaning, comfort, wear time, upfront cost) and consistent stop-if-pain caution.",
+    "Scannable structure with headings and a useful FAQ block matching common search questions."
+  ]
+}

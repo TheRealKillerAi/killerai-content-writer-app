@@ -1,6 +1,13 @@
 {
-  "words": 1056,
-  "h2": 6,
+  "words": 1293,
+  "h2": 8,
   "productLinks": 1,
-  "issues": []
+  "issues": [
+    "leaked wording: \"product information\""
+  ],
+  "similarity": {
+    "sharedSevenWordRuns": 13,
+    "example": "in sunlight for a few hours each"
+  },
+  "status": "NEEDS REVIEW"
 }

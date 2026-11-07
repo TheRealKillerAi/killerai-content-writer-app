@@ -1,25 +1,16 @@
 {
   "angles": [
     {
-      "target_query": "do laundry balls actually work",
-      "intent": "informational",
-      "working_title": "Do Laundry Balls Actually Work? A Plain-English Guide to How They Clean",
-      "why_it_fits": "Addresses the core scepticism shoppers have before buying, and can be answered from the product data (natural minerals, no detergent, one ball per 4 kg load, recharge in sunlight monthly) plus general explanation of how mineral laundry balls are used.",
-      "needs_info": [
-        "Which specific minerals are used, if the brand wants to state them",
-        "Any manufacturer guidance on water temperature suitability"
-      ],
-      "risk": "normal",
-      "overlaps_existing": false
-    },
-    {
       "target_query": "how to use a laundry ball",
       "intent": "informational",
-      "working_title": "How to Use a Laundry Ball: Load Size, Placement and Recharging",
-      "why_it_fits": "Practical how-to drawn directly from the product data: one ball per 4 kg wash, no detergent or softener needed, monthly sunlight recharge, refillable design.",
+      "working_title": "How to Use a Laundry Ball: A Simple Step-by-Step for Everyday Loads",
+      "why_it_fits": "People who have just bought or are considering a mineral laundry ball search for basic usage instructions; the product data covers load size, no detergent, and monthly sun recharging, so a practical how-to is largely answerable.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "Recommended placement in the machine (drum vs detergent drawer) if the brand has guidance",
-        "Whether it suits front and top loaders equally"
+        "Water temperature guidance is not in the product data",
+        "Whether to use with heavily soiled or stained loads is not stated",
+        "Placement in the drum vs with the load is not specified"
       ],
       "risk": "normal",
       "overlaps_existing": false
@@ -28,10 +19,12 @@
       "target_query": "laundry ball vs detergent",
       "intent": "commercial",
       "working_title": "Laundry Ball vs Detergent: What's the Difference and Which Suits Your Wash?",
-      "why_it_fits": "Comparison intent that sits beside the product page rather than competing with it. Can compare on the facts given: no added detergent, fragrance or softener, 4 kg per wash, up to 1,000 washes, monthly recharge.",
+      "why_it_fits": "A comparison angle suits shoppers weighing up a switch, and the product data gives clear points of difference (no added detergent, fragrance or softener, 4 kg load, up to 1,000 washes).",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "How the ball performs on stains and heavily soiled loads, if the brand has tested this",
-        "Any guidance on when detergent may still be needed"
+        "Independent cleaning performance comparisons are not in the product data",
+        "Cost-per-wash comparison requires detergent pricing the merchant has not supplied"
       ],
       "risk": "normal",
       "overlaps_existing": false
@@ -39,32 +32,57 @@
     {
       "target_query": "are laundry balls worth it",
       "intent": "commercial",
-      "working_title": "Are Laundry Balls Worth It? What to Weigh Up Before You Switch",
-      "why_it_fits": "Buyer-intent question answered honestly from product data: up to 1,000 washes per ball, replaces repeat detergent-bottle purchases, refillable and recyclable outer ball where facilities accept it.",
+      "working_title": "Are Laundry Balls Worth It? What to Expect From a Reusable Mineral Ball",
+      "why_it_fits": "Shoppers researching a switch want an honest expectation-setting piece, and the product data supports describing what the ball does and does not replace.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
       "needs_info": [
-        "Approximate cost per wash comparison the brand is comfortable publishing"
+        "Independent evidence on mineral laundry ball cleaning efficacy",
+        "How it performs on stains, odours and different fabric types",
+        "Realistic lifespan expectations beyond the stated 1,000 washes"
       ],
       "risk": "normal",
       "overlaps_existing": false
     },
     {
-      "target_query": "eco friendly laundry routine australia",
+      "target_query": "how many washes does a laundry ball last",
       "intent": "informational",
-      "working_title": "A Simpler, Lower-Waste Laundry Routine: Small Changes That Add Up",
-      "why_it_fits": "Broad eco-home angle that lets the laundry ball feature naturally alongside general low-waste laundry habits, all supported by the product's eco-friendly, refillable and recyclable positioning.",
+      "working_title": "How Long Does a Laundry Ball Last? Understanding the 1,000-Wash Lifespan",
+      "why_it_fits": "Lifespan and upkeep are common questions for reusable laundry products, and the product data states up to 1,000 washes plus monthly sun recharging.",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "Local recycling guidance for the outer ball by council area, if the brand wants specifics"
+        "What to do when the ball reaches end of life is not stated",
+        "Whether the 1,000 washes assumes a specific wash frequency or temperature is not specified"
       ],
       "risk": "normal",
       "overlaps_existing": false
     },
     {
-      "target_query": "how to reduce plastic in the laundry",
+      "target_query": "how to wash clothes without detergent",
       "intent": "informational",
-      "working_title": "How to Cut Down on Laundry Plastic Without Overhauling Your Routine",
-      "why_it_fits": "Plastic-reduction angle grounded in the product data: replaces repeat detergent-bottle purchases, refillable design, recyclable outer ball where suitable facilities accept it.",
+      "working_title": "How to Wash Clothes Without Detergent: A Practical Guide for Regular Loads",
+      "why_it_fits": "A broader how-to that naturally features the laundry ball, and the product data supplies the core method (one ball per 4 kg, no added detergent, fragrance or softener, monthly sun recharge).",
+      "answerable_from_data": 2,
+      "needs_outside_evidence": false,
       "needs_info": [
-        "Any packaging details for the product itself, if the brand wants to comment"
+        "Guidance for stains, delicates, wool and sensitive skin is not in the product data",
+        "Water hardness considerations are not covered"
+      ],
+      "risk": "normal",
+      "overlaps_existing": false
+    },
+    {
+      "target_query": "eco friendly laundry products australia",
+      "intent": "commercial",
+      "working_title": "Eco-Friendly Laundry Products in Australia: What to Look For Before You Switch",
+      "why_it_fits": "A buying-guide angle that helps shoppers compare reusable options, with the product data offering concrete criteria such as refillability, recyclability and no added fragrance.",
+      "answerable_from_data": 1,
+      "needs_outside_evidence": true,
+      "needs_info": [
+        "Australian recycling facility acceptance details for the outer ball",
+        "Certifications or ingredient disclosures for the natural minerals",
+        "Comparative facts on other eco laundry product categories"
       ],
       "risk": "normal",
       "overlaps_existing": false

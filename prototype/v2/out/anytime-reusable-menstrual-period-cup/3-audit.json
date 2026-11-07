@@ -1,109 +1,408 @@
 {
-  "product_claims": [
+  "final": {
+    "product_claims": [
+      {
+        "claim": "The reusable menstrual cup is designed to be worn for up to eight hours before removal and cleaning.",
+        "evidence": "Use for up to eight hours before removing and cleaning."
+      },
+      {
+        "claim": "The cup collects flow rather than absorbing it.",
+        "evidence": "collects flow rather than absorbing it"
+      },
+      {
+        "claim": "The Small cup holds roughly 15 ml.",
+        "evidence": "Small holds roughly 15 ml"
+      },
+      {
+        "claim": "The Large cup holds approximately 28–30 ml.",
+        "evidence": "Large holds approximately 28–30 ml"
+      },
+      {
+        "claim": "The cup is suitable for swimming and exercise when correctly inserted.",
+        "evidence": "Suitable for swimming and exercise when correctly inserted."
+      },
+      {
+        "claim": "The cup is reusable for a typical lifespan of 5 to 10 years with proper care.",
+        "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+      },
+      {
+        "claim": "The cup is made from medical-grade silicone.",
+        "evidence": "Medical-grade silicone menstrual cup."
+      },
+      {
+        "claim": "The cup comes with a storage pouch and instruction manual.",
+        "evidence": "Each cup includes a storage pouch and instruction manual."
+      },
+      {
+        "claim": "The cup comes in Small and Large sizes.",
+        "evidence": "Choose Small, which holds roughly 15 ml, or Large, which holds approximately 28–30 ml."
+      }
+    ],
+    "unsupported": [
+      {
+        "text": "There is no sensor or indicator on the cup.",
+        "problem": "PRODUCT DATA does not state whether the cup has a sensor or indicator; this is an unverified product feature claim.",
+        "fix": "Remove, or rephrase as 'You judge fullness by feel and by what you know about your own cycle.'"
+      },
+      {
+        "text": "The cup does not require a fixed schedule, only that you stay within the wear time and follow the cleaning guidance supplied with it.",
+        "problem": "PRODUCT DATA does not state that no fixed schedule is required; it only gives an eight-hour maximum.",
+        "fix": "Stay within the eight-hour maximum and follow the supplied cleaning guidance."
+      },
+      {
+        "text": "The eight-hour guideline assumes the cup is not overflowing, and on heavier days it may fill sooner than on lighter ones.",
+        "problem": "PRODUCT DATA does not state the assumption behind the eight-hour guideline or that it may fill sooner on heavy days.",
+        "fix": "On heavier days you may prefer to empty the cup more often."
+      },
+      {
+        "text": "No different wear time is specified for heavy flow, so check and empty more frequently if you suspect the cup is getting full.",
+        "problem": "PRODUCT DATA does not address heavy-flow wear time; this is an inference about product guidance.",
+        "fix": "Empty and clean the cup as needed within the eight-hour maximum."
+      },
+      {
+        "text": "The eight-hour wear time may fit around a night's sleep for some people; follow the supplied instructions.",
+        "problem": "PRODUCT DATA does not state that the cup is suitable for overnight wear or sleep.",
+        "fix": "Follow the supplied instructions regarding overnight use."
+      },
+      {
+        "text": "Insertion and removal can take practice. The first few tries may feel awkward.",
+        "problem": "PRODUCT DATA does not describe a learning curve or insertion/removal experience.",
+        "fix": "Remove, or rephrase as generic advice: 'Follow the supplied instructions for insertion and removal.'"
+      },
+      {
+        "text": "The cup needs to be cleaned between uses, following the supplied instructions.",
+        "problem": "PRODUCT DATA mentions cleaning before removal but does not explicitly state cleaning between uses.",
+        "fix": "Clean the cup as instructed in the supplied manual."
+      },
+      {
+        "text": "Some people find cups comfortable; others do not.",
+        "problem": "PRODUCT DATA does not make any comfort claims or comparisons.",
+        "fix": "Remove, or rephrase as 'If it hurts, stop and speak to a qualified health professional.'"
+      },
+      {
+        "text": "If you need longer, a cup may not suit your routine.",
+        "problem": "PRODUCT DATA does not state suitability limits beyond the eight-hour wear time.",
+        "fix": "If you need longer than eight hours, follow the supplied instructions or speak to a qualified health professional."
+      },
+      {
+        "text": "If you prefer a product with a fixed, disposable design, a cup may not be your first choice — and that is fine.",
+        "problem": "PRODUCT DATA does not compare the cup with disposable products or state suitability preferences.",
+        "fix": "Remove."
+      },
+      {
+        "text": "Many people keep a mix of options on hand for different days and situations.",
+        "problem": "PRODUCT DATA does not state anything about mixing products or user behaviour.",
+        "fix": "Remove."
+      }
+    ],
+    "risky": [
+      {
+        "text": "If you experience pain or discomfort, stop and speak to a qualified health professional.",
+        "problem": "Generic health advice is acceptable, but the article repeatedly frames pain guidance as product-specific without PRODUCT DATA support.",
+        "fix": "Keep as generic advice; no change needed if treated as general information."
+      },
+      {
+        "text": "The eight-hour figure is a maximum wear time, not a minimum.",
+        "problem": "PRODUCT DATA states 'up to eight hours' but does not explicitly define it as a maximum or minimum.",
+        "fix": "The product is designed for up to eight hours before removal and cleaning."
+      },
+      {
+        "text": "Follow the supplied instructions and empty the cup as needed within the eight-hour maximum.",
+        "problem": "PRODUCT DATA does not state 'as needed' emptying guidance or call it a maximum.",
+        "fix": "Follow the supplied instructions and remove and clean the cup within eight hours."
+      },
+      {
+        "text": "On heavier days, you may notice the cup feels fuller sooner, or you may simply prefer to empty it more often for peace of mind.",
+        "problem": "PRODUCT DATA does not describe fullness sensations or recommend more frequent emptying.",
+        "fix": "Follow the supplied instructions and empty the cup as needed."
+      },
+      {
+        "text": "If you need longer wear, speak to a qualified health professional for advice.",
+        "problem": "PRODUCT DATA does not provide guidance for longer wear; this is health advice beyond product data.",
+        "fix": "Keep as generic advice, or remove."
+      },
+      {
+        "text": "The product is designed for up to eight hours of wear; follow the supplied instructions and speak to a qualified health professional if unsure about overnight use.",
+        "problem": "PRODUCT DATA does not address overnight use or direct users to a health professional for it.",
+        "fix": "Follow the supplied instructions regarding overnight use."
+      }
+    ],
+    "leaks": [],
+    "verdict": "revise"
+  },
+  "history": [
     {
-      "claim": "The Anytime Reusable Menstrual Cup comes in two sizes: Small holds roughly 15 ml and Large holds approximately 28–30 ml.",
-      "evidence": "Choose Small, which holds roughly 15 ml, or Large, which holds approximately 28–30 ml."
+      "product_claims": [
+        {
+          "claim": "The reusable menstrual cup is designed to be worn for up to eight hours before removal and cleaning.",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "claim": "The Small cup holds roughly 15 ml.",
+          "evidence": "Small holds roughly 15 ml"
+        },
+        {
+          "claim": "The Large cup holds approximately 28–30 ml.",
+          "evidence": "Large holds approximately 28–30 ml"
+        },
+        {
+          "claim": "The cup is made from medical-grade silicone.",
+          "evidence": "Medical-grade silicone menstrual cup."
+        },
+        {
+          "claim": "The cup is suitable for swimming and exercise when correctly inserted.",
+          "evidence": "Suitable for swimming and exercise when correctly inserted."
+        },
+        {
+          "claim": "The cup is reusable for a typical lifespan of 5 to 10 years with proper care.",
+          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+        },
+        {
+          "claim": "The cup comes with a storage pouch and instruction manual.",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
+        },
+        {
+          "claim": "The cup collects flow rather than absorbing it.",
+          "evidence": "collects flow rather than absorbing it"
+        },
+        {
+          "claim": "The cup can reduce repeat purchases and ongoing period waste.",
+          "evidence": "helping reduce repeat purchases and ongoing period waste."
+        }
+      ],
+      "unsupported": [
+        {
+          "text": "The cup is designed to stay in place during movement when inserted properly.",
+          "problem": "PRODUCT DATA states suitability for swimming and exercise when correctly inserted but does not state the cup is designed to stay in place during movement.",
+          "fix": "The cup is suitable for swimming and exercise when correctly inserted."
+        },
+        {
+          "text": "The eight-hour wear time applies overnight as well.",
+          "problem": "PRODUCT DATA gives an eight-hour wear time but does not state that it applies overnight or to sleep.",
+          "fix": "The eight-hour wear time is the stated maximum; if you plan to wear it overnight, follow the supplied instructions and stay within eight hours."
+        },
+        {
+          "text": "The Large cup holds more than the Small, which may suit people with heavier flows",
+          "problem": "PRODUCT DATA gives capacities but does not state that the Large may suit people with heavier flows.",
+          "fix": "The Large cup holds approximately 28–30 ml, compared with roughly 15 ml for the Small."
+        }
+      ],
+      "risky": [
+        {
+          "text": "If you have a heavier flow, you may find you need to empty the cup sooner.",
+          "problem": "Usage/emptying guidance based on flow is not stated in PRODUCT DATA.",
+          "fix": "Follow the supplied instructions and empty the cup as needed within the eight-hour maximum."
+        },
+        {
+          "text": "If you are unsure how your flow will behave on a given day, start with a shorter interval and adjust.",
+          "problem": "Specific wear-interval advice not in PRODUCT DATA.",
+          "fix": "Follow the supplied instructions and stay within the eight-hour maximum."
+        },
+        {
+          "text": "If you are new to the cup, you may prefer to empty it just before bed and again on waking, which keeps you comfortably within the guideline.",
+          "problem": "Overnight usage routine not in PRODUCT DATA.",
+          "fix": "Follow the supplied instructions and stay within the eight-hour maximum."
+        },
+        {
+          "text": "If you experience pain, discomfort or any unusual symptoms, remove the cup and speak to a qualified health professional.",
+          "problem": "Instruction to remove the cup on symptoms is health guidance not in PRODUCT DATA.",
+          "fix": "If you experience pain or discomfort, stop using the cup and speak to a qualified health professional."
+        }
+      ],
+      "leaks": [
+        {
+          "text": "The product data does not specify a different wear time for heavy flow, so the safest approach is to check and empty more frequently if you suspect the cup is getting full.",
+          "problem": "References 'product data', revealing how the article was made.",
+          "fix": "No different wear time is specified for heavy flow, so check and empty more frequently if you suspect the cup is getting full."
+        }
+      ],
+      "verdict": "revise"
     },
     {
-      "claim": "Both are made from medical-grade silicone and collect flow rather than absorbing it.",
-      "evidence": "made from medical-grade silicone and collects flow rather than absorbing it"
+      "product_claims": [
+        {
+          "claim": "The reusable menstrual cup is designed to be worn for up to eight hours before removal and cleaning.",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "claim": "The cup collects flow rather than absorbing it.",
+          "evidence": "collects flow rather than absorbing it"
+        },
+        {
+          "claim": "The Small cup holds roughly 15 ml.",
+          "evidence": "Small holds roughly 15 ml"
+        },
+        {
+          "claim": "The Large cup holds approximately 28–30 ml.",
+          "evidence": "Large holds approximately 28–30 ml"
+        },
+        {
+          "claim": "The cup is suitable for swimming and exercise when correctly inserted.",
+          "evidence": "Suitable for swimming and exercise when correctly inserted."
+        },
+        {
+          "claim": "The cup is reusable for a typical lifespan of 5 to 10 years with proper care.",
+          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+        },
+        {
+          "claim": "The cup is made from medical-grade silicone.",
+          "evidence": "Medical-grade silicone menstrual cup."
+        },
+        {
+          "claim": "The cup comes with a storage pouch and instruction manual.",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
+        },
+        {
+          "claim": "The cup can reduce repeat purchases and ongoing period waste.",
+          "evidence": "helping reduce repeat purchases and ongoing period waste"
+        }
+      ],
+      "unsupported": [],
+      "risky": [
+        {
+          "text": "Many people find it convenient for a full night's sleep.",
+          "problem": "Sleep-use guidance not stated in PRODUCT DATA; PRODUCT DATA only states up to eight hours of wear, not that it is suitable for overnight use.",
+          "fix": "The eight-hour wear time may fit around a night's sleep for some people; follow the supplied instructions."
+        },
+        {
+          "text": "Yes, provided you stay within the eight-hour wear time. Many people empty the cup before bed and again on waking.",
+          "problem": "Explicit confirmation that sleeping with the cup is fine is not supported by PRODUCT DATA.",
+          "fix": "The product is designed for up to eight hours of wear; follow the supplied instructions and speak to a qualified health professional if unsure about overnight use."
+        }
+      ],
+      "leaks": [],
+      "verdict": "revise"
     },
     {
-      "claim": "Each cup comes with a storage pouch and an instruction manual.",
-      "evidence": "Each cup includes a storage pouch and instruction manual."
-    },
-    {
-      "claim": "The cup can be used for up to eight hours before removing and cleaning.",
-      "evidence": "Use for up to eight hours before removing and cleaning."
-    },
-    {
-      "claim": "It is reusable for a typical lifespan of 5 to 10 years with proper care.",
-      "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
-    },
-    {
-      "claim": "It can also be used for swimming and exercise when correctly inserted.",
-      "evidence": "Suitable for swimming and exercise when correctly inserted."
-    },
-    {
-      "claim": "A reusable cup can reduce repeat purchases and ongoing period waste.",
-      "evidence": "helping reduce repeat purchases and ongoing period waste"
+      "product_claims": [
+        {
+          "claim": "The reusable menstrual cup is designed to be worn for up to eight hours before removal and cleaning.",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "claim": "The cup collects flow rather than absorbing it.",
+          "evidence": "collects flow rather than absorbing it"
+        },
+        {
+          "claim": "The Small cup holds roughly 15 ml.",
+          "evidence": "Small holds roughly 15 ml"
+        },
+        {
+          "claim": "The Large cup holds approximately 28–30 ml.",
+          "evidence": "Large holds approximately 28–30 ml"
+        },
+        {
+          "claim": "The cup is suitable for swimming and exercise when correctly inserted.",
+          "evidence": "Suitable for swimming and exercise when correctly inserted."
+        },
+        {
+          "claim": "The cup is reusable for a typical lifespan of 5 to 10 years with proper care.",
+          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+        },
+        {
+          "claim": "The cup is made from medical-grade silicone.",
+          "evidence": "Medical-grade silicone menstrual cup."
+        },
+        {
+          "claim": "The cup comes with a storage pouch and instruction manual.",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
+        },
+        {
+          "claim": "The cup comes in Small and Large sizes.",
+          "evidence": "Choose Small, which holds roughly 15 ml, or Large, which holds approximately 28–30 ml."
+        }
+      ],
+      "unsupported": [
+        {
+          "text": "There is no sensor or indicator on the cup.",
+          "problem": "PRODUCT DATA does not state whether the cup has a sensor or indicator; this is an unverified product feature claim.",
+          "fix": "Remove, or rephrase as 'You judge fullness by feel and by what you know about your own cycle.'"
+        },
+        {
+          "text": "The cup does not require a fixed schedule, only that you stay within the wear time and follow the cleaning guidance supplied with it.",
+          "problem": "PRODUCT DATA does not state that no fixed schedule is required; it only gives an eight-hour maximum.",
+          "fix": "Stay within the eight-hour maximum and follow the supplied cleaning guidance."
+        },
+        {
+          "text": "The eight-hour guideline assumes the cup is not overflowing, and on heavier days it may fill sooner than on lighter ones.",
+          "problem": "PRODUCT DATA does not state the assumption behind the eight-hour guideline or that it may fill sooner on heavy days.",
+          "fix": "On heavier days you may prefer to empty the cup more often."
+        },
+        {
+          "text": "No different wear time is specified for heavy flow, so check and empty more frequently if you suspect the cup is getting full.",
+          "problem": "PRODUCT DATA does not address heavy-flow wear time; this is an inference about product guidance.",
+          "fix": "Empty and clean the cup as needed within the eight-hour maximum."
+        },
+        {
+          "text": "The eight-hour wear time may fit around a night's sleep for some people; follow the supplied instructions.",
+          "problem": "PRODUCT DATA does not state that the cup is suitable for overnight wear or sleep.",
+          "fix": "Follow the supplied instructions regarding overnight use."
+        },
+        {
+          "text": "Insertion and removal can take practice. The first few tries may feel awkward.",
+          "problem": "PRODUCT DATA does not describe a learning curve or insertion/removal experience.",
+          "fix": "Remove, or rephrase as generic advice: 'Follow the supplied instructions for insertion and removal.'"
+        },
+        {
+          "text": "The cup needs to be cleaned between uses, following the supplied instructions.",
+          "problem": "PRODUCT DATA mentions cleaning before removal but does not explicitly state cleaning between uses.",
+          "fix": "Clean the cup as instructed in the supplied manual."
+        },
+        {
+          "text": "Some people find cups comfortable; others do not.",
+          "problem": "PRODUCT DATA does not make any comfort claims or comparisons.",
+          "fix": "Remove, or rephrase as 'If it hurts, stop and speak to a qualified health professional.'"
+        },
+        {
+          "text": "If you need longer, a cup may not suit your routine.",
+          "problem": "PRODUCT DATA does not state suitability limits beyond the eight-hour wear time.",
+          "fix": "If you need longer than eight hours, follow the supplied instructions or speak to a qualified health professional."
+        },
+        {
+          "text": "If you prefer a product with a fixed, disposable design, a cup may not be your first choice — and that is fine.",
+          "problem": "PRODUCT DATA does not compare the cup with disposable products or state suitability preferences.",
+          "fix": "Remove."
+        },
+        {
+          "text": "Many people keep a mix of options on hand for different days and situations.",
+          "problem": "PRODUCT DATA does not state anything about mixing products or user behaviour.",
+          "fix": "Remove."
+        }
+      ],
+      "risky": [
+        {
+          "text": "If you experience pain or discomfort, stop and speak to a qualified health professional.",
+          "problem": "Generic health advice is acceptable, but the article repeatedly frames pain guidance as product-specific without PRODUCT DATA support.",
+          "fix": "Keep as generic advice; no change needed if treated as general information."
+        },
+        {
+          "text": "The eight-hour figure is a maximum wear time, not a minimum.",
+          "problem": "PRODUCT DATA states 'up to eight hours' but does not explicitly define it as a maximum or minimum.",
+          "fix": "The product is designed for up to eight hours before removal and cleaning."
+        },
+        {
+          "text": "Follow the supplied instructions and empty the cup as needed within the eight-hour maximum.",
+          "problem": "PRODUCT DATA does not state 'as needed' emptying guidance or call it a maximum.",
+          "fix": "Follow the supplied instructions and remove and clean the cup within eight hours."
+        },
+        {
+          "text": "On heavier days, you may notice the cup feels fuller sooner, or you may simply prefer to empty it more often for peace of mind.",
+          "problem": "PRODUCT DATA does not describe fullness sensations or recommend more frequent emptying.",
+          "fix": "Follow the supplied instructions and empty the cup as needed."
+        },
+        {
+          "text": "If you need longer wear, speak to a qualified health professional for advice.",
+          "problem": "PRODUCT DATA does not provide guidance for longer wear; this is health advice beyond product data.",
+          "fix": "Keep as generic advice, or remove."
+        },
+        {
+          "text": "The product is designed for up to eight hours of wear; follow the supplied instructions and speak to a qualified health professional if unsure about overnight use.",
+          "problem": "PRODUCT DATA does not address overnight use or direct users to a health professional for it.",
+          "fix": "Follow the supplied instructions regarding overnight use."
+        }
+      ],
+      "leaks": [],
+      "verdict": "revise"
     }
-  ],
-  "unsupported": [
-    {
-      "text": "If you usually need to change pads or tampons frequently, the larger capacity of the Large may be worth considering.",
-      "problem": "PRODUCT DATA does not state any guidance linking pad/tampon change frequency to cup size choice",
-      "fix": "If you have heavier days, the larger capacity of the Large may be worth considering."
-    },
-    {
-      "text": "You can try one size and, if it does not suit you, try the other. Many people end up owning both.",
-      "problem": "PRODUCT DATA does not state that you can try/switch sizes or that people own both",
-      "fix": "You may wish to consider the other size if one does not suit you."
-    },
-    {
-      "text": "Some people keep both sizes on hand and use the Small on lighter days and the Large on heavier ones.",
-      "problem": "PRODUCT DATA does not state or imply using both sizes across different days",
-      "fix": "Some people may prefer a larger capacity for heavier days and a smaller one for lighter days."
-    },
-    {
-      "text": "A reusable cup is a single purchase rather than a repeat one, but the initial outlay may be higher than a box of disposables.",
-      "problem": "PRODUCT DATA does not state pricing or cost comparisons with disposables",
-      "fix": "remove"
-    },
-    {
-      "text": "You can choose the size that matches your flow and comfort preferences, and remember that you do not have to choose one product forever. Many people try a cup, take a break, or use it alongside other period products.",
-      "problem": "PRODUCT DATA does not state that the cup can be used alongside other period products or that users take breaks",
-      "fix": "You can choose the size that matches your flow and comfort preferences."
-    },
-    {
-      "text": "Yes, you can use one cup throughout your period, emptying and cleaning it as needed.",
-      "problem": "PRODUCT DATA does not explicitly state one cup can be used throughout an entire period",
-      "fix": "The cup can be reused throughout your cycle, emptying and cleaning it as needed."
-    }
-  ],
-  "risky": [
-    {
-      "text": "If you experience persistent discomfort or leaking, it is worth reviewing the instruction manual and considering whether the other size might suit you better. If problems continue, speak to a qualified health professional.",
-      "problem": "PRODUCT DATA does not provide troubleshooting guidance for discomfort or leaking",
-      "fix": "If you experience persistent discomfort or leaking, review the instruction manual and speak to a qualified health professional."
-    },
-    {
-      "text": "If the cup feels uncomfortable, review the instruction manual that comes with it. If discomfort continues, speak to a qualified health professional. Comfort is important, and a different size or product may suit you better.",
-      "problem": "PRODUCT DATA does not provide guidance on discomfort or suggest switching products",
-      "fix": "If the cup feels uncomfortable, review the instruction manual. If discomfort continues, speak to a qualified health professional."
-    },
-    {
-      "text": "The cup needs to be cleaned between uses, following the instructions supplied with it.",
-      "problem": "PRODUCT DATA mentions cleaning but does not specify cleaning between uses",
-      "fix": "The cup can be cleaned and reused, following the instructions supplied with it."
-    }
-  ],
-  "leaks": [
-    {
-      "text": "[Anytime Reusable Menstrual Cup]({{PRODUCT_URL}})",
-      "problem": "Unrendered placeholder {{PRODUCT_URL}} visible to readers",
-      "fix": "Replace with the actual product URL or remove the link markup."
-    },
-    {
-      "text": "This product's information does not make specific recommendations based on those factors, so we are not going to invent them here.",
-      "problem": "Undermines the product and reveals editorial process",
-      "fix": "remove"
-    },
-    {
-      "text": "We are deliberately not putting a dollar figure on that, as prices vary.",
-      "problem": "Reveals editorial process and undermines the product",
-      "fix": "remove"
-    },
-    {
-      "text": "according to the product information",
-      "problem": "Meta-reference to source material rather than stating the fact directly",
-      "fix": "remove the phrase and state the lifespan directly."
-    },
-    {
-      "text": "Product information for the Anytime Reusable Menstrual Cup (capacities, materials, lifespan, included items).",
-      "problem": "Sources section references internal product data, revealing how the article was made",
-      "fix": "remove"
-    }
-  ],
-  "verdict": "revise"
+  ]
 }
