@@ -33,7 +33,7 @@ export default function Home() {
 
   return (
     <s-page heading="Welcome to KillerAi Content Writer">
-      <s-button slot="primary-action" variant="primary" href="/app/products">Write an article</s-button>
+      <s-button slot="primary-action" variant="primary" href="/app/new">Write an article</s-button>
 
       <s-section>
         <s-stack direction="block" gap="base">
@@ -60,7 +60,7 @@ export default function Home() {
               <s-badge tone={wroteDone ? "success" : "neutral"}>{wroteDone ? "Done" : "To do"}</s-badge>
               <s-text>Write your first article</s-text>
             </s-stack>
-            <s-button variant={wroteDone ? "secondary" : "primary"} href="/app/products">Choose a product</s-button>
+            <s-button variant={wroteDone ? "secondary" : "primary"} href="/app/new">Write an article</s-button>
           </s-stack>
         </s-stack>
       </s-section>

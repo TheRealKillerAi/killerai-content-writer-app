@@ -31,8 +31,8 @@ export default function Articles() {
       <s-section padding="none">
         {articles.length === 0 ? (
           <s-box padding="large">
-            <s-paragraph>No articles yet. Choose a product to write your first one.</s-paragraph>
-            <s-button href="/app/products">Choose a product</s-button>
+            <s-paragraph>No articles yet. Start your first one.</s-paragraph>
+            <s-button href="/app/new">Write an article</s-button>
           </s-box>
         ) : (
           <s-table>
