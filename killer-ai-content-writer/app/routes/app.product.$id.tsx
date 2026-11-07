@@ -4,7 +4,7 @@ import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
-import { deleteFact, loadAngles, loadFacts, saveAngles, saveFacts } from "../lib/facts.server";
+import { deleteFact, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
 import { startArticle } from "../lib/articles.server";
@@ -29,7 +29,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!product) throw new Response("Product not found", { status: 404 });
   const facts = await loadFacts(session.shop, params.id!);
   const savedAngles = await loadAngles(session.shop, params.id!);
-  return { product, facts, savedAngles };
+  const chosen = await loadChosen(session.shop, params.id!);
+  return { product, facts, savedAngles, chosen };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -62,6 +63,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       return { intent, error: null, angles };
     }
     const angle = JSON.parse(String(form.get("angle"))) as Angle;
+    await saveChosen(session.shop, productId, angle);
     const { factBudget, questions } = await askQuestions(product.facts, angle, facts);
     return { intent, error: null, angle, factBudget, questions };
   } catch (e) {
@@ -241,7 +243,7 @@ function QuestionForm({
 }
 
 export default function ProductPage() {
-  const { product, facts, savedAngles } = useLoaderData<typeof loader>();
+  const { product, facts, savedAngles, chosen } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
@@ -296,6 +298,35 @@ export default function ProductPage() {
           </s-box>
         </s-stack>
       </s-section>
+
+      {chosen ? (
+        <s-section heading="Ready to write">
+          <s-stack direction="block" gap="base">
+            <s-text>
+              Chosen angle: <strong>{chosen.working_title}</strong>
+            </s-text>
+            <s-stack direction="inline" gap="small">
+              <s-button
+                variant="primary"
+                {...(writeF.state !== "idle" ? { loading: true } : {})}
+                onClick={() => writeF.submit({ intent: "write", angle: JSON.stringify(chosen) }, { method: "POST" })}
+              >
+                Write this article
+              </s-button>
+              <s-button
+                {...(questionsBusy ? { loading: true } : {})}
+                onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" })}
+              >
+                Check for missing facts first
+              </s-button>
+            </s-stack>
+            <s-text color="subdued">
+              Or pick a different angle with "Find article angles" above. Only facts you've given us are used; anything
+              you marked "don't know" is left out.
+            </s-text>
+          </s-stack>
+        </s-section>
+      ) : null}
 
       <FactsList
         facts={facts}

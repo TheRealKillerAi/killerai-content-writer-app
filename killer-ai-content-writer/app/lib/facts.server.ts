@@ -42,3 +42,17 @@ export async function saveAngles(shop: string, productId: string, angles: Angle[
     update: data,
   });
 }
+
+export async function loadChosen(shop: string, productId: string): Promise<Angle | null> {
+  const row = await db.productAngles.findUnique({ where: { shop_productId: { shop, productId } } });
+  return row?.chosen ? (JSON.parse(row.chosen) as Angle) : null;
+}
+
+export async function saveChosen(shop: string, productId: string, angle: Angle) {
+  const chosen = JSON.stringify(angle);
+  await db.productAngles.upsert({
+    where: { shop_productId: { shop, productId } },
+    create: { shop, productId, angles: "[]", chosen },
+    update: { chosen },
+  });
+}

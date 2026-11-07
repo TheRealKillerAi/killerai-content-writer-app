@@ -65,6 +65,7 @@ model ProductAngles {
   shop      String
   productId String
   angles    String
+  chosen    String?
   updatedAt DateTime @updatedAt
 
   @@id([shop, productId])
