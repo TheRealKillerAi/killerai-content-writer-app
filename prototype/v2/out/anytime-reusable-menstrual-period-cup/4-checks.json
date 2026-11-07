@@ -1,13 +1,13 @@
 {
-  "words": 812,
+  "words": 814,
   "h2": 10,
-  "productLinks": 0,
+  "productLinks": 1,
   "issues": [
-    "expected exactly 1 product link token, found 0"
+    "an empty section heading"
   ],
   "similarity": {
-    "sharedSevenWordRuns": 8,
-    "example": "in boiling water for three to five"
+    "sharedSevenWordRuns": 28,
+    "example": "mild unscented water based soap clear the"
   },
   "status": "NEEDS REVIEW"
 }

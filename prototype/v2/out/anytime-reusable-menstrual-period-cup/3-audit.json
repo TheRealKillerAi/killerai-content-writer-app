@@ -1,507 +1,1092 @@
 {
   "final": {
-    "claims": [
+    "labels": [
       {
-        "sentence": "This cup can be worn for up to eight hours before removal and cleaning, so keeping it clean is part of the routine.",
-        "category": "product_fact",
-        "evidence": "Use for up to eight hours before removing and cleaning."
+        "id": "S1",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
       },
       {
-        "sentence": "The cup can be worn for up to eight hours before removal and cleaning, so you'll typically do this routine in the morning and evening.",
-        "category": "product_fact",
-        "evidence": "Use for up to eight hours before removing and cleaning."
-      },
-      {
-        "sentence": "The manual says to sterilise it in boiling water for three to five minutes.",
-        "category": "instruction_reference",
+        "id": "S2",
+        "category": "usage_step",
         "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
       },
       {
-        "sentence": "If you don't have a pot handy, the manual also gives guidance on sterilising without one.",
-        "category": "instruction_reference",
-        "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
-      },
-      {
-        "sentence": "Each cup comes with a cotton storage pouch, which is machine washable.",
-        "category": "product_fact",
-        "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
-      },
-      {
-        "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
-        "category": "product_fact",
-        "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
-      },
-      {
-        "sentence": "Empty and clean the cup at least every eight hours.",
+        "id": "S3",
         "category": "usage_step",
+        "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+      },
+      {
+        "id": "S4",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S5",
+        "category": "general_background",
+        "evidence": null
+      },
+      {
+        "id": "S6",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S7",
+        "category": "usage_step",
+        "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+      },
+      {
+        "id": "S8",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S9",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S10",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S11",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S12",
+        "category": "usage_step",
+        "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+      },
+      {
+        "id": "S13",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S14",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S15",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S16",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S17",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S18",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S19",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S20",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S21",
+        "category": "product_fact",
+        "evidence": "Cotton; machine washable."
+      },
+      {
+        "id": "S22",
+        "category": "general_background",
+        "evidence": null
+      },
+      {
+        "id": "S23",
+        "category": "general_background",
+        "evidence": null
+      },
+      {
+        "id": "S24",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S25",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S26",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S27",
+        "category": "product_fact",
+        "evidence": "Small: roughly 15 ml to the rim. Large: approximately 28–30 ml."
+      },
+      {
+        "id": "S28",
+        "category": "product_fact",
         "evidence": "Use for up to eight hours before removing and cleaning."
       },
       {
-        "sentence": "The cup is suitable for swimming and exercise when correctly inserted, but always clean it after removal.",
+        "id": "S29",
         "category": "product_fact",
         "evidence": "Suitable for swimming and exercise when correctly inserted."
       },
       {
-        "sentence": "It's available in Small (roughly 15 ml) and Large (approximately 28–30 ml), in four colours.",
+        "id": "S30",
         "category": "product_fact",
-        "evidence": "Small holds roughly 15 ml; Large holds approximately 28–30 ml."
+        "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
       },
       {
-        "sentence": "The instructions for this cup specify mild, unscented, water-based soap.",
-        "category": "instruction_reference",
-        "evidence": "Daily care: Rinse with cold water; wash with mild, unscented, water-based soap; clear suction holes; rinse away all soap residue"
+        "id": "S31",
+        "category": "product_fact",
+        "evidence": "Each cup includes a storage pouch and instruction manual."
       },
       {
-        "sentence": "The manual says to sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot.",
-        "category": "instruction_reference",
+        "id": "S32",
+        "category": "product_fact",
+        "evidence": "Blue/Pink/Purple/Clear in Small and Large (8 variants)"
+      },
+      {
+        "id": "S33",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S34",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S35",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S36",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S37",
+        "category": "product_fact",
+        "evidence": "Use for up to eight hours before removing and cleaning."
+      },
+      {
+        "id": "S38",
+        "category": "product_fact",
+        "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+      },
+      {
+        "id": "S39",
+        "category": "usage_step",
+        "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+      },
+      {
+        "id": "S40",
+        "category": "usage_step",
         "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
       },
       {
-        "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
+        "id": "S41",
         "category": "product_fact",
-        "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+        "evidence": "Cotton; machine washable."
+      },
+      {
+        "id": "S42",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S43",
+        "category": "hedge",
+        "evidence": null
       }
     ],
     "unsupported": [],
     "risky": [],
-    "leaks": []
+    "leaks": [],
+    "missing": []
   },
   "history": [
     {
-      "claims": [
+      "labels": [
         {
-          "sentence": "This guide walks you through daily care and between-cycle sterilising, using the cleaning steps from the instruction manual for the Anytime Reusable Menstrual Period Cup.",
-          "category": "instruction_reference",
-          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue. Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
-        },
-        {
-          "sentence": "Here's what the instructions for this cup call for:",
-          "category": "instruction_reference",
-          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue. Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
-        },
-        {
-          "sentence": "Cold water for rinsing",
-          "category": "instruction_reference",
-          "evidence": "Daily care: rinse with cold water"
-        },
-        {
-          "sentence": "Mild, unscented, water-based soap",
-          "category": "instruction_reference",
-          "evidence": "wash with mild, unscented, water-based soap"
-        },
-        {
-          "sentence": "A small pot for boiling water (for sterilising between cycles)",
-          "category": "instruction_reference",
-          "evidence": "Between cycles: sterilise in boiling water for three to five minutes"
-        },
-        {
-          "sentence": "Rinse the cup with cold water.",
-          "category": "usage_step",
-          "evidence": "Daily care: rinse with cold water"
-        },
-        {
-          "sentence": "Wash it with mild, unscented, water-based soap.",
-          "category": "usage_step",
-          "evidence": "wash with mild, unscented, water-based soap"
-        },
-        {
-          "sentence": "Clear the suction holes.",
-          "category": "usage_step",
-          "evidence": "clear the suction holes"
-        },
-        {
-          "sentence": "Rinse away all soap residue thoroughly.",
-          "category": "usage_step",
-          "evidence": "rinse away all soap residue"
-        },
-        {
-          "sentence": "The cup can be worn for up to eight hours before removal and cleaning, so you'll typically do this routine in the morning and evening.",
-          "category": "product_fact",
-          "evidence": "Use for up to eight hours before removing and cleaning."
-        },
-        {
-          "sentence": "The instruction manual for this cup lists several things to keep away from it:",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "Bleach",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach"
-        },
-        {
-          "sentence": "Vinegar",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar"
-        },
-        {
-          "sentence": "Tea tree oil",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil"
-        },
-        {
-          "sentence": "Hydrogen peroxide",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide"
-        },
-        {
-          "sentence": "Antibacterial soaps",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps"
-        },
-        {
-          "sentence": "Harsh rubbing alcohol",
-          "category": "instruction_reference",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "The manual says to sterilise it in boiling water for three to five minutes.",
-          "category": "instruction_reference",
-          "evidence": "Between cycles: sterilise in boiling water for three to five minutes"
-        },
-        {
-          "sentence": "Keep the cup away from the base of the pot so it doesn't sit directly on the heat source, which can damage the silicone.",
-          "category": "instruction_reference",
-          "evidence": "keep the cup away from the base of the pot"
-        },
-        {
-          "sentence": "If you don't have a pot handy, the manual also gives guidance on sterilising without one.",
-          "category": "instruction_reference",
-          "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
-        },
-        {
-          "sentence": "Each cup comes with a cotton storage pouch, which is machine washable.",
-          "category": "product_fact",
-          "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
-        },
-        {
-          "sentence": "Once the cup is clean and fully dry, pop it in the pouch to keep it protected between uses.",
-          "category": "usage_step",
+          "id": "S1",
+          "category": "general_background",
           "evidence": null
         },
         {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
-          "category": "product_fact",
-          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+          "id": "S2",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
         },
         {
-          "sentence": "The manual doesn't specify exact signs that mean replacing it sooner, so if you notice any changes in the silicone, such as cracks, odour that won't wash away, or discolouration, it's worth checking the instructions or contacting the store for advice.",
-          "category": "instruction_reference",
+          "id": "S3",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S4",
+          "category": "usage_step",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S5",
+          "category": "hedge",
           "evidence": null
         },
         {
-          "sentence": "Empty and clean the cup at least every eight hours.",
+          "id": "S6",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S7",
           "category": "usage_step",
-          "evidence": "Use for up to eight hours before removing and cleaning."
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
         },
         {
-          "sentence": "The cup is suitable for swimming and exercise when correctly inserted, but always clean it after removal.",
-          "category": "product_fact",
-          "evidence": "Suitable for swimming and exercise when correctly inserted."
+          "id": "S8",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "If you're looking for a reusable cup that comes with clear care instructions, the Anytime Reusable Menstrual Period Cup is made from medical-grade silicone and includes a cotton storage pouch and instruction manual.",
+          "id": "S9",
           "category": "product_fact",
           "evidence": "Each cup includes a storage pouch and instruction manual."
         },
         {
-          "sentence": "It's available in Small (roughly 15 ml) and Large (approximately 28–30 ml), in four colours.",
+          "id": "S10",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S11",
           "category": "product_fact",
-          "evidence": "Small holds roughly 15 ml; Large holds approximately 28–30 ml."
+          "evidence": "This reusable menstrual cup is made from medical-grade silicone and collects flow rather than absorbing it."
         },
         {
-          "sentence": "No. The instructions for this cup specify mild, unscented, water-based soap.",
-          "category": "instruction_reference",
-          "evidence": "wash with mild, unscented, water-based soap"
+          "id": "S12",
+          "category": "other",
+          "evidence": null
         },
         {
-          "sentence": "The manual says to sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot.",
-          "category": "instruction_reference",
+          "id": "S13",
+          "category": "usage_step",
           "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
+          "id": "S14",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S15",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S16",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S17",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S18",
+          "category": "product_fact",
+          "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
+        },
+        {
+          "id": "S19",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S20",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S21",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S22",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S23",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S24",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S25",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S26",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S27",
+          "category": "product_fact",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S28",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S29",
+          "category": "product_fact",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S30",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S31",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S32",
+          "category": "product_fact",
+          "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
+        },
+        {
+          "id": "S33",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S34",
+          "category": "product_fact",
+          "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
+        },
+        {
+          "id": "S35",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S36",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S37",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S38",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S39",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S40",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S41",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S42",
+          "category": "product_fact",
+          "evidence": "This reusable menstrual cup is made from medical-grade silicone and collects flow rather than absorbing it."
+        },
+        {
+          "id": "S43",
+          "category": "product_fact",
+          "evidence": "Small: roughly 15 ml to the rim. Large: approximately 28–30 ml."
+        },
+        {
+          "id": "S44",
+          "category": "product_fact",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "id": "S45",
+          "category": "product_fact",
+          "evidence": "Suitable for swimming and exercise when correctly inserted."
+        },
+        {
+          "id": "S46",
           "category": "product_fact",
           "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
         },
         {
-          "sentence": "The manual doesn't list specific signs for early replacement, so if you notice cracks, persistent odour, or discolouration, it's best to replace it or seek advice.",
-          "category": "instruction_reference",
+          "id": "S47",
+          "category": "product_fact",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
+        },
+        {
+          "id": "S48",
+          "category": "product_fact",
+          "evidence": "Blue/Pink/Purple/Clear in Small and Large (8 variants)"
+        },
+        {
+          "id": "S49",
+          "category": "usage_step",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
+        },
+        {
+          "id": "S50",
+          "category": "other",
           "evidence": null
         },
         {
-          "sentence": "The manual gives guidance on sterilising without a pot, but the exact methods aren't listed here.",
-          "category": "instruction_reference",
+          "id": "S51",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S52",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S53",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S54",
+          "category": "product_fact",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "id": "S55",
+          "category": "product_fact",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S56",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S57",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S58",
+          "category": "product_fact",
           "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
+        },
+        {
+          "id": "S59",
+          "category": "product_fact",
+          "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
+        },
+        {
+          "id": "S60",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S61",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S62",
+          "category": "hedge",
+          "evidence": null
         }
       ],
       "unsupported": [
         {
-          "text": "This guide walks you through daily care and between-cycle sterilising, using the cleaning steps from the instruction manual for the Anytime Reusable Menstrual Period Cup.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "Here's what the instructions for this cup call for:",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "The instruction manual for this cup lists several things to keep away from it:",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "Bleach",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "Keep the cup away from the base of the pot so it doesn't sit directly on the heat source, which can damage the silicone.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "Once the cup is clean and fully dry, pop it in the pouch to keep it protected between uses.",
-          "problem": "no supporting evidence",
-          "category": "usage_step"
-        },
-        {
-          "text": "The manual doesn't specify exact signs that mean replacing it sooner, so if you notice any changes in the silicone, such as cracks, odour that won't wash away, or discolouration, it's worth checking the instructions or contacting the store for advice.",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "If you're looking for a reusable cup that comes with clear care instructions, the Anytime Reusable Menstrual Period Cup is made from medical-grade silicone and includes a cotton storage pouch and instruction manual.",
-          "problem": "the quoted evidence does not support this sentence",
+          "text": "Those steps come from the instructions supplied with this cup.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
           "category": "product_fact"
         },
         {
-          "text": "The manual doesn't list specific signs for early replacement, so if you notice cracks, persistent odour, or discolouration, it's best to replace it or seek advice.",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "The between-cycle boil is a deeper clean you do once your period is over, before the cup goes back into storage.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "If you want guidance on sterilising when a pot isn't practical, the instruction manual that comes with the cup covers alternatives.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "The suction holes are easy to overlook, so make a point of clearing them each time rather than only now and then.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "And rinse thoroughly at the end, since leftover soap is the last thing you want left on the silicone.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "The instructions for this cup list specific things to keep away from it:",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "Once the cup is sterilised and dry, the pouch gives it a dedicated place to live until your next cycle.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "Read the instruction manual before first use, keep the avoid-list somewhere you'll remember it, and go at your own pace.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "The instruction manual also covers sterilising without a pot, so check it for those options.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "Once sterilised and dry, the pouch gives the cup a dedicated place between cycles.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
         }
       ],
       "risky": [],
       "leaks": [
         {
-          "text": "The manual doesn't specify exact signs that mean replacing it sooner, so if you notice any changes in the silicone, such as cracks, odour that won't wash away, or discolouration, it's worth checking the instructions or contacting the store for advice.",
-          "problem": "Talks about what information the manual does or does not provide, undermining the product."
-        },
-        {
-          "text": "The manual doesn't list specific signs for early replacement, so if you notice cracks, persistent odour, or discolouration, it's best to replace it or seek advice.",
-          "problem": "Talks about what information the manual does or does not provide, undermining the product."
-        },
-        {
-          "text": "The manual gives guidance on sterilising without a pot, but the exact methods aren't listed here.",
-          "problem": "Talks about what information was or was not provided in the article/manual."
+          "text": "No, and it's worth saying so plainly.",
+          "problem": "Refers to information not provided by the merchant and reads as an answer to an unstated question, revealing the article's sourcing gaps."
         }
-      ]
+      ],
+      "missing": []
     },
     {
-      "claims": [
+      "labels": [
         {
-          "sentence": "Cleaning a menstrual cup is simple: rinse with cold water and wash with mild, unscented, water-based soap after each removal, then sterilise in boiling water for three to five minutes between cycles.",
+          "id": "S1",
           "category": "usage_step",
           "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue. Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "A menstrual cup sits inside your vagina for up to eight hours at a time, so keeping it clean is part of using it comfortably and safely.",
+          "id": "S2",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S3",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S4",
+          "category": "usage_step",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S5",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S6",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S7",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S8",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S9",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S10",
           "category": "product_fact",
-          "evidence": "Use for up to eight hours before removing and cleaning."
+          "evidence": "collects flow rather than absorbing it"
         },
         {
-          "sentence": "Cold water for rinsing",
+          "id": "S11",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S12",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S13",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S14",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S15",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S16",
           "category": "usage_step",
           "evidence": "Daily care: rinse with cold water"
         },
         {
-          "sentence": "Mild, unscented, water-based soap",
-          "category": "usage_step",
-          "evidence": "wash with mild, unscented, water-based soap"
-        },
-        {
-          "sentence": "A small pot for boiling water (for sterilising between cycles)",
-          "category": "usage_step",
-          "evidence": "Between cycles: sterilise in boiling water for three to five minutes"
-        },
-        {
-          "sentence": "Rinse the cup with cold water.",
-          "category": "usage_step",
-          "evidence": "Daily care: rinse with cold water"
-        },
-        {
-          "sentence": "Wash it with mild, unscented, water-based soap.",
-          "category": "usage_step",
-          "evidence": "wash with mild, unscented, water-based soap"
-        },
-        {
-          "sentence": "Clear the suction holes.",
+          "id": "S17",
           "category": "usage_step",
           "evidence": "clear the suction holes"
         },
         {
-          "sentence": "Rinse away all soap residue thoroughly.",
+          "id": "S18",
           "category": "usage_step",
           "evidence": "rinse away all soap residue"
         },
         {
-          "sentence": "The cup can be worn for up to eight hours before removal and cleaning, so you'll typically do this routine in the morning and evening.",
+          "id": "S19",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S20",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S21",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S22",
+          "category": "product_fact",
+          "evidence": "wash with mild, unscented, water-based soap"
+        },
+        {
+          "id": "S23",
+          "category": "product_fact",
+          "evidence": null
+        },
+        {
+          "id": "S24",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S25",
+          "category": "product_fact",
+          "evidence": "Cotton; machine washable."
+        },
+        {
+          "id": "S26",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S27",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S28",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S29",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S30",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S31",
+          "category": "product_fact",
+          "evidence": "Small: roughly 15 ml to the rim. Large: approximately 28–30 ml."
+        },
+        {
+          "id": "S32",
           "category": "product_fact",
           "evidence": "Use for up to eight hours before removing and cleaning."
         },
         {
-          "sentence": "Vinegar",
-          "category": "usage_step",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "Tea tree oil",
-          "category": "usage_step",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "Hydrogen peroxide",
-          "category": "usage_step",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "Antibacterial soaps",
-          "category": "usage_step",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "Harsh rubbing alcohol",
-          "category": "usage_step",
-          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
-        },
-        {
-          "sentence": "The manual says to sterilise it in boiling water for three to five minutes.",
-          "category": "instruction_reference",
-          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
-        },
-        {
-          "sentence": "If you don't have a pot handy, the manual also gives guidance on sterilising without one.",
-          "category": "instruction_reference",
-          "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
-        },
-        {
-          "sentence": "Each cup comes with a cotton storage pouch, which is machine washable.",
-          "category": "product_fact",
-          "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
-        },
-        {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
-          "category": "product_fact",
-          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
-        },
-        {
-          "sentence": "Empty and clean the cup at least every eight hours.",
-          "category": "usage_step",
-          "evidence": "Use for up to eight hours before removing and cleaning."
-        },
-        {
-          "sentence": "The cup is suitable for swimming and exercise when correctly inserted, but always clean it after removal.",
+          "id": "S33",
           "category": "product_fact",
           "evidence": "Suitable for swimming and exercise when correctly inserted."
         },
         {
-          "sentence": "It's available in Small (roughly 15 ml) and Large (approximately 28–30 ml), in four colours.",
+          "id": "S34",
           "category": "product_fact",
-          "evidence": "Small holds roughly 15 ml; Large holds approximately 28–30 ml."
+          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
         },
         {
-          "sentence": "The instructions for this cup specify mild, unscented, water-based soap.",
-          "category": "instruction_reference",
-          "evidence": "Daily care: Rinse with cold water; wash with mild, unscented, water-based soap; clear suction holes; rinse away all soap residue"
+          "id": "S35",
+          "category": "product_fact",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
         },
         {
-          "sentence": "The manual says to sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot.",
-          "category": "instruction_reference",
+          "id": "S36",
+          "category": "product_fact",
+          "evidence": "Blue/Pink/Purple/Clear in Small and Large (8 variants)"
+        },
+        {
+          "id": "S37",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S38",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S39",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S40",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S41",
+          "category": "product_fact",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "id": "S42",
+          "category": "product_fact",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S43",
+          "category": "usage_step",
+          "evidence": "wash with mild, unscented, water-based soap"
+        },
+        {
+          "id": "S44",
+          "category": "usage_step",
           "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
+          "id": "S45",
           "category": "product_fact",
-          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+          "evidence": "Cotton; machine washable."
+        },
+        {
+          "id": "S46",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S47",
+          "category": "hedge",
+          "evidence": null
         }
       ],
       "unsupported": [
         {
-          "text": "A menstrual cup sits inside your vagina for up to eight hours at a time, so keeping it clean is part of using it comfortably and safely.",
-          "problem": "the quoted evidence does not support this sentence",
+          "text": "Cleaning a menstrual cup comes down to two routines: a quick wash each time you empty it, and a longer sterilise between cycles.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "A menstrual cup collects flow rather than absorbing it, so what sits on the silicone is residue that can be rinsed and washed away.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "The instruction manual also covers sterilising without a pot.",
+          "problem": "no supporting evidence (product_fact)",
           "category": "product_fact"
         }
       ],
       "risky": [],
-      "leaks": []
+      "leaks": [
+        {
+          "text": "The instruction manual also covers sterilising without a pot.",
+          "problem": "The merchant did not provide details on sterilising without a pot, so this hints at information not supplied."
+        },
+        {
+          "text": "Follow what it says for this exact product rather than guessing at times or methods.",
+          "problem": "Implies the article lacks specific times or methods, undermining the product guidance."
+        }
+      ],
+      "missing": []
     },
     {
-      "claims": [
+      "labels": [
         {
-          "sentence": "This cup can be worn for up to eight hours before removal and cleaning, so keeping it clean is part of the routine.",
-          "category": "product_fact",
-          "evidence": "Use for up to eight hours before removing and cleaning."
+          "id": "S1",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
         },
         {
-          "sentence": "The cup can be worn for up to eight hours before removal and cleaning, so you'll typically do this routine in the morning and evening.",
-          "category": "product_fact",
-          "evidence": "Use for up to eight hours before removing and cleaning."
-        },
-        {
-          "sentence": "The manual says to sterilise it in boiling water for three to five minutes.",
-          "category": "instruction_reference",
+          "id": "S2",
+          "category": "usage_step",
           "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "If you don't have a pot handy, the manual also gives guidance on sterilising without one.",
-          "category": "instruction_reference",
-          "evidence": "Does the manual give guidance on how to sterilise without a pot (e.g. microwave, sterilising tablets, cup steamer)?: yes"
-        },
-        {
-          "sentence": "Each cup comes with a cotton storage pouch, which is machine washable.",
-          "category": "product_fact",
-          "evidence": "What is the storage pouch made from, and is it machine washable?: Cotton; machine washable."
-        },
-        {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
-          "category": "product_fact",
-          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
-        },
-        {
-          "sentence": "Empty and clean the cup at least every eight hours.",
+          "id": "S3",
           "category": "usage_step",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S4",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S5",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S6",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S7",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S8",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S9",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S10",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S11",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S12",
+          "category": "usage_step",
+          "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
+        },
+        {
+          "id": "S13",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S14",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S15",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S16",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S17",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S18",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S19",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S20",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S21",
+          "category": "product_fact",
+          "evidence": "Cotton; machine washable."
+        },
+        {
+          "id": "S22",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S23",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S24",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S25",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S26",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S27",
+          "category": "product_fact",
+          "evidence": "Small: roughly 15 ml to the rim. Large: approximately 28–30 ml."
+        },
+        {
+          "id": "S28",
+          "category": "product_fact",
           "evidence": "Use for up to eight hours before removing and cleaning."
         },
         {
-          "sentence": "The cup is suitable for swimming and exercise when correctly inserted, but always clean it after removal.",
+          "id": "S29",
           "category": "product_fact",
           "evidence": "Suitable for swimming and exercise when correctly inserted."
         },
         {
-          "sentence": "It's available in Small (roughly 15 ml) and Large (approximately 28–30 ml), in four colours.",
+          "id": "S30",
           "category": "product_fact",
-          "evidence": "Small holds roughly 15 ml; Large holds approximately 28–30 ml."
+          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
         },
         {
-          "sentence": "The instructions for this cup specify mild, unscented, water-based soap.",
-          "category": "instruction_reference",
-          "evidence": "Daily care: Rinse with cold water; wash with mild, unscented, water-based soap; clear suction holes; rinse away all soap residue"
+          "id": "S31",
+          "category": "product_fact",
+          "evidence": "Each cup includes a storage pouch and instruction manual."
         },
         {
-          "sentence": "The manual says to sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot.",
-          "category": "instruction_reference",
+          "id": "S32",
+          "category": "product_fact",
+          "evidence": "Blue/Pink/Purple/Clear in Small and Large (8 variants)"
+        },
+        {
+          "id": "S33",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S34",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S35",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S36",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S37",
+          "category": "product_fact",
+          "evidence": "Use for up to eight hours before removing and cleaning."
+        },
+        {
+          "id": "S38",
+          "category": "product_fact",
+          "evidence": "Avoid: Bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol"
+        },
+        {
+          "id": "S39",
+          "category": "usage_step",
+          "evidence": "Daily care: rinse with cold water; wash with mild, unscented, water-based soap; clear the suction holes; rinse away all soap residue."
+        },
+        {
+          "id": "S40",
+          "category": "usage_step",
           "evidence": "Between cycles: sterilise in boiling water for three to five minutes; keep the cup away from the base of the pot."
         },
         {
-          "sentence": "With proper care, this cup has a typical lifespan of 5 to 10 years.",
+          "id": "S41",
           "category": "product_fact",
-          "evidence": "Reusable for a typical lifespan of 5 to 10 years with proper care."
+          "evidence": "Cotton; machine washable."
+        },
+        {
+          "id": "S42",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S43",
+          "category": "hedge",
+          "evidence": null
         }
       ],
       "unsupported": [],
       "risky": [],
-      "leaks": []
+      "leaks": [],
+      "missing": []
     }
   ]
 }

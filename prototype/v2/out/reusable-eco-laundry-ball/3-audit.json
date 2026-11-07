@@ -1,733 +1,953 @@
 {
   "final": {
-    "claims": [
+    "labels": [
       {
-        "sentence": "For larger loads, use two balls; for stains, pre-treat first.",
+        "id": "S1",
+        "category": "usage_step",
+        "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+      },
+      {
+        "id": "S2",
         "category": "usage_step",
         "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
       },
       {
-        "sentence": "That's it. No detergent, no fragrance, no fabric softener.",
-        "category": "product_fact",
-        "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        "id": "S3",
+        "category": "other",
+        "evidence": null
       },
       {
-        "sentence": "The ball goes in the drum with your clothes.",
+        "id": "S4",
         "category": "usage_step",
-        "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
       },
       {
-        "sentence": "It won't fit in the detergent drawer, so there's no need to try.",
-        "category": "product_fact",
-        "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-      },
-      {
-        "sentence": "One ball is designed for a 4 kg wash.",
+        "id": "S5",
         "category": "product_fact",
         "evidence": "One ball for a 4 kg wash."
       },
       {
-        "sentence": "If your load is heavier than that, use two balls.",
+        "id": "S6",
         "category": "usage_step",
-        "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        "evidence": "for loads over 4kg use two balls"
       },
       {
-        "sentence": "The ball uses natural minerals to clean, so you don't add detergent, fragrance or fabric softener.",
+        "id": "S7",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S8",
+        "category": "usage_step",
+        "evidence": "One ball for a 4 kg wash."
+      },
+      {
+        "id": "S9",
+        "category": "usage_step",
+        "evidence": "for loads over 4kg use two balls"
+      },
+      {
+        "id": "S10",
+        "category": "product_fact",
+        "evidence": "Cold"
+      },
+      {
+        "id": "S11",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S12",
+        "category": "usage_step",
+        "evidence": "Pre-treat stains"
+      },
+      {
+        "id": "S13",
+        "category": "hedge",
+        "evidence": null
+      },
+      {
+        "id": "S14",
         "category": "product_fact",
         "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
       },
       {
-        "sentence": "Pre-treat stains before washing.",
-        "category": "usage_step",
-        "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        "id": "S15",
+        "category": "product_fact",
+        "evidence": "Refillable design for repeat use."
       },
       {
-        "sentence": "For loads over 4 kg, use two balls.",
-        "category": "usage_step",
-        "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        "id": "S16",
+        "category": "general_background",
+        "evidence": null
       },
       {
-        "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
+        "id": "S17",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S18",
         "category": "usage_step",
         "evidence": "Recharge in sunlight for a few hours each month with regular use."
       },
       {
-        "sentence": "If you rely on fragrance or fabric softener, you'll miss those.",
+        "id": "S19",
+        "category": "usage_step",
+        "evidence": "up to 1,000 washes and empty the contents into waste and outer ball can be recycled"
+      },
+      {
+        "id": "S20",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S21",
         "category": "product_fact",
         "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
       },
       {
-        "sentence": "**Monthly recharge.** It's a small task, but it's a task.",
+        "id": "S22",
         "category": "usage_step",
         "evidence": "Recharge in sunlight for a few hours each month with regular use."
       },
       {
-        "sentence": "If the steps above sound manageable, the [Reusable Eco Laundry Ball]({{PRODUCT_URL}}) is an option for regular loads.",
+        "id": "S23",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S24",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S25",
+        "category": "other",
+        "evidence": null
+      },
+      {
+        "id": "S26",
         "category": "product_fact",
-        "evidence": "Reusable Eco Laundry Ball for Everyday Loads"
+        "evidence": "Reusable for up to 1,000 washes."
       },
       {
-        "sentence": "You stay in control: try it with one load, see how it goes, and adjust from there.",
+        "id": "S27",
         "category": "usage_step",
-        "evidence": null
+        "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
       },
       {
-        "sentence": "Q: Does the laundry ball go in the drum or the detergent drawer?",
-        "category": "instruction_reference",
-        "evidence": null
-      },
-      {
-        "sentence": "A: Put it in the drum with your clothes.",
-        "category": "usage_step",
-        "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-      },
-      {
-        "sentence": "It won't fit in the detergent drawer.",
+        "id": "S28",
         "category": "product_fact",
-        "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        "evidence": "it won't fit in the detergent draw"
       },
       {
-        "sentence": "Q: How many balls do I need for a large load?",
-        "category": "instruction_reference",
-        "evidence": null
-      },
-      {
-        "sentence": "A: One ball is for a 4 kg wash.",
+        "id": "S29",
         "category": "product_fact",
         "evidence": "One ball for a 4 kg wash."
       },
       {
-        "sentence": "For loads over 4 kg, use two balls.",
+        "id": "S30",
         "category": "usage_step",
-        "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        "evidence": "for loads over 4kg use two balls"
       },
       {
-        "sentence": "Q: Do I still need detergent?",
-        "category": "instruction_reference",
-        "evidence": null
-      },
-      {
-        "sentence": "A: No. The ball uses natural minerals and is designed to clean without added detergent, fragrance or fabric softener.",
-        "category": "product_fact",
-        "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-      },
-      {
-        "sentence": "Q: How often do I need to recharge the ball?",
-        "category": "instruction_reference",
-        "evidence": null
-      },
-      {
-        "sentence": "A: Recharge it in sunlight for a few hours each month with regular use.",
+        "id": "S31",
         "category": "usage_step",
         "evidence": "Recharge in sunlight for a few hours each month with regular use."
       },
       {
-        "sentence": "Q: What should I do for stained clothes?",
-        "category": "instruction_reference",
-        "evidence": null
+        "id": "S32",
+        "category": "product_fact",
+        "evidence": "Reusable for up to 1,000 washes."
       },
       {
-        "sentence": "A: Pre-treat stains before washing.",
+        "id": "S33",
         "category": "usage_step",
-        "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        "evidence": "empty the contents into waste and outer ball can be recycled"
       }
     ],
     "unsupported": [
       {
-        "text": "If the steps above sound manageable, the [Reusable Eco Laundry Ball]({{PRODUCT_URL}}) is an option for regular loads.",
-        "problem": "the quoted evidence does not support this sentence",
+        "text": "The packaging for this ball recommends a cold wash.",
+        "problem": "quoted evidence not found in product data or merchant facts",
         "category": "product_fact"
-      },
-      {
-        "text": "You stay in control: try it with one load, see how it goes, and adjust from there.",
-        "problem": "no supporting evidence",
-        "category": "usage_step"
-      },
-      {
-        "text": "Q: Does the laundry ball go in the drum or the detergent drawer?",
-        "problem": "no supporting evidence",
-        "category": "instruction_reference"
-      },
-      {
-        "text": "Q: How many balls do I need for a large load?",
-        "problem": "no supporting evidence",
-        "category": "instruction_reference"
-      },
-      {
-        "text": "Q: Do I still need detergent?",
-        "problem": "no supporting evidence",
-        "category": "instruction_reference"
-      },
-      {
-        "text": "Q: How often do I need to recharge the ball?",
-        "problem": "no supporting evidence",
-        "category": "instruction_reference"
-      },
-      {
-        "text": "Q: What should I do for stained clothes?",
-        "problem": "no supporting evidence",
-        "category": "instruction_reference"
       }
     ],
     "risky": [],
     "leaks": [
       {
-        "text": "## What temperature should you use?",
-        "problem": "Empty section heading with no answer; suggests missing information about the product's recommended wash temperature"
-      },
-      {
-        "text": "- ****",
-        "problem": "Empty bullet placeholder left in the article"
+        "text": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes",
+        "problem": "Reveals that the product has no leaflet/instructions and that placement is only inferred, undermining the product and exposing article sourcing."
       }
-    ]
+    ],
+    "missing": []
   },
   "history": [
     {
-      "claims": [
+      "labels": [
         {
-          "sentence": "Using a reusable laundry ball is straightforward: place one ball in the drum with your clothes for a wash of up to 4 kg, skip detergent, fragrance and fabric softener, and recharge the ball in sunlight for a few hours each month.",
+          "id": "S1",
           "category": "usage_step",
-          "evidence": null
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
         },
         {
-          "sentence": "For larger loads, use two balls; for stains, pre-treat first.",
+          "id": "S2",
           "category": "usage_step",
           "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
         },
         {
-          "sentence": "Put one ball in the washing machine drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "No detergent, no fragrance, no fabric softener.",
-          "category": "usage_step",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "The ball is refillable and reusable for up to 1,000 washes, and it needs a few hours in sunlight each month to recharge.",
-          "category": "product_fact",
+          "id": "S3",
+          "category": "other",
           "evidence": null
         },
         {
-          "sentence": "The ball goes in the drum with your clothes.",
+          "id": "S4",
           "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
         },
         {
-          "sentence": "It won't fit in the detergent drawer, so there's no need to try.",
+          "id": "S5",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S6",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S7",
           "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+          "evidence": "it goes in with the clothes"
         },
         {
-          "sentence": "Just drop it in with the load before you start the cycle.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "One ball is designed for a 4 kg wash.",
+          "id": "S8",
           "category": "product_fact",
           "evidence": "One ball for a 4 kg wash."
         },
         {
-          "sentence": "If your load is heavier than that, use two balls.",
+          "id": "S9",
           "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+          "evidence": "for loads over 4kg use two balls"
         },
         {
-          "sentence": "The ball uses natural minerals to clean, so you don't add detergent, fragrance or fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "The packaging recommends cold water.",
-          "category": "instruction_reference",
-          "evidence": "Cold"
-        },
-        {
-          "sentence": "Stick with a cold wash cycle when using the ball.",
-          "category": "usage_step",
-          "evidence": "Cold"
-        },
-        {
-          "sentence": "Pre-treat stains before washing.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "For loads over 4 kg, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "The ball isn't a stain remover on its own, so a little pre-treatment helps.",
-          "category": "product_fact",
+          "id": "S10",
+          "category": "other",
           "evidence": null
         },
         {
-          "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
-          "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "When the ball reaches the end of its life (up to 1,000 washes), empty the contents into waste and recycle the outer ball where suitable facilities accept it.",
-          "category": "usage_step",
-          "evidence": null
-        },
-        {
-          "sentence": "If you rely on fragrance or fabric softener, you'll miss those.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "Pre-treating is part of the routine.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "Cold water only.",
-          "category": "instruction_reference",
-          "evidence": "Cold"
-        },
-        {
-          "sentence": "The packaging recommends cold, so very hot washes aren't part of the plan.",
-          "category": "instruction_reference",
-          "evidence": "Cold"
-        },
-        {
-          "sentence": "It's designed for up to 1,000 washes, with a recyclable outer ball where facilities accept it.",
-          "category": "product_fact",
-          "evidence": null
-        },
-        {
-          "sentence": "Put it in the drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "It won't fit in the detergent drawer.",
-          "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "One ball is for a 4 kg wash.",
+          "id": "S11",
           "category": "product_fact",
           "evidence": "One ball for a 4 kg wash."
         },
         {
-          "sentence": "For loads over 4 kg, use two balls.",
+          "id": "S12",
           "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+          "evidence": "for loads over 4kg use two balls"
         },
         {
-          "sentence": "No. The ball uses natural minerals and is designed to clean without added detergent, fragrance or fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
+          "id": "S13",
           "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+          "evidence": "for loads over 4kg use two balls"
         },
         {
-          "sentence": "Pre-treat stains before washing.",
+          "id": "S14",
           "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+          "evidence": "Cold"
         },
         {
-          "sentence": "The ball isn't a dedicated stain remover.",
-          "category": "product_fact",
+          "id": "S15",
+          "category": "general_background",
           "evidence": null
-        }
-      ],
-      "unsupported": [
-        {
-          "text": "Using a reusable laundry ball is straightforward: place one ball in the drum with your clothes for a wash of up to 4 kg, skip detergent, fragrance and fabric softener, and recharge the ball in sunlight for a few hours each month.",
-          "problem": "no supporting evidence",
-          "category": "usage_step"
         },
         {
-          "text": "Put one ball in the washing machine drum with your clothes.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "usage_step"
+          "id": "S16",
+          "category": "hedge",
+          "evidence": null
         },
         {
-          "text": "The ball is refillable and reusable for up to 1,000 washes, and it needs a few hours in sunlight each month to recharge.",
-          "problem": "no supporting evidence",
-          "category": "product_fact"
-        },
-        {
-          "text": "Just drop it in with the load before you start the cycle.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "usage_step"
-        },
-        {
-          "text": "The packaging recommends cold water.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "Stick with a cold wash cycle when using the ball.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "usage_step"
-        },
-        {
-          "text": "The ball isn't a stain remover on its own, so a little pre-treatment helps.",
-          "problem": "no supporting evidence",
-          "category": "product_fact"
-        },
-        {
-          "text": "When the ball reaches the end of its life (up to 1,000 washes), empty the contents into waste and recycle the outer ball where suitable facilities accept it.",
-          "problem": "no supporting evidence",
-          "category": "usage_step"
-        },
-        {
-          "text": "Pre-treating is part of the routine.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "usage_step"
-        },
-        {
-          "text": "Cold water only.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "The packaging recommends cold, so very hot washes aren't part of the plan.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "instruction_reference"
-        },
-        {
-          "text": "It's designed for up to 1,000 washes, with a recyclable outer ball where facilities accept it.",
-          "problem": "no supporting evidence",
-          "category": "product_fact"
-        },
-        {
-          "text": "The ball isn't a dedicated stain remover.",
-          "problem": "no supporting evidence",
-          "category": "product_fact"
-        }
-      ],
-      "risky": [],
-      "leaks": []
-    },
-    {
-      "claims": [
-        {
-          "sentence": "For larger loads, use two balls; for stains, pre-treat first.",
+          "id": "S17",
           "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+          "evidence": "Pre-treat stains"
         },
         {
-          "sentence": "That's it. No detergent, no fragrance, no fabric softener.",
+          "id": "S18",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S19",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S20",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S21",
           "category": "product_fact",
           "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
         },
         {
-          "sentence": "The ball goes in the drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "It won't fit in the detergent drawer, so there's no need to try.",
-          "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "One ball is designed for a 4 kg wash.",
-          "category": "product_fact",
-          "evidence": "One ball for a 4 kg wash."
-        },
-        {
-          "sentence": "If your load is heavier than that, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "The ball uses natural minerals to clean, so you don't add detergent, fragrance or fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "That means one less bottle to buy and measure.",
-          "category": "product_fact",
-          "evidence": "Make wash day simpler with a refillable laundry ball that replaces repeat detergent-bottle purchases in your regular routine."
-        },
-        {
-          "sentence": "Pre-treat stains before washing.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "For loads over 4 kg, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
-          "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "That's the main maintenance step.",
-          "category": "product_fact",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "If you rely on fragrance or fabric softener, you'll miss those.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "Monthly recharge.",
-          "category": "product_fact",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "If the steps above sound manageable, the Reusable Eco Laundry Ball is a refillable option for regular loads.",
+          "id": "S22",
           "category": "product_fact",
           "evidence": "Refillable design for repeat use."
         },
         {
-          "sentence": "Put it in the drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+          "id": "S23",
+          "category": "other",
+          "evidence": null
         },
         {
-          "sentence": "It won't fit in the detergent drawer.",
-          "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+          "id": "S24",
+          "category": "general_background",
+          "evidence": null
         },
         {
-          "sentence": "One ball is for a 4 kg wash.",
-          "category": "product_fact",
-          "evidence": "One ball for a 4 kg wash."
-        },
-        {
-          "sentence": "No. The ball uses natural minerals and is designed to clean without added detergent, fragrance or fabric softener.",
+          "id": "S25",
           "category": "product_fact",
           "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
         },
         {
-          "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
+          "id": "S26",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S27",
           "category": "usage_step",
           "evidence": "Recharge in sunlight for a few hours each month with regular use."
         },
         {
-          "sentence": "Pre-treat stains before washing.",
+          "id": "S28",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S29",
           "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+          "evidence": "empty the contents into waste and outer ball can be recycled"
+        },
+        {
+          "id": "S30",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S31",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S32",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S33",
+          "category": "usage_step",
+          "evidence": "Pre-treat stains"
+        },
+        {
+          "id": "S34",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S35",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S36",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S37",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S38",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S39",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S40",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S41",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S42",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S43",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S44",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S45",
+          "category": "product_fact",
+          "evidence": "it won't fit in the detergent draw"
+        },
+        {
+          "id": "S46",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S47",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S48",
+          "category": "usage_step",
+          "evidence": "Cold"
+        },
+        {
+          "id": "S49",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S50",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S51",
+          "category": "usage_step",
+          "evidence": "empty the contents into waste and outer ball can be recycled"
         }
       ],
       "unsupported": [
         {
-          "text": "That means one less bottle to buy and measure.",
-          "problem": "the quoted evidence does not support this sentence",
+          "text": "The ball goes in with the wash and does its work alongside your clothes.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
           "category": "product_fact"
         },
         {
-          "text": "That's the main maintenance step.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "product_fact"
-        },
-        {
-          "text": "If the steps above sound manageable, the Reusable Eco Laundry Ball is a refillable option for regular loads.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "product_fact"
-        }
-      ],
-      "risky": [],
-      "leaks": [
-        {
-          "text": "Always follow any instructions that come with the product.",
-          "problem": "Generic referral to instructions that do not exist; merchant confirms there is no leaflet."
-        },
-        {
-          "text": "This article doesn't replace the instructions supplied with the product or advice from a qualified professional.",
-          "problem": "Refers to instructions supplied with the product, which do not exist."
-        }
-      ]
-    },
-    {
-      "claims": [
-        {
-          "sentence": "For larger loads, use two balls; for stains, pre-treat first.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "That's it. No detergent, no fragrance, no fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "The ball goes in the drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "It won't fit in the detergent drawer, so there's no need to try.",
-          "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "One ball is designed for a 4 kg wash.",
-          "category": "product_fact",
-          "evidence": "One ball for a 4 kg wash."
-        },
-        {
-          "sentence": "If your load is heavier than that, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "The ball uses natural minerals to clean, so you don't add detergent, fragrance or fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "Pre-treat stains before washing.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "For loads over 4 kg, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "Recharge it in sunlight for a few hours each month with regular use.",
-          "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "If you rely on fragrance or fabric softener, you'll miss those.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "**Monthly recharge.** It's a small task, but it's a task.",
-          "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "If the steps above sound manageable, the [Reusable Eco Laundry Ball]({{PRODUCT_URL}}) is an option for regular loads.",
-          "category": "product_fact",
-          "evidence": "Reusable Eco Laundry Ball for Everyday Loads"
-        },
-        {
-          "sentence": "You stay in control: try it with one load, see how it goes, and adjust from there.",
-          "category": "usage_step",
-          "evidence": null
-        },
-        {
-          "sentence": "Q: Does the laundry ball go in the drum or the detergent drawer?",
-          "category": "instruction_reference",
-          "evidence": null
-        },
-        {
-          "sentence": "A: Put it in the drum with your clothes.",
-          "category": "usage_step",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "It won't fit in the detergent drawer.",
-          "category": "product_fact",
-          "evidence": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
-        },
-        {
-          "sentence": "Q: How many balls do I need for a large load?",
-          "category": "instruction_reference",
-          "evidence": null
-        },
-        {
-          "sentence": "A: One ball is for a 4 kg wash.",
-          "category": "product_fact",
-          "evidence": "One ball for a 4 kg wash."
-        },
-        {
-          "sentence": "For loads over 4 kg, use two balls.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        },
-        {
-          "sentence": "Q: Do I still need detergent?",
-          "category": "instruction_reference",
-          "evidence": null
-        },
-        {
-          "sentence": "A: No. The ball uses natural minerals and is designed to clean without added detergent, fragrance or fabric softener.",
-          "category": "product_fact",
-          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
-        },
-        {
-          "sentence": "Q: How often do I need to recharge the ball?",
-          "category": "instruction_reference",
-          "evidence": null
-        },
-        {
-          "sentence": "A: Recharge it in sunlight for a few hours each month with regular use.",
-          "category": "usage_step",
-          "evidence": "Recharge in sunlight for a few hours each month with regular use."
-        },
-        {
-          "sentence": "Q: What should I do for stained clothes?",
-          "category": "instruction_reference",
-          "evidence": null
-        },
-        {
-          "sentence": "A: Pre-treat stains before washing.",
-          "category": "usage_step",
-          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
-        }
-      ],
-      "unsupported": [
-        {
-          "text": "If the steps above sound manageable, the [Reusable Eco Laundry Ball]({{PRODUCT_URL}}) is an option for regular loads.",
-          "problem": "the quoted evidence does not support this sentence",
-          "category": "product_fact"
-        },
-        {
-          "text": "You stay in control: try it with one load, see how it goes, and adjust from there.",
-          "problem": "no supporting evidence",
+          "text": "If you are unsure how much your usual load weighs, start with one ball for a smaller wash and add a second when you are washing more.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
           "category": "usage_step"
         },
         {
-          "text": "Q: Does the laundry ball go in the drum or the detergent drawer?",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "The packaging for this ball recommends a cold wash, so set your machine accordingly.",
+          "problem": "quoted evidence not found in product data or merchant facts",
+          "category": "usage_step"
         },
         {
-          "text": "Q: How many balls do I need for a large load?",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "It is a refillable design, so you keep using the same ball rather than buying another bottle each time.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
         },
         {
-          "text": "Q: Do I still need detergent?",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "It is not a stain remover on its own — which is why pre-treating stains matters — and it does not add fragrance or softness the way a detergent or softener would.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
         },
         {
-          "text": "Q: How often do I need to recharge the ball?",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "**Load sizing:** you need to think about weight, because one ball covers 4 kg and larger loads need two.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
         },
         {
-          "text": "Q: What should I do for stained clothes?",
-          "problem": "no supporting evidence",
-          "category": "instruction_reference"
+          "text": "**Stains still need attention:** pre-treating is part of the routine.",
+          "problem": "the quoted evidence does not support this sentence (usage_step)",
+          "category": "usage_step"
+        },
+        {
+          "text": "It is reusable for up to 1,000 washes, refillable, and sized for a 4 kg load with a second ball for larger washes.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "The packaging recommends a cold wash.",
+          "problem": "quoted evidence not found in product data or merchant facts",
+          "category": "usage_step"
         }
       ],
       "risky": [],
       "leaks": [
         {
-          "text": "## What temperature should you use?",
-          "problem": "Empty section heading with no answer; suggests missing information about the product's recommended wash temperature"
+          "text": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes",
+          "problem": "Reveals that the product has no leaflet and that placement is only inferred, undermining the product and exposing article sourcing."
         },
         {
-          "text": "- ****",
-          "problem": "Empty bullet placeholder left in the article"
+          "text": "That is the guidance that comes with this product.",
+          "problem": "Implies guidance comes with the product when the merchant states there is no leaflet."
         }
-      ]
+      ],
+      "missing": []
+    },
+    {
+      "labels": [
+        {
+          "id": "S1",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S2",
+          "category": "usage_step",
+          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        },
+        {
+          "id": "S3",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S4",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S5",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S6",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S7",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S8",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S9",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S10",
+          "category": "usage_step",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S11",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S12",
+          "category": "product_fact",
+          "evidence": "Cold"
+        },
+        {
+          "id": "S13",
+          "category": "usage_step",
+          "evidence": null
+        },
+        {
+          "id": "S14",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S15",
+          "category": "usage_step",
+          "evidence": "Pre-treat stains"
+        },
+        {
+          "id": "S16",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S17",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S18",
+          "category": "product_fact",
+          "evidence": "Refillable design for repeat use."
+        },
+        {
+          "id": "S19",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S20",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S21",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S22",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S23",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S24",
+          "category": "usage_step",
+          "evidence": "up to 1,000 washes and empty the contents into waste and outer ball can be recycled"
+        },
+        {
+          "id": "S25",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S26",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S27",
+          "category": "product_fact",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S28",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S29",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S30",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S31",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S32",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S33",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S34",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S35",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S36",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S37",
+          "category": "product_fact",
+          "evidence": "it won't fit in the detergent draw"
+        },
+        {
+          "id": "S38",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S39",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S40",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S41",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S42",
+          "category": "usage_step",
+          "evidence": "empty the contents into waste and outer ball can be recycled"
+        }
+      ],
+      "unsupported": [
+        {
+          "text": "If you have used detergent pods or liquid before, this is the one habit that changes: there is nothing to measure and nothing to pour.",
+          "problem": "the quoted evidence does not support this sentence (product_fact)",
+          "category": "product_fact"
+        },
+        {
+          "text": "The packaging for this ball recommends a cold wash.",
+          "problem": "quoted evidence not found in product data or merchant facts",
+          "category": "product_fact"
+        },
+        {
+          "text": "Cold washing is also a reasonable default for everyday clothing and helps keep your routine simple.",
+          "problem": "no supporting evidence (usage_step)",
+          "category": "usage_step"
+        }
+      ],
+      "risky": [],
+      "leaks": [
+        {
+          "text": "It is too big for the detergent drawer, so the drum is where it belongs.",
+          "problem": "Reveals the placement was inferred rather than stated in any instructions, undermining confidence in the guidance."
+        },
+        {
+          "text": "It is worth being honest about what this means in practice.",
+          "problem": "Meta-commentary about the article's honesty rather than product information."
+        },
+        {
+          "text": "That is the maintenance step the product calls for.",
+          "problem": "Implies the product's instructions were consulted when no leaflet exists."
+        },
+        {
+          "text": "None of these are dealbreakers for everyone, but they are worth knowing before you commit.",
+          "problem": "Editorial commentary that undermines the product and reads as article scaffolding."
+        },
+        {
+          "text": "There is no rush.",
+          "problem": "Filler/transition that adds nothing and reads as article padding."
+        },
+        {
+          "text": "Read the details, think about your typical loads, and decide from there — you stay in control of what goes into your machine.",
+          "problem": "Invitation/editorial closing rather than product information."
+        },
+        {
+          "text": "*This article is general information only.",
+          "problem": "Article disclaimer that should not appear in product copy."
+        }
+      ],
+      "missing": []
+    },
+    {
+      "labels": [
+        {
+          "id": "S1",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S2",
+          "category": "usage_step",
+          "evidence": "Pre-treat stains  and for loads over 4kg use two balls"
+        },
+        {
+          "id": "S3",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S4",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S5",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S6",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S7",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S8",
+          "category": "usage_step",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S9",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S10",
+          "category": "product_fact",
+          "evidence": "Cold"
+        },
+        {
+          "id": "S11",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S12",
+          "category": "usage_step",
+          "evidence": "Pre-treat stains"
+        },
+        {
+          "id": "S13",
+          "category": "hedge",
+          "evidence": null
+        },
+        {
+          "id": "S14",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S15",
+          "category": "product_fact",
+          "evidence": "Refillable design for repeat use."
+        },
+        {
+          "id": "S16",
+          "category": "general_background",
+          "evidence": null
+        },
+        {
+          "id": "S17",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S18",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S19",
+          "category": "usage_step",
+          "evidence": "up to 1,000 washes and empty the contents into waste and outer ball can be recycled"
+        },
+        {
+          "id": "S20",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S21",
+          "category": "product_fact",
+          "evidence": "Natural minerals clean without added detergent, fragrance or fabric softener."
+        },
+        {
+          "id": "S22",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S23",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S24",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S25",
+          "category": "other",
+          "evidence": null
+        },
+        {
+          "id": "S26",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S27",
+          "category": "usage_step",
+          "evidence": "it won't fit in the detergent draw so it can be inferred that it goes in with the clothes"
+        },
+        {
+          "id": "S28",
+          "category": "product_fact",
+          "evidence": "it won't fit in the detergent draw"
+        },
+        {
+          "id": "S29",
+          "category": "product_fact",
+          "evidence": "One ball for a 4 kg wash."
+        },
+        {
+          "id": "S30",
+          "category": "usage_step",
+          "evidence": "for loads over 4kg use two balls"
+        },
+        {
+          "id": "S31",
+          "category": "usage_step",
+          "evidence": "Recharge in sunlight for a few hours each month with regular use."
+        },
+        {
+          "id": "S32",
+          "category": "product_fact",
+          "evidence": "Reusable for up to 1,000 washes."
+        },
+        {
+          "id": "S33",
+          "category": "usage_step",
+          "evidence": "empty the contents into waste and outer ball can be recycled"
+        }
+      ],
+      "unsupported": [
+        {
+          "text": "The packaging for this ball recommends a cold wash.",
+          "problem": "quoted evidence not found in product data or merchant facts",
+          "category": "product_fact"
+        }
+      ],
+      "risky": [],
+      "leaks": [
+        {
+          "text": "There is no leaflet, but it won't fit in the detergent draw so it can be inferred that it goes in with the clothes",
+          "problem": "Reveals that the product has no leaflet/instructions and that placement is only inferred, undermining the product and exposing article sourcing."
+        }
+      ],
+      "missing": []
     }
   ]
 }

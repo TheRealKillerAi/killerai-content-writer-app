@@ -1,89 +1,92 @@
 # How to Clean a Menstrual Cup: Daily Care and Between-Cycle Sterilising
 
-**TL;DR:** Cleaning a menstrual cup is simple: rinse with cold water and wash with mild, unscented, water-based soap after each removal, then sterilise in boiling water for three to five minutes between cycles. Always follow the instructions that come with your cup, and stop if you feel pain or discomfort.
+**TL;DR:**  For daily care, rinse in cold water, wash with a mild unscented water-based soap, clear the suction holes and rinse away all soap residue. Between cycles, boil it for three to five minutes, keeping it off the base of the pot. Skip bleach, vinegar, tea tree oil, hydrogen peroxide, antibacterial soaps and harsh rubbing alcohol. Your cup's own instructions remain the final word.
 
-## Why cleaning matters
+## The short answer
 
-This cup can be worn for up to eight hours before removal and cleaning, so keeping it clean is part of the routine. The good news is that the routine is straightforward once you know the steps. If you use a different cup, check its own instructions, as cleaning advice can vary.
+A menstrual cup is cleaned in two ways, depending on where you are in your cycle.
 
-## What do you need to clean a menstrual cup?
+- **Each time you empty it:** rinse with cold water, wash with a mild, unscented, water-based soap, clear the suction holes, then rinse away all soap residue.
+- **Between cycles:** sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot.
 
-You don't need a cupboard full of special products.
+If anything in this article differs from the leaflet in your box, follow the leaflet.
 
-- Cold water for rinsing
-- Mild, unscented, water-based soap
-- A small pot for boiling water (for sterilising between cycles)
-- Clean hands before you start
+## Why does the cup need both a wash and a sterilise?
 
-That's it. No fancy cleansers or scented washes are needed, and some products should be avoided altogether (more on that below).
+The daily routine handles that.
 
-## How do you clean your cup during your period?
+It helps to think of the daily wash as maintenance and the sterilise as the reset at the end of each cycle. Both are part of the care routine the instructions describe, and doing them in the order above keeps things simple.
 
-The daily routine is quick and can be done in a bathroom sink. After removing the cup, follow these steps:
+## What do I need on hand?
 
-1. Rinse the cup with cold water. Cold water helps prevent stains and odours from setting in.
-2. Wash it with mild, unscented, water-based soap. A little goes a long way.
-3. Clear the suction holes. These small holes near the rim can trap residue, so give them a quick check and rinse.
-4. Rinse away all soap residue thoroughly. Soap left behind can irritate sensitive skin.
+Nothing elaborate. For the between-cycle sterilise you need a pot of boiling water and a way to keep the cup off the bottom of the pot.
 
-Once it's clean, you can reinsert it or set it aside to dry. The cup can be worn for up to eight hours before removal and cleaning, so you'll typically do this routine in the morning and evening.
+## How do I wash the cup during my period?
 
-## What should you avoid when cleaning your cup?
+1. Rinse the cup with cold water.
+3. Clear the suction holes.
+4. Rinse away all soap residue.
 
--
+That's the whole daily routine.
+
+## What should I avoid using on a menstrual cup?
+
+Things to keep away from the cup:
+
+- Bleach
 - Vinegar
 - Tea tree oil
 - Hydrogen peroxide
 - Antibacterial soaps
 - Harsh rubbing alcohol
 
-These can damage the silicone or leave irritating residues. If you're unsure about a particular cleaner, it's best to leave it out.
+It's a useful list to keep in mind, because some of these are the kind of thing you might reach for out of habit when you want something cleaned thoroughly. For this cup, mild and unscented is the approach the instructions describe.
 
-## How do you sterilise your cup between cycles?
+## How do I sterilise between cycles?
 
-At the end of your period, give the cup a deeper clean. The manual says to sterilise it in boiling water for three to five minutes.
+That's worth reading before you need it, so you know your options ahead of time rather than working it out mid-cycle.
 
-If you don't have a pot handy, the manual also gives guidance on sterilising without one. Check the instructions that come with your cup for those alternatives, as methods and timings can differ.
+## Where does the cup go between cycles?
 
-## How should you store your cup?
+Each cup comes with a cotton storage pouch, and the pouch is machine washable.
 
-Each cup comes with a cotton storage pouch, which is machine washable. Store it somewhere cool and dry, away from direct sunlight.
+## Is a menstrual cup for everyone?
 
-## How often should you replace your cup?
+A cup has a learning curve: insertion and removal take practice, and comfort varies from person to person. Some people find they prefer pads, period underwear or tampons, and that's a fair choice too.
 
-With proper care, this cup has a typical lifespan of 5 to 10 years. When in doubt, replacing it is the safer choice.
+If you try a cup and experience pain, stop. Speak to a qualified health professional if something doesn't feel right or you're unsure whether a cup suits you.
 
-## What else is worth knowing?
+## What else is worth knowing about this cup?
 
-A few practical points can make cleaning easier:
+A few practical details, so you know what you're working with:
 
-- Wash your hands before and after handling the cup.
-- Empty and clean the cup at least every eight hours.
-- If you're in a public bathroom, you can wipe the cup with a clean tissue or rinse it with water and reinsert, then do a proper wash when you get home.
-- The cup is suitable for swimming and exercise when correctly inserted, but always clean it after removal.
+- Small holds roughly 15 ml; Large holds approximately 28–30 ml.
+- It can be worn for up to eight hours before removing and cleaning.
+- It's suitable for swimming and exercise when correctly inserted.
+- With proper care, the typical lifespan is 5 to 10 years.
+- Each cup includes a storage pouch and an instruction manual.
 
-## When to stop and seek help
-
-If you experience pain, discomfort, or unusual symptoms while using your cup, stop using it and speak to a qualified health professional. Cleaning routines can reduce the risk of irritation, but they aren't a substitute for medical advice.
+It comes in Blue, Pink, Purple and Clear, in Small and Large.
 
 ## Ready to explore?
 
-It's available in Small (roughly 15 ml) and Large (approximately 28–30 ml), in four colours.
+If the routine above sounds manageable, you can take a closer look at the {{PRODUCT_URL}} here. There's no rush, and you stay in control of whether a cup is right for you.
 
-Remember, you're in control. Take your time, follow the instructions, and choose the routine that feels right for you.
-
-*This article is general information only and is not medical advice. Always follow the instructions supplied with your product and consult a qualified health professional if you have concerns.*
+*This article is general information only and is not medical advice. Follow the instructions supplied with your cup.*
 
 ## Frequently asked questions
 
-**Can I use scented soap to clean my menstrual cup?**
-No. The instructions for this cup specify mild, unscented, water-based soap. Scented products can leave residues that may irritate sensitive skin.
+**How often should I wash my menstrual cup?**
+Wash it each time you remove and empty it during your period, using the daily routine: rinse with cold water, wash with a mild unscented water-based soap, clear the suction holes and rinse away all soap residue. The cup can be worn for up to eight hours before removing and cleaning.
 
-**How long should I boil my cup to sterilise it?**
-The manual says to sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot. Always check the instructions that come with your cup for the exact method.
+**Can I use antibacterial soap on my cup?**
+No. The instructions for this cup list antibacterial soaps among the things to avoid, along with bleach, vinegar, tea tree oil, hydrogen peroxide and harsh rubbing alcohol. Stick with a mild, unscented, water-based soap.
 
-**How often should I replace my menstrual cup?**
-With proper care, this cup has a typical lifespan of 5 to 10 years. 
+**How long do I boil the cup between cycles?**
+Sterilise in boiling water for three to five minutes, keeping the cup away from the base of the pot. 
 
-**Can I clean my cup in the microwave?**
- Check the instructions that come with your cup for microwave or alternative sterilising options.
+**How should I store the cup after sterilising?**
+Each cup comes with a cotton storage pouch, which is machine washable. 
+
+**What if using the cup hurts?**
+Stop if you experience pain. A cup has a learning curve and comfort varies between people, so speak to a qualified health professional if something doesn't feel right or you're unsure whether a cup suits you.

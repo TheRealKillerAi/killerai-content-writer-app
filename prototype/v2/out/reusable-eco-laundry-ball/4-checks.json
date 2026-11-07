@@ -1,11 +1,13 @@
 {
-  "words": 453,
+  "words": 616,
   "h2": 9,
   "productLinks": 1,
-  "issues": [],
+  "issues": [
+    "an empty section heading"
+  ],
   "similarity": {
-    "sharedSevenWordRuns": 8,
-    "example": "recharge it in sunlight for a few"
+    "sharedSevenWordRuns": 9,
+    "example": "in sunlight for a few hours each"
   },
   "status": "NEEDS REVIEW"
 }

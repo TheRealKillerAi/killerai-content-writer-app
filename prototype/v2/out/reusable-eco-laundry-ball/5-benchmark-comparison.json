@@ -1,11 +1,11 @@
 {
   "new": {
-    "reader_usefulness": 3,
-    "honesty_about_tradeoffs": 3,
-    "voice_and_tone": 2,
-    "structure_and_scannability": 3,
-    "search_intent_coverage": 3,
-    "caution_with_claims": 3
+    "reader_usefulness": 4,
+    "honesty_about_tradeoffs": 4,
+    "voice_and_tone": 4,
+    "structure_and_scannability": 5,
+    "search_intent_coverage": 4,
+    "caution_with_claims": 4
   },
   "benchmarks": [
     {
@@ -20,22 +20,22 @@
     {
       "name": "voice/benchmark-laundry-post.txt",
       "reader_usefulness": 4,
-      "honesty_about_tradeoffs": 4,
+      "honesty_about_tradeoffs": 3,
       "voice_and_tone": 5,
       "structure_and_scannability": 4,
       "search_intent_coverage": 4,
       "caution_with_claims": 3
     }
   ],
-  "verdict": "worse",
+  "verdict": "similar",
   "biggest_gaps": [
-    "Empty/broken sections: 'What temperature should you use?' and a trade-off bullet are blank, leaving unanswered questions and a visible formatting error that undermines trust and usefulness.",
-    "Voice is thin and mechanical compared to benchmarks — no context, no 'why it matters', no real-world framing (e.g. what to expect on first loads, sensitive skin, scent/feel differences beyond one line).",
-    "Trade-offs and caution are underdeveloped: benchmarks name who it suits/doesn't, note heavy soiling limits, and avoid overpromising; the new article lists trade-offs but doesn't explain them or set expectations about cleaning performance."
+    "The new article is a how-to but never explains the 'why' behind steps (e.g. why cold wash, why pre-treat, why drum not drawer beyond 'too big') — the cup benchmark consistently explains the reasoning behind each instruction, which builds trust and usefulness.",
+    "Trade-offs section is thin and generic ('first few loads may feel odd'); the benchmarks name concrete scenarios (heavily soiled footy gear, oil stains, sensitive skin, hard water) so readers can self-qualify. Add specific load types where the ball underperforms.",
+    "No sourcing or caution framing. The cup benchmark cites a systematic review and TGA guidance and adds a 'general information only, not medical advice' line; the laundry benchmark at least quantifies the problem (10–13 bottles/year). The new article asserts 'natural minerals clean' with no supporting context or caveat about what 'natural minerals' means."
   ],
   "what_new_does_well": [
-    "Clear, scannable step-by-step structure with FAQ block that maps well to search intent.",
-    "Honest, plain-language trade-off section and a sensible 'try one load' invitation rather than hard sell.",
-    "Sticks to supplied product facts (4 kg, two balls for larger loads, monthly sunlight recharge) without inventing claims."
+    "Excellent scannability: question-based H2s, a clean one-ball/two-ball table, and a FAQ block that directly mirrors likely search queries.",
+    "Honest, non-pushy framing — explicitly says the product may not suit people who want fragrance/softener and that this 'is fine', matching the benchmarks' no-pressure tone.",
+    "Accurate, disciplined use of supplied product facts (4 kg, 1,000 washes, sunlight recharge, recyclable outer ball) without inventing claims or dollar savings."
   ]
 }

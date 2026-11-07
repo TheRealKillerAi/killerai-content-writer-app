@@ -3,8 +3,8 @@
     "reader_usefulness": 4,
     "honesty_about_tradeoffs": 3,
     "voice_and_tone": 4,
-    "structure_and_scannability": 5,
-    "search_intent_coverage": 5,
+    "structure_and_scannability": 4,
+    "search_intent_coverage": 4,
     "caution_with_claims": 4
   },
   "benchmarks": [
@@ -20,13 +20,13 @@
   ],
   "verdict": "similar",
   "biggest_gaps": [
-    "The new article lacks the benchmark's explicit acknowledgment that a menstrual cup isn't for everyone and that a learning curve is normal; it could add a sentence about comfort with insertion/removal and that it's okay to use other products.",
-    "The new article doesn't mention that cleaning requires access to clean water and a private place, which is a practical trade-off the benchmark covers.",
-    "The new article's FAQ section is good but could include a question about whether the cup can be used with an IUD or if there are health considerations, as the benchmark does."
+    "The new article's 'Why does the cup need both a wash and a sterilise?' section is vague and doesn't explain the purpose of each step, unlike the benchmark's clear explanation of trade-offs.",
+    "The new article lacks a balanced comparison of cup use versus other period products, which the benchmark includes to help readers make an informed choice.",
+    "The new article's 'How do I sterilise between cycles?' section is incomplete—it only says 'That's worth reading before you need it' without actually describing the sterilising process, which is a key search intent."
   ],
   "what_new_does_well": [
-    "Clear, step-by-step cleaning instructions with a logical flow from daily care to sterilising to storage.",
-    "Strong structure with headings, bullet points, and a FAQ that directly answers common search queries.",
-    "Appropriate caution about avoiding certain cleaners and seeking medical advice for pain or discomfort."
+    "The new article is tightly focused on cleaning and sterilising, directly addressing search intent with clear, step-by-step instructions.",
+    "It includes a concise FAQ section that answers common questions, improving scannability and reader usefulness.",
+    "The tone is supportive and cautious, with appropriate disclaimers and encouragement to follow product instructions."
   ]
 }

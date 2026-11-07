@@ -1,65 +1,70 @@
-# How to Use a Reusable Laundry Ball: A Simple Step-by-Step Guide
+# How to Use a Laundry Ball: A Simple Guide for Everyday Loads
 
-**TL;DR:**  For larger loads, use two balls; for stains, pre-treat first. 
+**TL;DR:** Put the ball in the drum with your clothes, not in the detergent drawer. Use one ball for a 4 kg wash and two balls for loads over 4 kg, wash cold, pre-treat any stains first, and recharge the ball in sunlight for a few hours each month with regular use. This guide walks through each step for the Reusable Eco Laundry Ball, which is reusable for up to 1,000 washes.
 
-## The short answer
+## Where does the laundry ball actually go?
 
-That's it. No detergent, no fragrance, no fabric softener.
+In the drum, with the clothes.
 
-If you're wondering whether a laundry ball could simplify your routine, the practical steps below are a good place to start.
+## How many balls does one load need?
 
-## Where does the ball go?
+The Reusable Eco Laundry Ball is sized for a 4 kg wash — one ball per 4 kg load. For loads over 4 kg, use two balls.
 
-The ball goes in the drum with your clothes. It won't fit in the detergent drawer, so there's no need to try.
+A quick way to think about it:
 
-## How much laundry does one ball handle?
+- **Up to 4 kg:** one ball.
+- **Over 4 kg:** two balls.
 
-One ball is designed for a 4 kg wash. If your load is heavier than that, use two balls. This keeps the wash simple without guessing.
+## What temperature should you wash at?
 
-## What about detergent and other products?
+Cold. The packaging for this ball recommends a cold wash.
 
-The ball uses natural minerals to clean, so you don't add detergent, fragrance or fabric softener. If you're used to a particular detergent, you may notice the difference in scent or feel — that's expected with a mineral-based approach.
+If a particular garment has its own care label instructions, those still apply.
 
-## What temperature should you use?
+## What about stains and heavily soiled loads?
 
-## What do you do for stains or heavily soiled loads?
+Pre-treat stains before the wash.
 
-Pre-treat stains before washing. For loads over 4 kg, use two balls.
+Beyond that, follow any instructions that come with the product and the care labels on your garments.
+
+## How does the ball clean without detergent?
+
+The ball uses natural minerals to clean, without added detergent, fragrance or fabric softener. It is a refillable design.
+
+A mineral-based ball suits regular, everyday loads. If you like a strong scent on your washing or rely on softener, this may not be the product for you, and that is fine.
 
 ## How do you look after the ball?
 
 Recharge it in sunlight for a few hours each month with regular use.
 
-## What are the trade-offs?
+When the ball reaches the end of its life — up to 1,000 washes — empty the contents into waste, and the outer ball can be recycled where suitable facilities accept it.
 
-- **It won't suit every load.** If you rely on fragrance or fabric softener, you'll miss those.
-- **Stains need attention.**
-- ****
-- **Monthly recharge.** It's a small task, but it's a task.
+## The trade-offs, plainly
 
-If you're weighing up whether a laundry ball fits your household, these points are worth considering honestly.
+- **Learning curve:** you are changing a habit, and the first few loads may feel odd without a scoop or a bottle.
+- **No added extras:** there is no fragrance or fabric softener built in.
+- **Monthly sunlight:** the ball needs a few hours in the sun each month with regular use.
 
-## Ready to simplify your wash day?
+## Could a laundry ball fit your routine?
 
-If the steps above sound manageable, the [Reusable Eco Laundry Ball]({{PRODUCT_URL}}) is an option for regular loads.
+The useful question is not whether a laundry ball is better than everything else — it is whether it suits the way you wash. If your loads are mostly everyday clothing, you are happy to wash cold, and you like the idea of one refillable item instead of repeat bottles, it can be a straightforward swap.
 
-You stay in control: try it with one load, see how it goes, and adjust from there.
+If you rely on fragrance, softener or a heavy-duty stain product in every load, a mineral ball alone may leave you wanting more.
 
-> General information only. This article doesn't replace advice from a qualified professional. Stop using the product if you experience any irritation or discomfort and speak to a health professional if you have concerns.
+## Ready to explore?
+
+If the steps above sound workable, you can read more about the {{PRODUCT_URL}} and check it against your usual wash routine. It is reusable for up to 1,000 washes and refillable.
 
 ## Frequently asked questions
 
 **Does the laundry ball go in the drum or the detergent drawer?**
-Put it in the drum with your clothes. It won't fit in the detergent drawer.
+In the drum, with the clothes. It is too big for the detergent drawer.
 
-**How many balls do I need for a large load?**
-One ball is for a 4 kg wash. For loads over 4 kg, use two balls.
+**How many laundry balls do I need for a large load?**
+One ball covers a 4 kg wash. For loads over 4 kg, use two balls.
 
-**Do I still need detergent?**
-No. The ball uses natural minerals and is designed to clean without added detergent, fragrance or fabric softener.
+**How do I recharge the laundry ball?**
+Place it in sunlight for a few hours each month with regular use.
 
-**How often do I need to recharge the ball?**
-Recharge it in sunlight for a few hours each month with regular use.
-
-**What should I do for stained clothes?**
-Pre-treat stains before washing. 
+**What should I do with the ball at the end of its life?**
+It is reusable for up to 1,000 washes. When it is finished, empty the contents into waste, and the outer ball can be recycled where suitable facilities accept it.
