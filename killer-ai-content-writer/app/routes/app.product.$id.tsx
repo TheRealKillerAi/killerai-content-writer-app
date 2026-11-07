@@ -268,6 +268,8 @@ export default function ProductPage() {
   }, [questionsF.data]);
 
   const q = questionsF.data;
+  const step = chosen ? 2 : 1;
+  const [selected, setSelected] = useState<number | null>(null);
 
   // After answers are saved, automatically re-check whether anything else is missing for this angle.
   useEffect(() => {
@@ -288,51 +290,28 @@ export default function ProductPage() {
         {angles.length ? "Refresh article angles" : "Find article angles"}
       </s-button>
 
-      {chosen ? (
-        <s-section heading="Ready to write">
-          <s-stack direction="block" gap="base">
-            <s-text>
-              Chosen angle: <strong>{chosen.working_title}</strong>
-            </s-text>
-            <s-stack direction="inline" gap="small">
-              <s-button
-                {...(clearF.state !== "idle" ? { loading: true } : {})}
-                onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
-              >
-                ← Choose a different angle
-              </s-button>
-              <s-button
-                variant="primary"
-                {...(writeF.state !== "idle" ? { loading: true } : {})}
-                onClick={() => writeF.submit({ intent: "write", angle: JSON.stringify(chosen) }, { method: "POST" })}
-              >
-                Write this article
-              </s-button>
+      <s-banner tone="info" heading={step === 1 ? "Step 1 of 3: choose an angle" : "Step 2 of 3: check your facts"}>
+        {step === 1
+          ? angles.length
+            ? "Select the angle you want to write about, then press Continue."
+            : 'Click "Find article angles" (top right). We suggest what shoppers search for, based on your product facts.'
+          : "Add anything we're missing below (or skip), then press Continue to write the article."}
+      </s-banner>
+
+      {step === 2 && chosen ? (
+        <s-section heading="Your chosen angle">
+          <s-stack direction="block" gap="small">
+            <s-text><strong>{chosen.working_title}</strong></s-text>
+            <s-stack direction="inline">
               <s-button
                 {...(questionsBusy ? { loading: true } : {})}
                 onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" })}
               >
-                Check for missing facts first
+                Check for missing facts
               </s-button>
             </s-stack>
-            <s-text color="subdued">
-              Changed your mind? Go back and pick another angle from the list below. Only facts you've given us are used; anything
-              you marked "don't know" is left out.
-            </s-text>
           </s-stack>
         </s-section>
-      ) : null}
-
-      {!chosen && !angles.length ? (
-        <s-banner tone="info" heading="Step 1: find article angles">
-          Click "Find article angles" (top right). We'll suggest what shoppers are searching for, based on your product
-          facts. You then choose one, tell us anything we're missing, and we write it.
-        </s-banner>
-      ) : null}
-      {!chosen && angles.length ? (
-        <s-banner tone="info" heading="Step 2: choose an angle">
-          Pick one of the suggested angles below to continue.
-        </s-banner>
       ) : null}
 
       <s-section heading="What we know about this product">
@@ -374,11 +353,10 @@ export default function ProductPage() {
         <s-banner tone="critical" heading="We couldn't find angles">{anglesF.data.error}</s-banner>
       ) : null}
 
-      {angles.length ? (
+      {step === 1 && angles.length ? (
         <s-section heading="Suggested article angles">
           <s-paragraph>
-            These are AI suggestions based on your product facts. They are not measured search volumes. Choose one to
-            continue.
+            These are AI suggestions based on your product facts. They are not measured search volumes.
           </s-paragraph>
           <s-stack direction="block" gap="base">
             {angles.map((a, i) => (
@@ -397,13 +375,10 @@ export default function ProductPage() {
                   {a.needs_info?.length ? <s-text>Would be better with: {a.needs_info.join("; ")}</s-text> : null}
                   <s-stack direction="inline">
                     <s-button
-                      variant="primary"
-                      {...(questionsBusy ? { disabled: true } : {})}
-                      onClick={() =>
-                        questionsF.submit({ intent: "questions", angle: JSON.stringify(a) }, { method: "POST" })
-                      }
+                      variant={selected === i ? "primary" : "secondary"}
+                      onClick={() => setSelected(i)}
                     >
-                      Choose this angle
+                      {selected === i ? "Selected ✓" : "Select this angle"}
                     </s-button>
                   </s-stack>
                 </s-stack>
@@ -421,7 +396,7 @@ export default function ProductPage() {
 
       <div ref={questionsRef} style={{ scrollMarginTop: 90 }} />
       {q?.error ? <s-banner tone="critical" heading="We couldn't prepare the questions">{q.error}</s-banner> : null}
-      {q?.angle && !q.error ? (
+      {step === 2 && q?.angle && !q.error ? (
         <s-section heading={`Before we write: ${q.angle.working_title}`}>
           {saveF.data?.saved ? (
             <s-banner tone="success" heading="Saved">
@@ -440,6 +415,42 @@ export default function ProductPage() {
           />
         </s-section>
       ) : null}
+
+      <s-section>
+        <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+          {step === 1 ? (
+            <s-button href="/app">← Back to products</s-button>
+          ) : (
+            <s-button
+              {...(clearF.state !== "idle" ? { loading: true } : {})}
+              onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
+            >
+              ← Back to angles
+            </s-button>
+          )}
+          {step === 1 ? (
+            <s-button
+              variant="primary"
+              {...(selected === null || !angles.length ? { disabled: true } : {})}
+              {...(questionsBusy ? { loading: true } : {})}
+              onClick={() =>
+                selected !== null &&
+                questionsF.submit({ intent: "questions", angle: JSON.stringify(angles[selected]) }, { method: "POST" })
+              }
+            >
+              Continue →
+            </s-button>
+          ) : (
+            <s-button
+              variant="primary"
+              {...(writeF.state !== "idle" ? { loading: true } : {})}
+              onClick={() => chosen && writeF.submit({ intent: "write", angle: JSON.stringify(chosen) }, { method: "POST" })}
+            >
+              Continue: write the article →
+            </s-button>
+          )}
+        </s-stack>
+      </s-section>
     </s-page>
   );
 }
