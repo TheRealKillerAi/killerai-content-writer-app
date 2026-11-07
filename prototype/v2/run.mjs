@@ -2,6 +2,7 @@
 // Optional merchant answers: inputs/answers/<handle>.json  (a JSON object of question -> answer)
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { chat } from "./llm.mjs";
+const judgeP = await readFile(new URL("./prompts/judge.md", import.meta.url), "utf8");
 import { runChecks, loadReference, articleText } from "./checks.mjs";
 const here = (p) => new URL(p, import.meta.url);
 const args = process.argv.slice(2);
@@ -12,7 +13,8 @@ const [anglesP, writerP, auditP, fixerP, voice, existing] = await Promise.all(
   ["prompts/angles.md", "prompts/writer.md", "prompts/auditor.md", "prompts/fixer.md", "voice/zwc-voice.md", "inputs/existing-articles.json"].map((p) => readFile(here(p), "utf8")),
 );
 const answers = await readFile(here(`inputs/answers/${product.handle.slice(0, 40)}.json`), "utf8").catch(() => "{}");
-const ref = await loadReference();
+const benchFiles = JSON.parse(await readFile(here("inputs/benchmarks.json"), "utf8"))[product.handle.slice(0, 40)] || [];
+const ref = await loadReference(benchFiles);
 const dir = `out/${product.handle.slice(0, 40)}`;
 await mkdir(here(`./${dir}/`), { recursive: true });
 const save = (name, obj) => writeFile(here(`./${dir}/${name}`), typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
@@ -66,8 +68,21 @@ await save("2-article.json", article);
 await save("3-audit.json", { final: report, history });
 await save("4-checks.json", { ...checks, status });
 await save("article.md", `# ${article.h1}\n\n**TL;DR:** ${article.tldr}\n\n${article.body_markdown}\n\n## Frequently asked questions\n\n${article.faq.map((f) => `**${f.q}**\n${f.a}`).join("\n\n")}\n`);
-console.log(`5/5 Done. STATUS: ${status}`);
+let cmp = null;
+if (benchFiles.length) {
+  console.log("5/5 Comparing with your benchmark post(s)...");
+  const refs = await Promise.all(benchFiles.map(async (f) => `--- BENCHMARK: ${f}\n${await readFile(here(f), "utf8")}`));
+  cmp = await call(judgeP, `${refs.join("\n\n")}\n\n--- NEW ARTICLE\n${articleText(article)}\n\nPRODUCT DATA\n${pd}`, 0);
+  await save("5-benchmark-comparison.json", cmp);
+}
+console.log(`Done. STATUS: ${status}`);
 console.log(`Words: ${checks.words} | audit problems left: ${remaining} | tokens: ${tokens}`);
 [...report.unsupported, ...report.risky, ...report.leaks].forEach((x) => console.log(` - AUDIT: ${(x.text || "").slice(0, 110)} -> ${(x.problem || "").slice(0, 90)}`));
 checks.issues.forEach((i) => console.log(` - CHECK: ${i}`));
+console.log(`Similarity to benchmark (information only): ${checks.similarity.sharedSevenWordRuns} shared 7-word runs`);
+if (cmp) {
+  const avg = (o) => (Object.values(o).filter((v) => typeof v === "number").reduce((a, b) => a + b, 0) / 6).toFixed(1);
+  console.log(`Benchmark comparison: ${cmp.verdict.toUpperCase()} | new ${avg(cmp.new)}/5 vs ` + cmp.benchmarks.map((b) => `${b.name.split("/").pop()} ${avg(b)}/5`).join(", "));
+  (cmp.biggest_gaps || []).forEach((g) => console.log(` - GAP: ${g}`));
+}
 console.log(`Files in prototype/v2/${dir}/`);

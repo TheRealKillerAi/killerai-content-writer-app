@@ -17,5 +17,5 @@ Results: `out/<product>/article.md` (read this), plus `1-angles.json`, `2-articl
 - Angles carry `answerable_from_data` and `needs_outside_evidence`; the default pick is the most answerable angle (override with `--angle N`).
 - Optional merchant answers: `inputs/answers/<handle>.json` ({"question": "answer"}). Treated as source of truth, like product data. This models the free plan asking the merchant.
 - Audit then surgical fix (edit only the flagged sentences), up to 2 rounds, then re-audit. Never rewrites the whole article.
-- Code checks now also flag wording copied from your earlier post (7-word runs) and Sources sections with no real sources.
+- Code checks flag Sources sections with no real sources, leaked wording, links, lengths. Similarity to your benchmark posts is reported for information only, and a judge step scores the new article against them (better/similar/worse).
 - Final status: READY FOR MERCHANT APPROVAL or NEEDS REVIEW.
