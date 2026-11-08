@@ -5,7 +5,7 @@ export type TldrStyle = {
   tldrBg: string;
   tldrText: string;
   tldrCorners: "rounded" | "square";
-  tldrSize: "normal" | "large" | "xl";
+  tldrFontSize: number; // px
   tldrFont: "theme" | "serif" | "sans" | "mono";
 };
 
@@ -15,17 +15,18 @@ export const TLDR_DEFAULTS: TldrStyle = {
   tldrBg: "#f4f4f5",
   tldrText: "#1a1a1a",
   tldrCorners: "rounded",
-  tldrSize: "normal",
+  tldrFontSize: 16,
   tldrFont: "theme",
 };
 
-const SIZES = { normal: "1em", large: "1.15em", xl: "1.3em" } as const;
 const FONTS = {
   theme: "",
   serif: "font-family:Georgia,'Times New Roman',serif;",
   sans: "font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;",
   mono: 'font-family:ui-monospace,Menlo,Consolas,monospace;',
 } as const;
+
+export const clampPx = (n: number) => (Number.isFinite(n) ? Math.min(48, Math.max(10, Math.round(n))) : TLDR_DEFAULTS.tldrFontSize);
 
 export const isHex = (v: string) => /^#[0-9a-fA-F]{6}$/.test(v);
 
@@ -36,7 +37,7 @@ export function tldrBoxStyle(s: TldrStyle): string {
   const fg = isHex(s.tldrText) ? s.tldrText : TLDR_DEFAULTS.tldrText;
   return (
     `background-color:${bg};color:${fg};border-radius:${s.tldrCorners === "square" ? "0" : "12px"};` +
-    `padding:18px 22px;margin:0 0 24px;font-size:${SIZES[s.tldrSize] ?? "1em"};line-height:1.55;${FONTS[s.tldrFont] ?? ""}`
+    `padding:18px 22px;margin:0 0 24px;font-size:${clampPx(s.tldrFontSize)}px;line-height:1.55;${FONTS[s.tldrFont] ?? ""}`
   );
 }
 

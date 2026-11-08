@@ -65,7 +65,7 @@ export default function Settings() {
     tldrBg: s.tldrBg,
     tldrText: s.tldrText,
     tldrCorners: s.tldrCorners,
-    tldrSize: s.tldrSize,
+    tldrFontSize: s.tldrFontSize,
     tldrFont: s.tldrFont,
   });
   const setP = (patch: Partial<TldrStyle>) => setPv((p) => ({ ...p, ...patch }));
@@ -217,16 +217,17 @@ export default function Settings() {
                 <s-option value="rounded">Rounded</s-option>
                 <s-option value="square">Square</s-option>
               </s-select>
-              <s-select
-                name="tldrSize"
-                label="Text size"
-                value={s.tldrSize}
-                onChange={(e) => setP({ tldrSize: val(e as unknown as Event) as TldrStyle["tldrSize"] })}
-              >
-                <s-option value="normal">Normal</s-option>
-                <s-option value="large">Large</s-option>
-                <s-option value="xl">Extra large</s-option>
-              </s-select>
+              <s-number-field
+                name="tldrFontSize"
+                label="Font size (px)"
+                details="Between 10 and 48. Most themes use about 16."
+                min={10}
+                max={48}
+                step={1}
+                value={String(s.tldrFontSize)}
+                onInput={(e) => setP({ tldrFontSize: Number(val(e as unknown as Event)) || 16 })}
+                onChange={(e) => setP({ tldrFontSize: Number(val(e as unknown as Event)) || 16 })}
+              />
               <s-select
                 name="tldrFont"
                 label="Font"

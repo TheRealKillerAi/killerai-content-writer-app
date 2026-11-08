@@ -8,9 +8,8 @@ import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, productImages, type ProductImage } from "../lib/products.server";
-import { tldrHtml } from "../lib/tldr";
 import type { AppSettings } from "../lib/settings";
-import { renderMarkdown } from "../lib/markdown";
+import { buildBodyHtml } from "../lib/articleHtml";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -27,13 +26,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       tldrBg: settings.tldrBg,
       tldrText: settings.tldrText,
       tldrCorners: settings.tldrCorners,
-      tldrSize: settings.tldrSize,
+      tldrFontSize: settings.tldrFontSize,
       tldrFont: settings.tldrFont,
     },
     article,
     handle: product?.facts.handle ?? "",
     productTitle: product?.facts.title ?? "",
     publishMode: settings.publishMode,
+    toc: settings.toc,
+    author: settings.defaultAuthor.trim() || settings.businessName,
     store: session.shop.replace(".myshopify.com", ""),
   };
 };
@@ -92,9 +93,15 @@ function ArticleReview({
   store,
   images,
   tldrStyle,
+  toc,
+  author,
+  handle,
 }: {
   images: ProductImage[];
-  tldrStyle: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrSize" | "tldrFont">;
+  toc: boolean;
+  author: string;
+  handle: string;
+  tldrStyle: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrFontSize" | "tldrFont">;
   r: ArticleResult;
   back: string;
   productTitle: string;
@@ -111,6 +118,7 @@ function ArticleReview({
     sendF.submit({ intent: "send", mode }, { method: "POST" });
   };
   const adminUrl = sent ? `https://admin.shopify.com/store/${store}/content/articles/${sent.id.split("/").pop()}` : "";
+  const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [draft, setDraft] = useState<Article>(r.article);
   const dirty = setOf(draft) !== setOf(r.article);
   const saving = fetcher.state !== "idle";
@@ -161,60 +169,15 @@ function ArticleReview({
       {sendF.data?.error ? <s-banner tone="critical" heading="We couldn't send it to Shopify">{sendF.data.error}</s-banner> : null}
       {sendF.data?.warning ? <s-banner tone="warning">{sendF.data.warning}</s-banner> : null}
 
-      <s-section heading="Send to your Shopify blog">
-        {sent ? (
-          <s-stack direction="block" gap="base">
-            <s-stack direction="inline" gap="small" alignItems="center">
-              <s-badge tone={sent.published ? "success" : "info"}>{sent.published ? "Published" : "Draft"}</s-badge>
-              <s-text>
-                {sent.published ? "This article is live on your blog." : "This article is saved as a draft in your blog."}
-              </s-text>
-            </s-stack>
-            <s-stack direction="inline" gap="small">
-              <s-button href={adminUrl} target="_blank">Open in Shopify</s-button>
-              {sent.url ? <s-button href={sent.url} target="_blank">View on your store</s-button> : null}
-              <s-button
-                {...(sending ? { loading: true } : {})}
-                {...(dirty ? { disabled: true } : {})}
-                onClick={() => sendF.submit({ intent: "update", mode: sent.published ? "live" : "draft" }, { method: "POST" })}
-              >
-                Update in Shopify with my latest edits
-              </s-button>
-            </s-stack>
-            {dirty ? <s-text color="subdued">Save your changes first, then update Shopify.</s-text> : null}
-          </s-stack>
-        ) : (
-          <s-stack direction="block" gap="base">
-            <s-paragraph>
-              {publishMode === "draft"
-                ? "Your settings send articles to Shopify as drafts, so nothing goes live until you publish it."
-                : "Your settings publish articles straight away."}
-            </s-paragraph>
-            <s-stack direction="inline" gap="small">
-              <s-button
-                variant="primary"
-                {...(sending ? { loading: true } : {})}
-                {...(dirty ? { disabled: true } : {})}
-                onClick={() => send(publishMode)}
-              >
-                {publishMode === "draft" ? "Save as draft in Shopify" : "Publish to my blog"}
-              </s-button>
-              <s-button {...(sending ? { disabled: true } : {})} {...(dirty ? { disabled: true } : {})} onClick={() => send(publishMode === "draft" ? "live" : "draft")}>
-                {publishMode === "draft" ? "Publish now instead" : "Save as draft instead"}
-              </s-button>
-            </s-stack>
-            {dirty ? <s-text color="subdued">Save your changes first, then send.</s-text> : null}
-            {!img?.url ? <s-text color="subdued">Reminder: this article has no featured image yet (see "Featured image" below).</s-text> : null}
-          </s-stack>
-        )}
+      <s-section>
+        <s-stack direction="inline" gap="small">
+          <s-button variant={tab === "edit" ? "primary" : "secondary"} onClick={() => setTab("edit")}>Edit</s-button>
+          <s-button variant={tab === "preview" ? "primary" : "secondary"} onClick={() => setTab("preview")}>Preview</s-button>
+        </s-stack>
       </s-section>
 
-      {r.edited && !dirty ? (
-        <s-banner tone="info" heading="Your edits are saved">
-          We re-run our format checks after you save, but we don't fact-check your own changes.
-        </s-banner>
-      ) : null}
-
+      {tab === "edit" ? (
+      <>
       {r.remaining.length || r.issues.length ? (
         <s-section heading="Things to check">
           <s-stack direction="block" gap="small">
@@ -239,93 +202,6 @@ function ArticleReview({
           </s-stack>
         </s-section>
       ) : null}
-
-      <s-section heading="Featured image">
-        <s-stack direction="block" gap="base">
-          {!img?.url ? (
-            <s-banner tone="warning" heading="This article has no featured image yet">
-              Articles with a picture look better on your blog and when shared. Choose one below, or add one in Shopify
-              after sending.
-            </s-banner>
-          ) : null}
-          {images.length ? (
-            <s-stack direction="block" gap="small">
-              <s-text><strong>Choose from this product's photos</strong></s-text>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-                {images.map((im) => (
-                  <button
-                    key={im.url}
-                    type="button"
-                    onClick={() => set("featured_image", { url: im.url, alt: img?.url === im.url ? img.alt : im.alt || productTitle })}
-                    style={{
-                      padding: 2,
-                      border: img?.url === im.url ? "3px solid #1a1a1a" : "1px solid #c9c9c9",
-                      borderRadius: 8,
-                      background: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <img src={im.url} alt={im.alt || productTitle} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 6, display: "block" }} />
-                  </button>
-                ))}
-              </div>
-            </s-stack>
-          ) : null}
-          <s-text-field
-            label="Or paste an image address"
-            details="A web address that starts with https://. To upload your own picture, add it in Shopify after sending."
-            value={img?.url ?? ""}
-            onInput={(e) => {
-              const url = val(e as unknown as Event);
-              set("featured_image", url ? { url, alt: img?.alt ?? "" } : undefined);
-            }}
-          />
-          {img?.url ? (
-            <s-stack direction="block" gap="small">
-              <img src={img.url} alt="" style={{ maxWidth: 320, maxHeight: 200, borderRadius: 8, objectFit: "cover" }} />
-              <s-text-field
-                label="Image description (alt text)"
-                details="Describes the picture for people using screen readers, and helps search engines."
-                value={img.alt}
-                onInput={(e) => set("featured_image", { url: img.url, alt: val(e as unknown as Event) })}
-              />
-              <s-stack direction="inline">
-                <s-button onClick={() => set("featured_image", undefined)}>Remove image</s-button>
-              </s-stack>
-            </s-stack>
-          ) : null}
-          {draft.image_prompts?.[0] ? (
-            <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
-          ) : null}
-        </s-stack>
-      </s-section>
-
-      <s-section heading="Search listing">
-        <s-stack direction="block" gap="base">
-          <s-text-field
-            label={`Title tag (${draft.title_tag.length}/60)`}
-            value={draft.title_tag}
-            onInput={(e) => set("title_tag", val(e as unknown as Event))}
-          />
-          <s-text-area
-            label={`Meta description (${draft.meta_description.length}/155)`}
-            rows={2}
-            value={draft.meta_description}
-            onInput={(e) => set("meta_description", val(e as unknown as Event))}
-          />
-          <s-text-area
-            label="Excerpt (shown on your blog's listing page)"
-            rows={3}
-            value={draft.excerpt ?? ""}
-            onInput={(e) => set("excerpt", val(e as unknown as Event))}
-          />
-          <s-text-field
-            label="URL handle"
-            value={draft.handle}
-            onInput={(e) => set("handle", val(e as unknown as Event))}
-          />
-        </s-stack>
-      </s-section>
 
       <s-section heading="Article">
         <s-stack direction="block" gap="base">
@@ -373,22 +249,37 @@ function ArticleReview({
         </s-stack>
       </s-section>
 
-      <s-section heading="Preview">
-        <s-box padding="base" borderWidth="base" borderRadius="base">
-          <s-stack direction="block" gap="base">
-            <s-heading>{draft.h1}</s-heading>
-            {tldrStyle.tldrEnabled ? <div dangerouslySetInnerHTML={{ __html: tldrHtml(draft.tldr, tldrStyle) }} /> : null}
-            {img?.url ? <img src={img.url} alt={img.alt} style={{ maxWidth: "100%", borderRadius: 8 }} /> : null}
-            <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draft.body_markdown, url) }} />
-            <s-heading>Frequently asked questions</s-heading>
-            {draft.faq.map((f, i) => (
-              <s-stack key={i} direction="block" gap="small-300">
-                <s-text><strong>{f.q}</strong></s-text>
-                <s-paragraph>{f.a}</s-paragraph>
-              </s-stack>
-            ))}
-          </s-stack>
-        </s-box>
+      <s-section heading="Excerpt">
+        <s-stack direction="block" gap="small">
+          <s-text-area
+            label="Excerpt (shown on your blog's listing page)"
+            rows={3}
+            value={draft.excerpt ?? ""}
+            onInput={(e) => set("excerpt", val(e as unknown as Event))}
+          />
+          <s-text color="subdued">Shown on your blog's listing page. This is separate from the search description below.</s-text>
+        </s-stack>
+      </s-section>
+
+      <s-section heading="Search engine listing">
+        <s-stack direction="block" gap="base">
+          <s-text-field
+            label={`Title tag (${draft.title_tag.length}/60)`}
+            value={draft.title_tag}
+            onInput={(e) => set("title_tag", val(e as unknown as Event))}
+          />
+          <s-text-area
+            label={`Meta description (${draft.meta_description.length}/155)`}
+            rows={2}
+            value={draft.meta_description}
+            onInput={(e) => set("meta_description", val(e as unknown as Event))}
+          />
+          <s-text-field
+            label="URL handle"
+            value={draft.handle}
+            onInput={(e) => set("handle", val(e as unknown as Event))}
+          />
+        </s-stack>
       </s-section>
 
       {draft.missing_info_for_merchant?.length ? (
@@ -436,12 +327,153 @@ function ArticleReview({
           </s-stack>
         </s-stack>
       </s-section>
+      </>
+      ) : (
+      <>
+      <s-section heading="Preview">
+        <s-stack direction="block" gap="base">
+          <s-text color="subdued">
+            An approximate preview with neutral styling. Your theme controls fonts and spacing on your store. For the
+            exact look, send it as a draft and use Preview in Shopify.
+          </s-text>
+          <div style={{ background: "#fff", border: "1px solid #e3e3e3", borderRadius: 12, padding: "32px 24px" }}>
+            <div style={{ maxWidth: 720, margin: "0 auto", lineHeight: 1.65 }}>
+              {img?.url ? (
+                <img src={img.url} alt={img.alt} style={{ width: "100%", maxHeight: 380, objectFit: "cover", borderRadius: 8, marginBottom: 24 }} />
+              ) : null}
+              <h1 style={{ fontSize: 32, lineHeight: 1.2, margin: "0 0 8px" }}>{draft.h1}</h1>
+              <p style={{ margin: "0 0 24px", color: "#6a6a6a", fontSize: 14 }}>
+                {author ? `By ${author} · ` : ""}{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+              <div dangerouslySetInnerHTML={{ __html: buildBodyHtml(draft, handle, toc, tldrStyle) }} />
+            </div>
+          </div>
+        </s-stack>
+      </s-section>
+
+      </>
+      )}
+
+      {r.edited && !dirty ? (
+        <s-banner tone="info" heading="Your edits are saved">
+          We re-run our format checks after you save, but we don't fact-check your own changes.
+        </s-banner>
+      ) : null}
+
+      <s-section slot="aside" heading="Send to your Shopify blog">
+        {sent ? (
+          <s-stack direction="block" gap="base">
+            <s-stack direction="inline" gap="small" alignItems="center">
+              <s-badge tone={sent.published ? "success" : "info"}>{sent.published ? "Published" : "Draft"}</s-badge>
+              <s-text>
+                {sent.published ? "This article is live on your blog." : "This article is saved as a draft in your blog."}
+              </s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small">
+              <s-button href={adminUrl} target="_blank">Open in Shopify</s-button>
+              {sent.url ? <s-button href={sent.url} target="_blank">View on your store</s-button> : null}
+              <s-button
+                {...(sending ? { loading: true } : {})}
+                {...(dirty ? { disabled: true } : {})}
+                onClick={() => sendF.submit({ intent: "update", mode: sent.published ? "live" : "draft" }, { method: "POST" })}
+              >
+                Update in Shopify with my latest edits
+              </s-button>
+            </s-stack>
+            {dirty ? <s-text color="subdued">Save your changes first, then update Shopify.</s-text> : null}
+          </s-stack>
+        ) : (
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              {publishMode === "draft"
+                ? "Your settings send articles to Shopify as drafts, so nothing goes live until you publish it."
+                : "Your settings publish articles straight away."}
+            </s-paragraph>
+            <s-stack direction="inline" gap="small">
+              <s-button
+                variant="primary"
+                {...(sending ? { loading: true } : {})}
+                {...(dirty ? { disabled: true } : {})}
+                onClick={() => send(publishMode)}
+              >
+                {publishMode === "draft" ? "Save as draft in Shopify" : "Publish to my blog"}
+              </s-button>
+              <s-button {...(sending ? { disabled: true } : {})} {...(dirty ? { disabled: true } : {})} onClick={() => send(publishMode === "draft" ? "live" : "draft")}>
+                {publishMode === "draft" ? "Publish now instead" : "Save as draft instead"}
+              </s-button>
+            </s-stack>
+            {dirty ? <s-text color="subdued">Save your changes first, then send.</s-text> : null}
+            {!img?.url ? <s-text color="subdued">Reminder: this article has no featured image yet (see "Featured image" below).</s-text> : null}
+          </s-stack>
+        )}
+      </s-section>
+
+      <s-section slot="aside" heading="Featured image">
+        <s-stack direction="block" gap="base">
+          {!img?.url ? (
+            <s-banner tone="warning" heading="This article has no featured image yet">
+              Articles with a picture look better on your blog and when shared. Choose one below, or add one in Shopify
+              after sending.
+            </s-banner>
+          ) : null}
+          {images.length ? (
+            <s-stack direction="block" gap="small">
+              <s-text><strong>Choose from this product's photos</strong></s-text>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {images.map((im) => (
+                  <button
+                    key={im.url}
+                    type="button"
+                    onClick={() => set("featured_image", { url: im.url, alt: img?.url === im.url ? img.alt : im.alt || productTitle })}
+                    style={{
+                      padding: 2,
+                      border: img?.url === im.url ? "3px solid #1a1a1a" : "1px solid #c9c9c9",
+                      borderRadius: 8,
+                      background: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <img src={im.url} alt={im.alt || productTitle} style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6, display: "block" }} />
+                  </button>
+                ))}
+              </div>
+            </s-stack>
+          ) : null}
+          <s-text-field
+            label="Or paste an image address"
+            details="A web address that starts with https://. To upload your own picture, add it in Shopify after sending."
+            value={img?.url ?? ""}
+            onInput={(e) => {
+              const url = val(e as unknown as Event);
+              set("featured_image", url ? { url, alt: img?.alt ?? "" } : undefined);
+            }}
+          />
+          {img?.url ? (
+            <s-stack direction="block" gap="small">
+              <img src={img.url} alt="" style={{ maxWidth: 320, maxHeight: 200, borderRadius: 8, objectFit: "cover" }} />
+              <s-text-field
+                label="Image description (alt text)"
+                details="Describes the picture for people using screen readers, and helps search engines."
+                value={img.alt}
+                onInput={(e) => set("featured_image", { url: img.url, alt: val(e as unknown as Event) })}
+              />
+              <s-stack direction="inline">
+                <s-button onClick={() => set("featured_image", undefined)}>Remove image</s-button>
+              </s-stack>
+            </s-stack>
+          ) : null}
+          {draft.image_prompts?.[0] ? (
+            <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
+          ) : null}
+        </s-stack>
+      </s-section>
+
     </s-page>
   );
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle, publishMode, store, images, tldrStyle } = useLoaderData<typeof loader>();
+  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -488,7 +520,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} />;
+  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} />;
 }
 
 export function ErrorBoundary() {
