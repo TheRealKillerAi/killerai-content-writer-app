@@ -431,7 +431,7 @@ function ArticleReview({
 
       <s-section slot="aside">
         <s-text color="subdued">
-          {r.seconds ? `Written in ${r.seconds} seconds · ` : ""}{r.words.toLocaleString()} words
+          {r.seconds ? `Written in ${r.seconds} seconds · ` : ""}{score.words.toLocaleString()} words
         </s-text>
       </s-section>
 

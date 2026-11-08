@@ -28,7 +28,7 @@ export function sections(md: string) {
 
 export function runChecks(a: Article) {
   const all = articleText(a);
-  const words = all.split(/\s+/).filter(Boolean).length;
+  const words = [a.tldr, a.body_markdown, ...a.faq.map((f) => f.q + " " + f.a)].join("\n").split(/\s+/).filter(Boolean).length;
   const productLinks = (a.body_markdown.match(/\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}/g) || []).length;
   const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL)[^)]+\)/g) || []).length;
   const h2 = (a.body_markdown.match(/^## /gm) || []).length;

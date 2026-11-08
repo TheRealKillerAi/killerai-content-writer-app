@@ -2,6 +2,8 @@ import type { Article } from "./pipeline/types";
 
 export type Check = { id: string; label: string; pass: boolean; hint: string; weight: number };
 export type Score = {
+  /** Words in the article a reader sees (TL;DR, body and FAQ), the same count the length check uses. */
+  words: number;
   seo: { score: number; checks: Check[] };
   ai: { passed: number; total: number; checks: Check[] };
 };
@@ -82,6 +84,7 @@ export function scoreArticle(
     { id: "author", weight: 1, label: "Has a named author", pass: !!ctx.author.trim(), hint: "Set an author in the Organization section." },
   ];
   return {
+    words: words(text),
     seo: { score: Math.round((gotW / totalW) * 100), checks: seo },
     ai: { passed: ai.filter((c) => c.pass).length, total: ai.length, checks: ai },
   };

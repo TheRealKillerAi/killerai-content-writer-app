@@ -94,7 +94,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
 };
 
 function answerLabel(n: number) {
-  return n >= 3 ? "Fully answerable from your product data" : n === 2 ? "Mostly answerable" : "A few extra details would help";
+  return n >= 3 ? "Your product data covers this" : n === 2 ? "Mostly answerable" : "A few extra details would help";
 }
 
 export default function ProductPage() {
@@ -197,7 +197,7 @@ export default function ProductPage() {
             <s-text>Options: {f.options.map((o) => `${o.name} (${o.values.join(", ")})`).join(" · ")}</s-text>
           ) : null}
           {f.variant_weights?.length ? (
-            <s-text>Recorded weight: {f.variant_weights.map((w) => `${w.variant} ${w.weight}`).join(" · ")}</s-text>
+            <s-text>Recorded weight: {f.variant_weights.map((w) => (w.variant ? `${w.variant} ${w.weight}` : w.weight)).join(" · ")}</s-text>
           ) : null}
           {f.details?.length ? <s-text>Product fields: {f.details.map((d) => `${d.name}: ${d.value}`).join(" · ")}</s-text> : null}
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
@@ -305,6 +305,14 @@ export default function ProductPage() {
             </s-button>
           )}
           {step === 1 ? (
+            <s-stack direction="inline" gap="small">
+              <s-button
+                variant={angles.length ? "secondary" : "primary"}
+                {...(anglesBusy ? { loading: true } : {})}
+                onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
+              >
+                {angles.length ? "Refresh article angles" : "Find article angles"}
+              </s-button>
             <s-button
               variant="primary"
               {...(selected === null || !angles.length ? { disabled: true } : {})}
@@ -316,6 +324,7 @@ export default function ProductPage() {
             >
               Continue →
             </s-button>
+            </s-stack>
           ) : (
             <s-button
               variant="primary"

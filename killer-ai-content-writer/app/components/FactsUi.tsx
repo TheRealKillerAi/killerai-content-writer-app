@@ -119,8 +119,9 @@ export function QuestionForm({
   return (
     <s-stack direction="block" gap="base">
       <s-paragraph>
-        Your answers become trusted facts for the article, so only say what you are sure of (check your packaging or
-        supplier sheet). Tick "I don't know" and we'll leave that topic out rather than guess.
+        This angle can be written from your product data, but a fuller article (500+ words works best for search)
+        needs a little more detail. Your answers become trusted facts, so only say what you are sure of (check your
+        packaging or supplier sheet). Tick "I don't know" and we'll leave that topic out rather than guess.
         {factBudget === "low" ? " The product page alone has few facts for this angle, so these answers matter." : ""}
       </s-paragraph>
       {questions.map((q, i) => (

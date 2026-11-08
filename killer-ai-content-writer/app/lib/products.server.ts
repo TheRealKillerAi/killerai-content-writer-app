@@ -56,7 +56,7 @@ function variantWeights(variants: { title: string; inventoryItem: { measurement:
   for (const v of variants) {
     const w = v.inventoryItem?.measurement?.weight;
     if (!w || !w.value) continue;
-    out.push({ variant: v.title, weight: `${w.value} ${UNITS[w.unit] ?? w.unit.toLowerCase()}` });
+    out.push({ variant: /^default title$/i.test(v.title) ? "" : v.title, weight: `${w.value} ${UNITS[w.unit] ?? w.unit.toLowerCase()}` });
   }
   return out.slice(0, 20);
 }
