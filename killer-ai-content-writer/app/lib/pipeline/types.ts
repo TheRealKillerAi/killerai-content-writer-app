@@ -58,4 +58,14 @@ export interface ArticleResult {
   remaining: AuditProblem[];
   tokens: number;
   edited?: boolean;
+  sent?: SentInfo;
+}
+
+export interface SentInfo {
+  id: string; // gid://shopify/Article/...
+  published: boolean;
+  at: string;
+  handle: string;
+  blogHandle: string;
+  url: string | null; // storefront URL when published
 }

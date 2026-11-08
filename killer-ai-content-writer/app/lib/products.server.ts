@@ -1,8 +1,8 @@
 import type { ProductFacts } from "./pipeline/types";
 
-type Admin = { graphql: (query: string, opts?: { variables?: Record<string, unknown> }) => Promise<Response> };
+export type Admin = { graphql: (query: string, opts?: { variables?: Record<string, unknown> }) => Promise<Response> };
 
-async function gql<T>(admin: Admin, query: string, variables: Record<string, unknown> = {}): Promise<T> {
+export async function gql<T>(admin: Admin, query: string, variables: Record<string, unknown> = {}): Promise<T> {
   const res = await admin.graphql(query, { variables });
   const body = await res.json();
   if (body.errors?.length) throw new Error(body.errors.map((e: { message: string }) => e.message).join("; "));

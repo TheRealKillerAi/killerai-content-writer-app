@@ -3,8 +3,10 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { dedupeArticle, getArticle, saveEdits } from "../lib/articles.server";
-import type { Article, ArticleResult } from "../lib/pipeline/types";
+import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.server";
+import { loadEffectiveSettings } from "../lib/settings.server";
+import { PublishError, sendToShopify } from "../lib/publish.server";
+import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct } from "../lib/products.server";
 import { renderMarkdown } from "../lib/markdown";
 
@@ -13,12 +15,50 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const article = await getArticle(session.shop, params.id!);
   if (!article) throw new Response("Article not found", { status: 404 });
   const product = await getProduct(admin, `gid://shopify/Product/${article.productId}`);
-  return { article, handle: product?.facts.handle ?? "", productTitle: product?.facts.title ?? "" };
+  const settings = await loadEffectiveSettings(admin, session.shop);
+  return {
+    article,
+    handle: product?.facts.handle ?? "",
+    productTitle: product?.facts.title ?? "",
+    publishMode: settings.publishMode,
+    store: session.shop.replace(".myshopify.com", ""),
+  };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const form = await request.formData();
+  const intent = form.get("intent");
+  if (intent === "send" || intent === "update") {
+    try {
+      const art = await getArticle(session.shop, params.id!);
+      if (!art?.result) return { saved: false, error: "This article isn't ready to send yet." };
+      const product = await getProduct(admin, `gid://shopify/Product/${art.productId}`);
+      if (!product) return { saved: false, error: "We couldn't find the product this article is about." };
+      const settings = await loadEffectiveSettings(admin, session.shop);
+      const { sent, warning } = await sendToShopify(admin, {
+        article: art.result.article,
+        angle: art.angle,
+        productHandle: product.facts.handle,
+        settings,
+        shopName: settings.businessName,
+        publish: form.get("mode") === "live",
+        existing: intent === "update" ? art.result.sent ?? null : null,
+      });
+      await setSent(session.shop, params.id!, sent);
+      return { saved: true, sentOk: true, warning };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      const error =
+        e instanceof PublishError
+          ? e.message
+          : /access denied|required access|scope/i.test(msg)
+            ? "The app doesn't have permission to publish to your blog yet. Reopen the app and approve the updated permissions."
+            : "Something went wrong sending to Shopify. Please try again.";
+      if (!(e instanceof PublishError)) console.error("Send to Shopify failed", e);
+      return { saved: false, error };
+    }
+  }
   if (form.get("intent") === "dedupe") {
     const result = await dedupeArticle(session.shop, params.id!);
     return { saved: !!result };
@@ -35,13 +75,25 @@ function ArticleReview({
   back,
   productTitle,
   url,
+  publishMode,
+  store,
 }: {
   r: ArticleResult;
   back: string;
   productTitle: string;
   url: string;
+  publishMode: "draft" | "live";
+  store: string;
 }) {
   const fetcher = useFetcher<{ saved: boolean }>();
+  const sendF = useFetcher<{ saved: boolean; error?: string; warning?: string; sentOk?: boolean }>();
+  const sending = sendF.state !== "idle";
+  const sent: SentInfo | undefined = r.sent;
+  const send = (mode: "draft" | "live") => {
+    if (mode === "live" && !window.confirm("Publish this article to your store's blog now? Anyone will be able to read it.")) return;
+    sendF.submit({ intent: "send", mode }, { method: "POST" });
+  };
+  const adminUrl = sent ? `https://admin.shopify.com/store/${store}/content/articles/${sent.id.split("/").pop()}` : "";
   const [draft, setDraft] = useState<Article>(r.article);
   const dirty = setOf(draft) !== setOf(r.article);
   const saving = fetcher.state !== "idle";
@@ -75,6 +127,56 @@ function ArticleReview({
           A few items below need a quick look before you use this article.
         </s-banner>
       )}
+      {sendF.data?.error ? <s-banner tone="critical" heading="We couldn't send it to Shopify">{sendF.data.error}</s-banner> : null}
+      {sendF.data?.warning ? <s-banner tone="warning">{sendF.data.warning}</s-banner> : null}
+
+      <s-section heading="Send to your Shopify blog">
+        {sent ? (
+          <s-stack direction="block" gap="base">
+            <s-stack direction="inline" gap="small" alignItems="center">
+              <s-badge tone={sent.published ? "success" : "info"}>{sent.published ? "Published" : "Draft"}</s-badge>
+              <s-text>
+                {sent.published ? "This article is live on your blog." : "This article is saved as a draft in your blog."}
+              </s-text>
+            </s-stack>
+            <s-stack direction="inline" gap="small">
+              <s-button href={adminUrl} target="_blank">Open in Shopify</s-button>
+              {sent.url ? <s-button href={sent.url} target="_blank">View on your store</s-button> : null}
+              <s-button
+                {...(sending ? { loading: true } : {})}
+                {...(dirty ? { disabled: true } : {})}
+                onClick={() => sendF.submit({ intent: "update", mode: sent.published ? "live" : "draft" }, { method: "POST" })}
+              >
+                Update in Shopify with my latest edits
+              </s-button>
+            </s-stack>
+            {dirty ? <s-text color="subdued">Save your changes first, then update Shopify.</s-text> : null}
+          </s-stack>
+        ) : (
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              {publishMode === "draft"
+                ? "Your settings send articles to Shopify as drafts, so nothing goes live until you publish it."
+                : "Your settings publish articles straight away."}
+            </s-paragraph>
+            <s-stack direction="inline" gap="small">
+              <s-button
+                variant="primary"
+                {...(sending ? { loading: true } : {})}
+                {...(dirty ? { disabled: true } : {})}
+                onClick={() => send(publishMode)}
+              >
+                {publishMode === "draft" ? "Save as draft in Shopify" : "Publish to my blog"}
+              </s-button>
+              <s-button {...(sending ? { disabled: true } : {})} {...(dirty ? { disabled: true } : {})} onClick={() => send(publishMode === "draft" ? "live" : "draft")}>
+                {publishMode === "draft" ? "Publish now instead" : "Save as draft instead"}
+              </s-button>
+            </s-stack>
+            {dirty ? <s-text color="subdued">Save your changes first, then send.</s-text> : null}
+          </s-stack>
+        )}
+      </s-section>
+
       {r.edited && !dirty ? (
         <s-banner tone="info" heading="Your edits are saved">
           We re-run our format checks after you save, but we don't fact-check your own changes.
@@ -229,7 +331,7 @@ function ArticleReview({
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle } = useLoaderData<typeof loader>();
+  const { article, handle, productTitle, publishMode, store } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -276,7 +378,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} />;
+  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} />;
 }
 
 export function ErrorBoundary() {

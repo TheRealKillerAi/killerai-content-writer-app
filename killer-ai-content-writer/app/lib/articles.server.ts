@@ -3,7 +3,7 @@ import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
 import type { AppSettings } from "./settings";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
-import type { Angle, Article, ArticleResult, MerchantFacts, ProductFacts } from "./pipeline/types";
+import type { Angle, Article, ArticleResult, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
 
 /** Starts writing in the background and returns the new article id straight away. */
 export async function startArticle(
@@ -119,4 +119,11 @@ export async function listArticles(shop: string, productId?: string): Promise<Ar
 
 export async function deleteArticle(shop: string, id: string) {
   await db.article.deleteMany({ where: { id, shop } });
+}
+
+export async function setSent(shop: string, id: string, sent: SentInfo) {
+  const row = await db.article.findFirst({ where: { id, shop } });
+  if (!row?.result) return;
+  const prev = JSON.parse(row.result) as ArticleResult;
+  await db.article.update({ where: { id }, data: { result: JSON.stringify({ ...prev, sent }) } });
 }

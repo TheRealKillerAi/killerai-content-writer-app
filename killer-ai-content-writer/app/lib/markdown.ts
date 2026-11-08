@@ -8,7 +8,27 @@ function inline(s: string, productUrl: string) {
     .replace(/\[([^\]]+)\]\(\{\{PRODUCT_URL\}\}\)/g, `<a href="${esc(productUrl)}">$1</a>`);
 }
 
-export function renderMarkdown(md: string, productUrl: string): string {
+export const slug = (t: string) =>
+  t.toLowerCase().replace(/\*\*/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "section";
+
+/** H2 headings of the article, with unique anchor ids. */
+export function tocEntries(md: string) {
+  const used = new Set<string>();
+  const out: { id: string; text: string }[] = [];
+  for (const line of md.split("\n")) {
+    const m = line.match(/^##\s+(.*)$/);
+    if (!m) continue;
+    let id = slug(m[1]);
+    for (let n = 2; used.has(id); n++) id = `${slug(m[1])}-${n}`;
+    used.add(id);
+    out.push({ id, text: m[1].replace(/\*\*/g, "") });
+  }
+  return out;
+}
+
+export function renderMarkdown(md: string, productUrl: string, withIds = false): string {
+  const ids = withIds ? tocEntries(md).map((e) => e.id) : [];
+  let h2 = 0;
   const out: string[] = [];
   let list: "ul" | "ol" | null = null;
   const close = () => {
@@ -22,7 +42,8 @@ export function renderMarkdown(md: string, productUrl: string): string {
     if (h) {
       close();
       const n = Math.min(h[1].length, 4);
-      out.push(`<h${n}>${inline(h[2], productUrl)}</h${n}>`);
+      const id = withIds && n === 2 ? ` id="${ids[h2++] ?? ""}"` : "";
+      out.push(`<h${n}${id}>${inline(h[2], productUrl)}</h${n}>`);
     } else if (ul || ol) {
       const kind = ul ? "ul" : "ol";
       if (list !== kind) {
