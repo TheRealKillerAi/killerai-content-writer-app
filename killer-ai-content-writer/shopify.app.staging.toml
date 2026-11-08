@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "ec11d59df639f3fe5646d6ab53292a14"
+application_url = "https://killerai-content-writer.vercel.app"
+embedded = true
+name = "KillerAi Writer (staging)"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,read_content,write_content"
+
+[webhooks]
+api_version = "2027-01"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+[auth]
+redirect_urls = [ "https://killerai-content-writer.vercel.app/api/auth" ]
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = false
