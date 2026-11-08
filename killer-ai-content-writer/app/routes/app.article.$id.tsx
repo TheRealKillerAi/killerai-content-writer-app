@@ -7,9 +7,9 @@ import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.s
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
-import { getProduct, productImages, type ProductImage } from "../lib/products.server";
+import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
-import { buildBodyHtml } from "../lib/articleHtml";
+import { buildBodyHtml, safeHandle } from "../lib/articleHtml";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -18,8 +18,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const product = await getProduct(admin, `gid://shopify/Product/${article.productId}`);
   const settings = await loadEffectiveSettings(admin, session.shop);
   const images = await productImages(admin, `gid://shopify/Product/${article.productId}`);
+  const blogs = await listBlogs(admin);
+  const domain = await primaryDomain(admin);
   return {
     images,
+    blogs,
+    domain,
+    orgDefaults: {
+      author: settings.defaultAuthor.trim() || settings.businessName,
+      blogId: settings.blogId.startsWith("gid://shopify/Blog/") ? settings.blogId : blogs[0]?.id ?? "auto",
+      tags: settings.keywordsAsTags && article.angle.target_query ? article.angle.target_query : "",
+      templateSuffix: settings.articleTemplate.trim(),
+    },
     tldrStyle: {
       tldrEnabled: settings.tldrEnabled,
       tldrLabel: settings.tldrLabel,
@@ -96,7 +106,13 @@ function ArticleReview({
   toc,
   author,
   handle,
+  blogs,
+  domain,
+  orgDefaults,
 }: {
+  blogs: BlogRow[];
+  domain: string;
+  orgDefaults: { author: string; blogId: string; tags: string; templateSuffix: string };
   images: ProductImage[];
   toc: boolean;
   author: string;
@@ -124,14 +140,20 @@ function ArticleReview({
   const saving = fetcher.state !== "idle";
   const ready = r.status === "READY FOR MERCHANT APPROVAL";
   const val = (e: Event) => (e.currentTarget as unknown as { value: string }).value;
-  const articleUrl = sent?.url ?? null;
+  const org = draft.organization ?? orgDefaults;
+  const blogHandle = blogs.find((b) => b.id === org.blogId)?.handle ?? "news";
+  const plannedUrl = domain ? `${domain}/blogs/${blogHandle}/${safeHandle(draft.handle, draft.h1)}` : "";
+  const articleUrl = sent?.url ?? plannedUrl;
+  const shown = (t: string | undefined) => (plannedUrl ? (t ?? "").replaceAll("{{ARTICLE_URL}}", plannedUrl) : t ?? "");
+  const stored = (t: string) => (plannedUrl ? t.replaceAll(plannedUrl, "{{ARTICLE_URL}}") : t);
+  const setOrg = (k: keyof typeof orgDefaults, v: string) => setDraft((d) => ({ ...d, organization: { ...(d.organization ?? orgDefaults), [k]: v } }));
   const copy = (text: string) => {
     const hasToken = text.includes("{{ARTICLE_URL}}");
     const out = articleUrl ? text.replaceAll("{{ARTICLE_URL}}", articleUrl) : text;
     void navigator.clipboard?.writeText(out);
     try {
       (window as unknown as { shopify?: { toast?: { show: (m: string) => void } } }).shopify?.toast?.show(
-        hasToken && !articleUrl ? "Copied. Send the article to Shopify first so the link can be filled in." : "Copied",
+        hasToken && !articleUrl ? "Copied. We couldn't work out your store address, so the link is a placeholder." : "Copied",
       );
     } catch {
       /* ignore */
@@ -296,8 +318,8 @@ function ArticleReview({
         <s-stack direction="block" gap="base">
           <s-text color="subdued">
             {articleUrl
-              ? "The link to your article is filled in when you copy."
-              : "The article link is filled in when you copy, once the article has been sent to Shopify."}
+              ? "The link below follows your URL handle and blog. It only works once the article is published."
+              : "The article link couldn't be worked out, so a placeholder is used."}
           </s-text>
           <s-text-field
             label="Email subject"
@@ -310,8 +332,8 @@ function ArticleReview({
           <s-text-area
             label="Email body"
             rows={8}
-            value={draft.email_body ?? ""}
-            onInput={(e) => set("email_body", val(e as unknown as Event))}
+            value={shown(draft.email_body)}
+            onInput={(e) => set("email_body", stored(val(e as unknown as Event)))}
           />
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.email_body ?? "")}>Copy email body</s-button>
@@ -319,8 +341,8 @@ function ArticleReview({
           <s-text-area
             label="Social post"
             rows={4}
-            value={draft.social_post ?? ""}
-            onInput={(e) => set("social_post", val(e as unknown as Event))}
+            value={shown(draft.social_post)}
+            onInput={(e) => set("social_post", stored(val(e as unknown as Event)))}
           />
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.social_post ?? "")}>Copy social post</s-button>
@@ -408,6 +430,34 @@ function ArticleReview({
         )}
       </s-section>
 
+      <s-section slot="aside" heading="Organization">
+        <s-stack direction="block" gap="base">
+          <s-text-field label="Author" value={org.author} onInput={(e) => setOrg("author", val(e as unknown as Event))} />
+          {blogs.length ? (
+            <s-select label="Blog" value={org.blogId} onChange={(e) => setOrg("blogId", val(e as unknown as Event))}>
+              {blogs.map((b) => (
+                <s-option key={b.id} value={b.id}>{b.title}</s-option>
+              ))}
+            </s-select>
+          ) : (
+            <s-text color="subdued">No blog found, so we'll create one called "News" when you send.</s-text>
+          )}
+          <s-text-field
+            label="Tags"
+            details="Separate tags with commas."
+            value={org.tags}
+            onInput={(e) => setOrg("tags", val(e as unknown as Event))}
+          />
+          <s-text-field
+            label="Theme template"
+            details="Leave blank for your theme's default blog post. Otherwise enter the template name, for example: recipe."
+            value={org.templateSuffix}
+            onInput={(e) => setOrg("templateSuffix", val(e as unknown as Event))}
+          />
+          {sent ? <s-text color="subdued">After sending, use "Update in Shopify" to apply changes here.</s-text> : null}
+        </s-stack>
+      </s-section>
+
       <s-section slot="aside" heading="Featured image">
         <s-stack direction="block" gap="base">
           {!img?.url ? (
@@ -473,7 +523,7 @@ function ArticleReview({
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author } = useLoaderData<typeof loader>();
+  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author, blogs, domain, orgDefaults } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -520,7 +570,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} />;
+  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} blogs={blogs} domain={domain} orgDefaults={orgDefaults} />;
 }
 
 export function ErrorBoundary() {

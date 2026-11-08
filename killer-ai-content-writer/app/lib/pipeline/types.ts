@@ -37,6 +37,7 @@ export interface Article {
   excerpt?: string;
   featured_image?: { url: string; alt: string };
   body_markdown: string;
+  organization?: { author: string; blogId: string; tags: string; templateSuffix: string };
   faq: { q: string; a: string }[];
   missing_info_for_merchant?: string[];
   image_prompts?: string[];

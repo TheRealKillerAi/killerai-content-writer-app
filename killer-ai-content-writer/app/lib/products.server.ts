@@ -110,14 +110,26 @@ export async function productTitles(admin: Admin, productIds: string[]): Promise
   }
 }
 
-export type BlogRow = { id: string; title: string };
+export type BlogRow = { id: string; title: string; handle: string };
+
+export async function primaryDomain(admin: Admin): Promise<string> {
+  try {
+    const d = await gql<{ shop: { primaryDomain: { url: string } } }>(
+      admin,
+      `#graphql\n      query Domain { shop { primaryDomain { url } } }`,
+    );
+    return d.shop.primaryDomain.url.replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
 
 export async function listBlogs(admin: Admin): Promise<BlogRow[]> {
   try {
     const data = await gql<{ blogs: { nodes: BlogRow[] } }>(
       admin,
       `#graphql
-      query Blogs { blogs(first: 20) { nodes { id title } } }`,
+      query Blogs { blogs(first: 20) { nodes { id title handle } } }`,
     );
     return data.blogs.nodes;
   } catch {

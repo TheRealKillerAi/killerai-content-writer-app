@@ -1,10 +1,7 @@
 import { gql, type Admin } from "./products.server";
-import { buildBodyHtml, esc } from "./articleHtml";
+import { buildBodyHtml, esc, safeHandle } from "./articleHtml";
 import type { AppSettings } from "./settings";
 import type { Angle, Article, SentInfo } from "./pipeline/types";
-
-const safeHandle = (h: string, fallback: string) =>
-  (h || fallback).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "article";
 
 export class PublishError extends Error {}
 
@@ -39,15 +36,23 @@ export async function sendToShopify(
 ): Promise<{ sent: SentInfo; warning?: string }> {
   const { article: a, angle, settings, publish, existing } = opts;
   const handle = safeHandle(a.handle, a.h1);
+  const org = a.organization;
+  const tagList = org
+    ? org.tags.split(",").map((t) => t.trim()).filter(Boolean)
+    : settings.keywordsAsTags && angle.target_query
+      ? [angle.target_query]
+      : [];
+  const template = (org ? org.templateSuffix : settings.articleTemplate).trim();
+  const chosenBlog = [org?.blogId, settings.blogId].find((b) => b?.startsWith("gid://shopify/Blog/")) ?? "";
   const base = {
     title: a.h1,
     handle,
     body: buildBodyHtml(a, opts.productHandle, settings.toc, settings),
     summary: `<p>${esc(a.excerpt?.trim() || a.tldr)}</p>`,
     ...(a.featured_image?.url ? { image: { url: a.featured_image.url, altText: a.featured_image.alt || a.h1 } } : {}),
-    author: { name: settings.defaultAuthor.trim() || opts.shopName || "Editor" },
-    tags: settings.keywordsAsTags && angle.target_query ? [angle.target_query] : [],
-    ...(settings.articleTemplate.trim() ? { templateSuffix: settings.articleTemplate.trim() } : {}),
+    author: { name: org?.author.trim() || settings.defaultAuthor.trim() || opts.shopName || "Editor" },
+    tags: tagList,
+    ...(template ? { templateSuffix: template } : {}),
   };
   const seo = [
     { namespace: "global", key: "title_tag", type: "single_line_text_field", value: a.title_tag },
@@ -62,12 +67,12 @@ export async function sendToShopify(
         mutation Update($id: ID!, $article: ArticleUpdateInput!) {
           articleUpdate(id: $id, article: $article) { article { ${ARTICLE_FIELDS} } userErrors { field message } }
         }`,
-        { id: existing.id, article: { ...base, redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
+        { id: existing.id, article: { ...base, ...(chosenBlog ? { blogId: chosenBlog } : {}), redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
       );
       return d.articleUpdate;
     }
     // Resolve the blog: the chosen one, else the first, else create a default blog.
-    let blogId = settings.blogId.startsWith("gid://shopify/Blog/") ? settings.blogId : "";
+    let blogId = chosenBlog;
     if (!blogId) {
       const b = await gql<{ blogs: { nodes: { id: string }[] } }>(
         admin,

@@ -3,6 +3,9 @@ import { tldrHtml } from "./tldr";
 import type { AppSettings } from "./settings";
 import type { Article } from "./pipeline/types";
 
+export const safeHandle = (h: string, fallback: string) =>
+  (h || fallback).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "article";
+
 export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, settings?: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrFontSize" | "tldrFont">): string {
