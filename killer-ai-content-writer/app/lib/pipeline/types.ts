@@ -34,6 +34,8 @@ export interface Article {
   meta_description: string;
   handle: string;
   tldr: string;
+  excerpt?: string;
+  featured_image?: { url: string; alt: string };
   body_markdown: string;
   faq: { q: string; a: string }[];
   missing_info_for_merchant?: string[];
@@ -67,5 +69,5 @@ export interface SentInfo {
   at: string;
   handle: string;
   blogHandle: string;
-  url: string | null; // storefront URL when published
+  url: string | null; // where the article lives on the storefront (public once published)
 }

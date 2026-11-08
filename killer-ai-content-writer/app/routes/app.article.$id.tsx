@@ -7,7 +7,9 @@ import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.s
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
-import { getProduct } from "../lib/products.server";
+import { getProduct, productImages, type ProductImage } from "../lib/products.server";
+import { tldrHtml } from "../lib/tldr";
+import type { AppSettings } from "../lib/settings";
 import { renderMarkdown } from "../lib/markdown";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -16,7 +18,18 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   if (!article) throw new Response("Article not found", { status: 404 });
   const product = await getProduct(admin, `gid://shopify/Product/${article.productId}`);
   const settings = await loadEffectiveSettings(admin, session.shop);
+  const images = await productImages(admin, `gid://shopify/Product/${article.productId}`);
   return {
+    images,
+    tldrStyle: {
+      tldrEnabled: settings.tldrEnabled,
+      tldrLabel: settings.tldrLabel,
+      tldrBg: settings.tldrBg,
+      tldrText: settings.tldrText,
+      tldrCorners: settings.tldrCorners,
+      tldrSize: settings.tldrSize,
+      tldrFont: settings.tldrFont,
+    },
     article,
     handle: product?.facts.handle ?? "",
     productTitle: product?.facts.title ?? "",
@@ -77,7 +90,11 @@ function ArticleReview({
   url,
   publishMode,
   store,
+  images,
+  tldrStyle,
 }: {
+  images: ProductImage[];
+  tldrStyle: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrSize" | "tldrFont">;
   r: ArticleResult;
   back: string;
   productTitle: string;
@@ -99,6 +116,20 @@ function ArticleReview({
   const saving = fetcher.state !== "idle";
   const ready = r.status === "READY FOR MERCHANT APPROVAL";
   const val = (e: Event) => (e.currentTarget as unknown as { value: string }).value;
+  const articleUrl = sent?.url ?? null;
+  const copy = (text: string) => {
+    const hasToken = text.includes("{{ARTICLE_URL}}");
+    const out = articleUrl ? text.replaceAll("{{ARTICLE_URL}}", articleUrl) : text;
+    void navigator.clipboard?.writeText(out);
+    try {
+      (window as unknown as { shopify?: { toast?: { show: (m: string) => void } } }).shopify?.toast?.show(
+        hasToken && !articleUrl ? "Copied. Send the article to Shopify first so the link can be filled in." : "Copied",
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+  const img = draft.featured_image;
   const set = <K extends keyof Article>(k: K, v: Article[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   return (
@@ -173,6 +204,7 @@ function ArticleReview({
               </s-button>
             </s-stack>
             {dirty ? <s-text color="subdued">Save your changes first, then send.</s-text> : null}
+            {!img?.url ? <s-text color="subdued">Reminder: this article has no featured image yet (see "Featured image" below).</s-text> : null}
           </s-stack>
         )}
       </s-section>
@@ -208,6 +240,66 @@ function ArticleReview({
         </s-section>
       ) : null}
 
+      <s-section heading="Featured image">
+        <s-stack direction="block" gap="base">
+          {!img?.url ? (
+            <s-banner tone="warning" heading="This article has no featured image yet">
+              Articles with a picture look better on your blog and when shared. Choose one below, or add one in Shopify
+              after sending.
+            </s-banner>
+          ) : null}
+          {images.length ? (
+            <s-stack direction="block" gap="small">
+              <s-text><strong>Choose from this product's photos</strong></s-text>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                {images.map((im) => (
+                  <button
+                    key={im.url}
+                    type="button"
+                    onClick={() => set("featured_image", { url: im.url, alt: img?.url === im.url ? img.alt : im.alt || productTitle })}
+                    style={{
+                      padding: 2,
+                      border: img?.url === im.url ? "3px solid #1a1a1a" : "1px solid #c9c9c9",
+                      borderRadius: 8,
+                      background: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <img src={im.url} alt={im.alt || productTitle} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 6, display: "block" }} />
+                  </button>
+                ))}
+              </div>
+            </s-stack>
+          ) : null}
+          <s-text-field
+            label="Or paste an image address"
+            details="A web address that starts with https://. To upload your own picture, add it in Shopify after sending."
+            value={img?.url ?? ""}
+            onInput={(e) => {
+              const url = val(e as unknown as Event);
+              set("featured_image", url ? { url, alt: img?.alt ?? "" } : undefined);
+            }}
+          />
+          {img?.url ? (
+            <s-stack direction="block" gap="small">
+              <img src={img.url} alt="" style={{ maxWidth: 320, maxHeight: 200, borderRadius: 8, objectFit: "cover" }} />
+              <s-text-field
+                label="Image description (alt text)"
+                details="Describes the picture for people using screen readers, and helps search engines."
+                value={img.alt}
+                onInput={(e) => set("featured_image", { url: img.url, alt: val(e as unknown as Event) })}
+              />
+              <s-stack direction="inline">
+                <s-button onClick={() => set("featured_image", undefined)}>Remove image</s-button>
+              </s-stack>
+            </s-stack>
+          ) : null}
+          {draft.image_prompts?.[0] ? (
+            <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
+          ) : null}
+        </s-stack>
+      </s-section>
+
       <s-section heading="Search listing">
         <s-stack direction="block" gap="base">
           <s-text-field
@@ -220,6 +312,12 @@ function ArticleReview({
             rows={2}
             value={draft.meta_description}
             onInput={(e) => set("meta_description", val(e as unknown as Event))}
+          />
+          <s-text-area
+            label="Excerpt (shown on your blog's listing page)"
+            rows={3}
+            value={draft.excerpt ?? ""}
+            onInput={(e) => set("excerpt", val(e as unknown as Event))}
           />
           <s-text-field
             label="URL handle"
@@ -279,7 +377,8 @@ function ArticleReview({
         <s-box padding="base" borderWidth="base" borderRadius="base">
           <s-stack direction="block" gap="base">
             <s-heading>{draft.h1}</s-heading>
-            <s-paragraph><strong>TL;DR:</strong> {draft.tldr}</s-paragraph>
+            {tldrStyle.tldrEnabled ? <div dangerouslySetInnerHTML={{ __html: tldrHtml(draft.tldr, tldrStyle) }} /> : null}
+            {img?.url ? <img src={img.url} alt={img.alt} style={{ maxWidth: "100%", borderRadius: 8 }} /> : null}
             <div dangerouslySetInnerHTML={{ __html: renderMarkdown(draft.body_markdown, url) }} />
             <s-heading>Frequently asked questions</s-heading>
             {draft.faq.map((f, i) => (
@@ -304,26 +403,37 @@ function ArticleReview({
 
       <s-section heading="Email and social copy">
         <s-stack direction="block" gap="base">
+          <s-text color="subdued">
+            {articleUrl
+              ? "The link to your article is filled in when you copy."
+              : "The article link is filled in when you copy, once the article has been sent to Shopify."}
+          </s-text>
           <s-text-field
             label="Email subject"
             value={draft.email_subject ?? ""}
             onInput={(e) => set("email_subject", val(e as unknown as Event))}
           />
+          <s-stack direction="inline">
+            <s-button onClick={() => copy(draft.email_subject ?? "")}>Copy subject</s-button>
+          </s-stack>
           <s-text-area
             label="Email body"
             rows={8}
             value={draft.email_body ?? ""}
             onInput={(e) => set("email_body", val(e as unknown as Event))}
           />
+          <s-stack direction="inline">
+            <s-button onClick={() => copy(draft.email_body ?? "")}>Copy email body</s-button>
+          </s-stack>
           <s-text-area
             label="Social post"
             rows={4}
             value={draft.social_post ?? ""}
             onInput={(e) => set("social_post", val(e as unknown as Event))}
           />
-          {draft.image_prompts?.length ? (
-            <s-text><strong>Image ideas:</strong> {draft.image_prompts.join(" · ")}</s-text>
-          ) : null}
+          <s-stack direction="inline">
+            <s-button onClick={() => copy(draft.social_post ?? "")}>Copy social post</s-button>
+          </s-stack>
         </s-stack>
       </s-section>
     </s-page>
@@ -331,7 +441,7 @@ function ArticleReview({
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle, publishMode, store } = useLoaderData<typeof loader>();
+  const { article, handle, productTitle, publishMode, store, images, tldrStyle } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -378,7 +488,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} />;
+  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} />;
 }
 
 export function ErrorBoundary() {

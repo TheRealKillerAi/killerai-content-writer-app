@@ -1,6 +1,7 @@
 import db from "../db.server";
 import { getShopName } from "./products.server";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings";
+import { isHex, TLDR_DEFAULTS } from "./tldr";
 
 export async function loadSettings(shop: string): Promise<AppSettings> {
   const row = await db.shopSettings.findUnique({ where: { shop } });
@@ -39,6 +40,13 @@ export function settingsFromForm(f: FormData): AppSettings {
     breadcrumbSchema: flag(f, "breadcrumbSchema"),
     customIdeasPrompt: text(f, "customIdeasPrompt", 1500),
     customContentPrompt: text(f, "customContentPrompt", 1500),
+    tldrEnabled: flag(f, "tldrEnabled"),
+    tldrLabel: text(f, "tldrLabel", 30) || TLDR_DEFAULTS.tldrLabel,
+    tldrBg: isHex(text(f, "tldrBg", 7)) ? text(f, "tldrBg", 7) : TLDR_DEFAULTS.tldrBg,
+    tldrText: isHex(text(f, "tldrText", 7)) ? text(f, "tldrText", 7) : TLDR_DEFAULTS.tldrText,
+    tldrCorners: f.get("tldrCorners") === "square" ? "square" : "rounded",
+    tldrSize: ["large", "xl"].includes(String(f.get("tldrSize"))) ? (String(f.get("tldrSize")) as "large" | "xl") : "normal",
+    tldrFont: ["serif", "sans", "mono"].includes(String(f.get("tldrFont"))) ? (String(f.get("tldrFont")) as "serif" | "sans" | "mono") : "theme",
   };
 }
 

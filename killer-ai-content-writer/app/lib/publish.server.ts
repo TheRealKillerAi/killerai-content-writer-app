@@ -1,13 +1,15 @@
 import { gql, type Admin } from "./products.server";
 import { renderMarkdown, tocEntries } from "./markdown";
+import { tldrHtml } from "./tldr";
 import type { AppSettings } from "./settings";
 import type { Angle, Article, SentInfo } from "./pipeline/types";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function buildBodyHtml(a: Article, productHandle: string, toc: boolean): string {
+export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, settings?: AppSettings): string {
   const productUrl = `/products/${productHandle}`;
-  const parts: string[] = [`<p><strong>TL;DR:</strong> ${esc(a.tldr)}</p>`];
+  const parts: string[] = [];
+  if (!settings || settings.tldrEnabled) parts.push(settings ? tldrHtml(a.tldr, settings) : `<p><strong>TL;DR:</strong> ${esc(a.tldr)}</p>`);
   const entries = toc ? tocEntries(a.body_markdown) : [];
   if (entries.length >= 3) {
     parts.push(
@@ -65,8 +67,9 @@ export async function sendToShopify(
   const base = {
     title: a.h1,
     handle,
-    body: buildBodyHtml(a, opts.productHandle, settings.toc),
-    summary: `<p>${esc(a.meta_description)}</p>`,
+    body: buildBodyHtml(a, opts.productHandle, settings.toc, settings),
+    summary: `<p>${esc(a.excerpt?.trim() || a.tldr)}</p>`,
+    ...(a.featured_image?.url ? { image: { url: a.featured_image.url, altText: a.featured_image.alt || a.h1 } } : {}),
     author: { name: settings.defaultAuthor.trim() || opts.shopName || "Editor" },
     tags: settings.keywordsAsTags && angle.target_query ? [angle.target_query] : [],
     ...(settings.articleTemplate.trim() ? { templateSuffix: settings.articleTemplate.trim() } : {}),
@@ -122,7 +125,7 @@ export async function sendToShopify(
     throw new PublishError(msg);
   }
   const art = result.article;
-  const url = art.isPublished ? await storefrontUrl(admin, art.blog.handle, art.handle) : null;
+  const url = await storefrontUrl(admin, art.blog.handle, art.handle);
   return {
     sent: { id: art.id, published: art.isPublished, at: new Date().toISOString(), handle: art.handle, blogHandle: art.blog.handle, url },
     warning,

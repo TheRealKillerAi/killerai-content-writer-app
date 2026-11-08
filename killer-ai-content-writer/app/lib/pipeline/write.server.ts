@@ -82,6 +82,9 @@ export async function writeArticle(
       return s;
     };
     art.tldr = swap(art.tldr);
+    if (art.excerpt) art.excerpt = swap(art.excerpt);
+    if (art.email_body) art.email_body = swap(art.email_body);
+    if (art.social_post) art.social_post = swap(art.social_post);
     art.body_markdown = swap(art.body_markdown)
       .replace(/[ \t]+\n/g, "\n")
       .replace(/\n[ \t]+/g, "\n")
@@ -105,7 +108,7 @@ export async function writeArticle(
     const fix = await call<{ edits?: { find?: string; replace?: string }[] }>(
       fixerPrompt,
       `ARTICLE\n${JSON.stringify(
-        { tldr: article.tldr, body_markdown: article.body_markdown.replace(LINK, MASK), faq: article.faq },
+        { tldr: article.tldr, excerpt: article.excerpt, email_body: article.email_body, social_post: article.social_post, body_markdown: article.body_markdown.replace(LINK, MASK), faq: article.faq },
         null,
         1,
       )}\n\nPROBLEMS\n${JSON.stringify(problems, null, 1)}\n\n${facts}`,

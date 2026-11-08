@@ -20,4 +20,6 @@ SEO RULES
 11. FAQ of 3-5 genuine questions, answered from the same fact rules.
 
 OUTPUT: ONLY JSON:
-{"h1":"","title_tag":"(<=60 chars)","meta_description":"(<=155 chars)","handle":"","tldr":"","body_markdown":"(starts after the TL;DR, includes the product section; no H1)","faq":[{"q":"","a":""}],"missing_info_for_merchant":[""],"suggested_sources_to_add":["types of reputable source a human should cite, not invented citations"],"image_prompts":["hero","in-use"],"social_post":"","email_subject":"","email_body":""}
+{"h1":"","title_tag":"(<=60 chars)","meta_description":"(<=155 chars)","handle":"","tldr":"","excerpt":"(2-3 sentences, about 40-60 words, for the blog listing page; richer than the meta description and different from the TL;DR; same fact rules)","body_markdown":"(starts after the TL;DR, includes the product section; no H1)","faq":[{"q":"","a":""}],"missing_info_for_merchant":[""],"suggested_sources_to_add":["types of reputable source a human should cite, not invented citations"],"image_prompts":["hero","in-use"],"social_post":"","email_subject":"","email_body":""}
+
+EMAIL AND SOCIAL: end email_body and social_post with a short invitation to read more that uses exactly the token {{ARTICLE_URL}} as the link (it is replaced with the real address later). Use no other links. image_prompts: the first is the hero image for the article.

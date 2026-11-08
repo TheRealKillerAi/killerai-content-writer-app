@@ -150,3 +150,21 @@ export async function getShopName(admin: Admin): Promise<string> {
     return "";
   }
 }
+
+export type ProductImage = { url: string; alt: string };
+
+export async function productImages(admin: Admin, productId: string): Promise<ProductImage[]> {
+  try {
+    const d = await gql<{ product: { media: { nodes: { image?: { url: string; altText: string | null } | null }[] } } | null }>(
+      admin,
+      `#graphql
+      query ProductImages($id: ID!) {
+        product(id: $id) { media(first: 12) { nodes { ... on MediaImage { image { url altText } } } } }
+      }`,
+      { id: productId },
+    );
+    return (d.product?.media.nodes ?? []).flatMap((n) => (n.image ? [{ url: n.image.url, alt: n.image.altText ?? "" }] : []));
+  } catch {
+    return [];
+  }
+}

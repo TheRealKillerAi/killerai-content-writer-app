@@ -11,7 +11,7 @@ function shingles(words: string[], n = 7) {
 }
 
 export function articleText(a: Article) {
-  return [a.h1, a.tldr, a.body_markdown, ...a.faq.map((f) => f.q + " " + f.a)].join("\n");
+  return [a.h1, a.tldr, a.excerpt ?? "", a.body_markdown, ...a.faq.map((f) => f.q + " " + f.a), a.email_body ?? "", a.social_post ?? ""].join("\n");
 }
 
 export function sections(md: string) {
@@ -70,15 +70,18 @@ export function splitSentences(a: Article): Sentence[] {
   const sents = (line: string) => line.split(/(?<=[.!?])\s+(?=[A-Z0-9*_"(])/);
   const add = (text: string, where: string) => {
     text = text.trim();
-    if (!text || text.includes("{{PRODUCT_URL}}") || /\?\**$/.test(text) || text.split(/\s+/).length < 4) return;
+    if (!text || text.includes("{{PRODUCT_URL}}") || text.includes("{{ARTICLE_URL}}") || /\?\**$/.test(text) || text.split(/\s+/).length < 4) return;
     out.push({ id: "S" + ++n, text, where });
   };
   sents(a.tldr).forEach((t) => add(t, "tldr"));
+  if (a.excerpt) sents(a.excerpt).forEach((t) => add(t, "excerpt"));
   for (const line of a.body_markdown.split("\n")) {
     if (/^#{1,6}\s/.test(line)) continue;
     sents(line.replace(/^\s*(?:[-*+]\s+|\d+\.\s+|>\s*)/, "")).forEach((t) => add(t, "body"));
   }
   a.faq.forEach((f) => sents(f.a).forEach((t) => add(t, "faq")));
+  if (a.email_body) a.email_body.split("\n").forEach((l) => sents(l).forEach((t) => add(t, "email")));
+  if (a.social_post) sents(a.social_post).forEach((t) => add(t, "social"));
   return out;
 }
 

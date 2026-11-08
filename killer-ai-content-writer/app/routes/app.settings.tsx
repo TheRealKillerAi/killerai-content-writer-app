@@ -6,6 +6,7 @@ import { authenticate } from "../shopify.server";
 import { loadEffectiveSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
+import { contrastRatio, tldrBoxStyle, type TldrStyle } from "../lib/tldr";
 import learnVoicePrompt from "../lib/pipeline/prompts/learn-voice.md?raw";
 
 type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; voice?: string };
@@ -58,6 +59,18 @@ export default function Settings() {
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
   const voiceRef = useRef<HTMLElement & { value: string }>(null);
+  const [pv, setPv] = useState<TldrStyle>({
+    tldrEnabled: s.tldrEnabled,
+    tldrLabel: s.tldrLabel,
+    tldrBg: s.tldrBg,
+    tldrText: s.tldrText,
+    tldrCorners: s.tldrCorners,
+    tldrSize: s.tldrSize,
+    tldrFont: s.tldrFont,
+  });
+  const setP = (patch: Partial<TldrStyle>) => setPv((p) => ({ ...p, ...patch }));
+  const val = (e: Event) => (e.currentTarget as unknown as { value: string }).value;
+  const lowContrast = contrastRatio(pv.tldrBg, pv.tldrText) < 4.5;
 
   const learned = learnF.data?.intent === "learn" ? learnF.data : null;
 
@@ -157,6 +170,97 @@ export default function Settings() {
               <s-option value="1000">Up to 1,000 words</s-option>
               <s-option value="1500">Up to 1,500 words</s-option>
             </s-select>
+          </s-stack>
+        </s-section>
+
+        <s-section heading="TL;DR summary box">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              A short summary at the top of each article. Your theme doesn't style this, so choose how it looks here.
+            </s-paragraph>
+            <s-checkbox
+              name="tldrEnabled"
+              label="Include a TL;DR box at the top of articles"
+              checked={s.tldrEnabled}
+              onChange={(e) => setP({ tldrEnabled: (e.currentTarget as unknown as { checked: boolean }).checked })}
+            />
+            <s-text-field
+              name="tldrLabel"
+              label="Label"
+              details='For example "TL;DR", "In short" or "Quick summary".'
+              value={s.tldrLabel}
+              onInput={(e) => setP({ tldrLabel: val(e as unknown as Event) })}
+            />
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap="base">
+              <s-color-field
+                name="tldrBg"
+                label="Background colour"
+                value={s.tldrBg}
+                onInput={(e) => setP({ tldrBg: val(e as unknown as Event) })}
+                onChange={(e) => setP({ tldrBg: val(e as unknown as Event) })}
+              />
+              <s-color-field
+                name="tldrText"
+                label="Text colour"
+                value={s.tldrText}
+                onInput={(e) => setP({ tldrText: val(e as unknown as Event) })}
+                onChange={(e) => setP({ tldrText: val(e as unknown as Event) })}
+              />
+            </s-grid>
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap="base">
+              <s-select
+                name="tldrCorners"
+                label="Corners"
+                value={s.tldrCorners}
+                onChange={(e) => setP({ tldrCorners: val(e as unknown as Event) as TldrStyle["tldrCorners"] })}
+              >
+                <s-option value="rounded">Rounded</s-option>
+                <s-option value="square">Square</s-option>
+              </s-select>
+              <s-select
+                name="tldrSize"
+                label="Text size"
+                value={s.tldrSize}
+                onChange={(e) => setP({ tldrSize: val(e as unknown as Event) as TldrStyle["tldrSize"] })}
+              >
+                <s-option value="normal">Normal</s-option>
+                <s-option value="large">Large</s-option>
+                <s-option value="xl">Extra large</s-option>
+              </s-select>
+              <s-select
+                name="tldrFont"
+                label="Font"
+                value={s.tldrFont}
+                onChange={(e) => setP({ tldrFont: val(e as unknown as Event) as TldrStyle["tldrFont"] })}
+              >
+                <s-option value="theme">Match my theme</s-option>
+                <s-option value="sans">Sans-serif</s-option>
+                <s-option value="serif">Serif</s-option>
+                <s-option value="mono">Monospace</s-option>
+              </s-select>
+            </s-grid>
+            {lowContrast ? (
+              <s-banner tone="warning">
+                These colours may be hard to read. Try a bigger difference between the background and the text.
+              </s-banner>
+            ) : null}
+            {pv.tldrEnabled ? (
+              <s-box padding="base" borderWidth="base" borderRadius="base">
+                <s-stack direction="block" gap="small">
+                  <s-text color="subdued">Preview</s-text>
+                  <div style={Object.fromEntries(tldrBoxStyle(pv).split(";").filter(Boolean).map((d) => {
+                    const i = d.indexOf(":");
+                    const k = d.slice(0, i).trim().replace(/-([a-z])/g, (_m, c: string) => c.toUpperCase());
+                    return [k, d.slice(i + 1).trim()];
+                  }))}>
+                    <p style={{ margin: 0, color: "inherit" }}>
+                      <strong>{(pv.tldrLabel || "TL;DR").trim()}:</strong> One ball cleans a 4 kg wash without added
+                      detergent, and it can be recharged in sunlight.
+                    </p>
+                  </div>
+                </s-stack>
+              </s-box>
+            ) : null}
           </s-stack>
         </s-section>
 

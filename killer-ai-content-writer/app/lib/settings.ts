@@ -1,5 +1,7 @@
 // Settings shared by server and client. No server-only imports here.
-export type AppSettings = {
+import { TLDR_DEFAULTS, type TldrStyle } from "./tldr";
+
+export type AppSettings = TldrStyle & {
   // Brand voice
   brandDescription: string;
   wordsToUse: string;
@@ -50,6 +52,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   breadcrumbSchema: false,
   customIdeasPrompt: "",
   customContentPrompt: "",
+  ...TLDR_DEFAULTS,
 };
 
 export const LANGUAGE_NAMES: Record<AppSettings["language"], string> = {
