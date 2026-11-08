@@ -1,0 +1,8 @@
+{
+  "name": "killerai-content-writer-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix killer-ai-content-writer run dev:codespace",
+    "keepalive": "echo 'Keeping this Codespace awake (prints a line every 4 minutes). Press Ctrl+C to stop.'; while true; do sleep 240; echo \"still here $(date +%H:%M)\"; done"
+  }
+}
