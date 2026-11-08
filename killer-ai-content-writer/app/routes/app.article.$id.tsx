@@ -222,7 +222,6 @@ function ArticleReview({
       {ready ? (
         <s-banner tone="success" heading="Your article is ready!">
           Every claim is backed by your product facts. Review it below, edit anything you like, and copy it when you're happy.
-          {r.seconds ? ` Written in ${r.seconds} seconds.` : ""}
         </s-banner>
       ) : (
         <s-banner tone="warning" heading="Nearly there">
@@ -429,6 +428,12 @@ function ArticleReview({
           We re-run our format checks after you save, but we don't fact-check your own changes.
         </s-banner>
       ) : null}
+
+      <s-section slot="aside">
+        <s-text color="subdued">
+          {r.seconds ? `Written in ${r.seconds} seconds · ` : ""}{r.words.toLocaleString()} words
+        </s-text>
+      </s-section>
 
       <s-section slot="aside" heading="Article score">
         <ScoreCard score={score} liveUrl={sent?.published ? sent.url : null} />
