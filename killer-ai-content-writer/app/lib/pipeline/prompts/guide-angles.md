@@ -10,7 +10,7 @@ Rules
 - Mark risk "high" for health, hygiene, safety, children, or regulated claims; otherwise "normal".
 - These are AI suggestions, not measured search volumes. Do not state or imply search volume or difficulty numbers.
 - Use the language given under LANGUAGE.
-- Score honestly how well the data alone can answer the angle: answerable_from_data 3 = fully, 2 = mostly, 1 = needs outside facts, 0 = cannot. Guides that compare products on sizes, materials, what is included usually score well; guides about performance or "which works best" usually need merchant facts: set needs_outside_evidence true and list exactly what is missing in needs_info.
+- Score honestly how well the data alone can answer the angle. A guide that compares or combines several products needs the same kinds of facts for each product (materials, sizes, care steps, what is included, limits), so give 3 only when the data already has those for EVERY product; otherwise 2 at most. answerable_from_data 3 = fully, 2 = mostly, 1 = needs outside facts, 0 = cannot. Guides that compare products on sizes, materials, what is included usually score well; guides about performance or "which works best" usually need merchant facts: set needs_outside_evidence true and list exactly what is missing in needs_info.
 - Never promise a ranking or "best" in the title that the data cannot support.
 
 Return ONLY JSON: {"angles":[{"target_query":"","intent":"informational|commercial","working_title":"","why_it_fits":"","answerable_from_data":0,"needs_outside_evidence":false,"needs_info":[""],"risk":"normal|high","overlaps_existing":false}]}

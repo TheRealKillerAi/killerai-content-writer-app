@@ -354,7 +354,7 @@ export default function Settings() {
             </s-stack>
             <s-text color="subdued">Plan limits and usage will show here.</s-text>
             <s-stack direction="inline">
-              <s-button onClick={() => toast("Plans are coming soon")}>Upgrade plan</s-button>
+              <s-button href="/app/plans">Upgrade plan</s-button>
             </s-stack>
           </s-stack>
         </s-section>

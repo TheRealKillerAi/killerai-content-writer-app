@@ -144,7 +144,7 @@ export default function ProductPage() {
       <s-banner tone="info" heading={step === 1 ? "Step 1 of 3: choose an angle" : "Step 2 of 3: check your facts"}>
         {step === 1
           ? angles.length
-            ? "Select the angle you want to write about, then press Continue."
+            ? "Select the angle you want to write about, then press Continue. Next we'll check which details would make the article stronger, so you may be asked a few short questions (you can skip them)."
             : 'Click "Find article angles" (top right). We suggest what shoppers search for, based on your product facts.'
           : "Add any extra details below if you'd like (or skip this), then press Continue to write the article."}
       </s-banner>
@@ -228,7 +228,7 @@ export default function ProductPage() {
       {step === 1 && angles.length ? (
         <s-section heading="Suggested article angles">
           <s-paragraph>
-            These are AI suggestions based on your product facts. They are not measured search volumes.
+            These are AI suggestions based on your product facts. They are not measured search volumes. For search volumes, upgrade your plan <s-link href="/app/plans">here</s-link>.
           </s-paragraph>
           <s-stack direction="block" gap="base">
             {angles.map((a, i) => (

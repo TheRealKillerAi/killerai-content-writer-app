@@ -163,13 +163,13 @@ export default function GuidePage() {
         {...(anglesBusy ? { loading: true } : {})}
         onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
       >
-        {angles.length ? "Refresh guide topics" : "Find guide topics"}
+        {angles.length ? "Add more topics" : "Find guide topics"}
       </s-button>
 
       <s-banner tone="info" heading={step === 2 ? "Step 2 of 4: choose a topic" : "Step 3 of 4: check your facts"}>
         {step === 2
           ? angles.length
-            ? "Select the topic you want the guide to cover, then press Continue."
+            ? "Select the topic you want the guide to cover, then press Continue. Next we'll check which details would make the guide stronger, so you may be asked a few short questions about each product (you can skip them)."
             : 'Click "Find guide topics" (top right). We suggest what shoppers search for when choosing between these products.'
           : "Add any extra details below if you'd like (or skip this), then press Continue to write the guide."}
       </s-banner>
@@ -249,10 +249,10 @@ export default function GuidePage() {
 
       {step === 2 && angles.length ? (
         <s-section heading="Suggested guide topics">
-          <s-paragraph>These are AI suggestions based on your product facts. They are not measured search volumes.</s-paragraph>
+          <s-paragraph>These are AI suggestions based on your product facts. They are not measured search volumes. For search volumes, upgrade your plan <s-link href="/app/plans">here</s-link>.</s-paragraph>
           <s-stack direction="inline">
             <s-button {...(anglesBusy ? { loading: true } : {})} onClick={() => anglesF.submit({ intent: "angles", replace: "1" }, { method: "POST" })}>
-              Replace these with new topics
+              Clear this list and start again
             </s-button>
           </s-stack>
           <s-stack direction="block" gap="base">
