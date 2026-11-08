@@ -42,7 +42,8 @@ export function scoreArticle(
   const img = a.featured_image;
   const bodyImgsMissingAlt = imgs.filter((i) => !/\balt="[^"]+"/i.test(i)).length;
   const skipped = headings.some((h, i) => i > 0 && h.level > headings[i - 1].level + 1);
-  const productLinked = links.some((l) => l.href.includes(`/products/${ctx.productHandle}`));
+  const productHrefs = new Set(links.filter((l) => l.href.includes("/products/")).map((l) => l.href));
+  const productLinked = a.guide ? productHrefs.size >= 2 : links.some((l) => l.href.includes(`/products/${ctx.productHandle}`));
   const kw = ctx.keyword;
 
   const seo: Check[] = [

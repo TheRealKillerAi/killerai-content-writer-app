@@ -38,6 +38,7 @@ export interface Article {
   featured_image?: { url: string; alt: string };
   body_markdown: string;
   body_html?: string; // set once the merchant edits the body visually or as HTML; used instead of body_markdown when sending
+  guide?: boolean; // a buying guide that links several products
   organization?: { author: string; blogId: string; tags: string; templateSuffix: string };
   faq: { q: string; a: string }[];
   missing_info_for_merchant?: string[];

@@ -4,11 +4,12 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { deleteArticle, listArticles } from "../lib/articles.server";
 import { productTitles } from "../lib/products.server";
+import { firstProductId, parseGuideKey } from "../lib/guide";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const articles = await listArticles(session.shop);
-  const titles = await productTitles(admin, articles.map((a) => a.productId));
+  const titles = await productTitles(admin, articles.map((a) => firstProductId(a.productId)));
   return { articles, titles };
 };
 
@@ -49,7 +50,7 @@ export default function Articles() {
                   <s-table-cell>
                     <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
                   </s-table-cell>
-                  <s-table-cell>{titles[a.productId] ?? "—"}</s-table-cell>
+                  <s-table-cell>{parseGuideKey(a.productId) ? "Buying guide" : titles[a.productId] ?? "—"}</s-table-cell>
                   <s-table-cell>
                     {a.state === "writing" ? (
                       <s-badge tone="info">Writing…</s-badge>

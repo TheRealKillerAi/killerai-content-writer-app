@@ -24,7 +24,9 @@ const TYPES = [
     title: "Buying guide",
     text: "Help shoppers choose between several of your products, or find the right one for their needs.",
     best: "Draws on the facts of each product you include.",
-    available: false,
+    href: "/app/guide/new",
+    cta: "Choose products",
+    available: true,
   },
   {
     key: "topic",

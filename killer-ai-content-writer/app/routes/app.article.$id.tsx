@@ -7,8 +7,9 @@ import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.s
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
-import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type ProductImage } from "../lib/products.server";
+import { getProduct, listBlogs, primaryDomain, productImages, productTitles, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
+import { firstProductId, parseGuideKey } from "../lib/guide";
 import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
 import { RichCopy } from "../components/RichCopy";
 import { BodyEditor } from "../components/BodyEditor";
@@ -20,9 +21,15 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const article = await getArticle(session.shop, params.id!);
   if (!article) throw new Response("Article not found", { status: 404 });
-  const product = await getProduct(admin, `gid://shopify/Product/${article.productId}`);
+  const guideIds = parseGuideKey(article.productId);
+  const product = await getProduct(admin, `gid://shopify/Product/${firstProductId(article.productId)}`);
+  const guideTitles = guideIds ? await productTitles(admin, guideIds) : {};
   const settings = await loadEffectiveSettings(admin, session.shop);
-  const images = await productImages(admin, `gid://shopify/Product/${article.productId}`);
+  const images = (
+    await Promise.all((guideIds ?? [article.productId]).map((id) => productImages(admin, `gid://shopify/Product/${id}`)))
+  )
+    .flat()
+    .slice(0, 24);
   const blogs = await listBlogs(admin);
   const domain = await primaryDomain(admin);
   if (article.result) {
@@ -51,7 +58,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     },
     article,
     handle: product?.facts.handle ?? "",
-    productTitle: product?.facts.title ?? "",
+    productTitle: guideIds ? "Buying guide" : product?.facts.title ?? "",
+    backHref: guideIds ? `/app/guide/${guideIds.join("-")}` : `/app/product/${article.productId}`,
+    guideProducts: guideIds ? Object.values(guideTitles) : [],
     publishMode: settings.publishMode,
     toc: settings.toc,
     keyword: article.angle.target_query ?? "",
@@ -68,7 +77,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     try {
       const art = await getArticle(session.shop, params.id!);
       if (!art?.result) return { saved: false, error: "This article isn't ready to send yet." };
-      const product = await getProduct(admin, `gid://shopify/Product/${art.productId}`);
+      const product = await getProduct(admin, `gid://shopify/Product/${firstProductId(art.productId)}`);
       if (!product) return { saved: false, error: "We couldn't find the product this article is about." };
       const settings = await loadEffectiveSettings(admin, session.shop);
       const { sent, warning } = await sendToShopify(admin, {
@@ -562,7 +571,7 @@ function ArticleReview({
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author, blogs, domain, orgDefaults, keyword } = useLoaderData<typeof loader>();
+  const { article, handle, backHref, productTitle, publishMode, store, images, tldrStyle, toc, author, blogs, domain, orgDefaults, keyword } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -573,7 +582,7 @@ export default function ArticlePage() {
     return () => clearInterval(t);
   }, [article.state, state, revalidate]);
 
-  const back = `/app/product/${article.productId}`;
+  const back = backHref;
   const r = article.result;
 
   if (article.state === "writing") {

@@ -18,6 +18,10 @@ export function htmlToMarkdown(root: HTMLElement, productUrl: string): string {
       case "A": {
         let href = node.getAttribute("href") ?? "";
         if (href === productUrl) href = "{{PRODUCT_URL}}";
+        else {
+          const pm = /^\/products\/([a-z0-9_-]+)$/.exec(href);
+          if (pm) href = `{{PRODUCT_URL:${pm[1]}}}`;
+        }
         return href && inner.trim() ? `[${inner}](${href})` : inner;
       }
       default:

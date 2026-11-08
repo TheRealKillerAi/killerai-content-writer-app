@@ -13,13 +13,14 @@ export async function startArticle(
   angle: Angle,
   merchant: MerchantFacts,
   settings: AppSettings,
+  guide?: ProductFacts[],
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle) } });
   void (async () => {
     try {
       const result = await writeArticle(product, angle, merchant, async (stage) => {
         await db.article.update({ where: { id: row.id }, data: { stage } });
-      }, settings);
+      }, settings, guide);
       await db.article.update({
         where: { id: row.id },
         data: { state: "done", stage: "Done", result: JSON.stringify(result) },

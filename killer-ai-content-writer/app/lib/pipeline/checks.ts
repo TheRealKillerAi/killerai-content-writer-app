@@ -29,13 +29,14 @@ export function sections(md: string) {
 export function runChecks(a: Article) {
   const all = articleText(a);
   const words = all.split(/\s+/).filter(Boolean).length;
-  const productLinks = (a.body_markdown.match(/\{\{PRODUCT_URL\}\}/g) || []).length;
-  const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL\}\})[^)]+\)/g) || []).length;
+  const productLinks = (a.body_markdown.match(/\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}/g) || []).length;
+  const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL)[^)]+\)/g) || []).length;
   const h2 = (a.body_markdown.match(/^## /gm) || []).length;
   const issues: string[] = [];
   if (a.title_tag.length > 60) issues.push(`Title tag is ${a.title_tag.length} characters (max 60)`);
   if (a.meta_description.length > 155) issues.push(`Meta description is ${a.meta_description.length} characters (max 155)`);
-  if (productLinks !== 1) issues.push(`Expected exactly 1 product link, found ${productLinks}`);
+  if (a.guide ? productLinks < 2 : productLinks !== 1)
+    issues.push(a.guide ? `A buying guide needs a link for each product, found ${productLinks}` : `Expected exactly 1 product link, found ${productLinks}`);
   if (otherLinks) issues.push(`${otherLinks} unexpected link(s)`);
   if (/^## Sources/im.test(a.body_markdown)) issues.push("Has a Sources section but no sources were provided");
   if (h2 < 3) issues.push(`Only ${h2} H2 headings`);
@@ -70,7 +71,7 @@ export function splitSentences(a: Article): Sentence[] {
   const sents = (line: string) => line.split(/(?<=[.!?])\s+(?=[A-Z0-9*_"(])/);
   const add = (text: string, where: string) => {
     text = text.trim();
-    if (!text || text.includes("{{PRODUCT_URL}}") || text.includes("{{ARTICLE_URL}}") || /\?\**$/.test(text) || text.split(/\s+/).length < 4) return;
+    if (!text || text.includes("{{PRODUCT_URL") || text.includes("{{ARTICLE_URL}}") || /\?\**$/.test(text) || text.split(/\s+/).length < 4) return;
     out.push({ id: "S" + ++n, text, where });
   };
   sents(a.tldr).forEach((t) => add(t, "tldr"));
@@ -226,7 +227,7 @@ export function removeRepeats(md: string) {
   };
   const out: string[] = [];
   for (const line of md.split("\n")) {
-    if (/^#{1,6}\s/.test(line) || !line.trim() || line.includes("{{PRODUCT_URL}}")) {
+    if (/^#{1,6}\s/.test(line) || !line.trim() || line.includes("{{PRODUCT_URL")) {
       out.push(line);
       continue;
     }

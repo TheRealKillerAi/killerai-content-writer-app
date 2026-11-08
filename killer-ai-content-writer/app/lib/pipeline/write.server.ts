@@ -1,6 +1,7 @@
 import writerPrompt from "./prompts/writer.md?raw";
 import auditorPrompt from "./prompts/auditor.md?raw";
 import fixerPrompt from "./prompts/fixer.md?raw";
+import guideWriterPrompt from "./prompts/guide-writer.md?raw";
 import { DEFAULT_SETTINGS, settingsContext, voiceGuide, type AppSettings } from "../settings";
 import { chatJson } from "./llm.server";
 import {
@@ -14,8 +15,15 @@ import {
 } from "./checks";
 import type { Angle, Article, ArticleResult, AuditProblem, AuditReport, MerchantFacts, ProductFacts } from "./types";
 
-const LINK = /\[[^\]]+\]\(\{\{PRODUCT_URL\}\}\)/;
-const MASK = "⟦PRODUCT_LINK⟧";
+const LINKS = /\[[^\]]+\]\(\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}\)/g;
+const mask = (n: number) => `⟦PRODUCT_LINK_${n}⟧`;
+/** Hides product links from the fixer so it can't change them, and puts them back afterwards. */
+const maskLinks = (md: string) => {
+  const links: string[] = [];
+  const text = md.replace(LINKS, (m) => mask(links.push(m) - 1));
+  return { text, links };
+};
+const unmaskLinks = (md: string, links: string[]) => links.reduce((t, l, i) => t.replace(mask(i), l), md);
 
 type Progress = (stage: string) => Promise<void> | void;
 
@@ -25,6 +33,7 @@ export async function writeArticle(
   merchant: MerchantFacts,
   progress: Progress = () => {},
   settings: AppSettings = DEFAULT_SETTINGS,
+  guide?: ProductFacts[],
 ): Promise<ArticleResult> {
   let tokens = 0;
   const call = async <T>(system: string, user: string, temperature: number): Promise<T> => {
@@ -33,7 +42,7 @@ export async function writeArticle(
     return r.json;
   };
 
-  const facts = `PRODUCT DATA\n${JSON.stringify(product, null, 2)}\n\nMERCHANT FACTS\n${JSON.stringify(
+  const facts = `PRODUCT DATA\n${JSON.stringify(guide ?? product, null, 2)}\n\nMERCHANT FACTS\n${JSON.stringify(
     merchant.known,
     null,
     2,
@@ -42,12 +51,13 @@ export async function writeArticle(
 
   await progress("Writing the article");
   const article = await call<Article>(
-    writerPrompt,
+    guide ? guideWriterPrompt : writerPrompt,
     `VOICE GUIDE\n${voiceGuide(settings)}\n\n${settingsContext(settings, "content")}\n\n${facts}\n\nUNAVAILABLE FACTS\n${JSON.stringify(gaps)}\n\nCHOSEN ANGLE\n${JSON.stringify(
       angle,
     )}\n\nSOURCES PROVIDED\nnone`,
     0.6,
   );
+  if (guide) article.guide = true;
   article.faq = Array.isArray(article.faq) ? article.faq : [];
   article.tldr = article.tldr ?? "";
   article.body_markdown = article.body_markdown ?? "";
@@ -74,11 +84,11 @@ export async function writeArticle(
   };
 
   const apply = (art: Article, edits: { find?: string; replace?: string }[]) => {
-    const link = (art.body_markdown.match(LINK) || [null])[0];
-    art.body_markdown = art.body_markdown.replace(LINK, MASK);
+    const masked = maskLinks(art.body_markdown);
+    art.body_markdown = masked.text;
     const swap = (s: string) => {
       for (const e of edits)
-        if (e.find && !e.find.includes("{{PRODUCT_URL}}") && s.includes(e.find)) s = s.replace(e.find, e.replace ?? "");
+        if (e.find && !e.find.includes("{{PRODUCT_URL") && s.includes(e.find)) s = s.replace(e.find, e.replace ?? "");
       return s;
     };
     art.tldr = swap(art.tldr);
@@ -91,7 +101,7 @@ export async function writeArticle(
       .replace(/ {2,}/g, " ")
       .replace(/\n{3,}/g, "\n\n");
     art.body_markdown = cleanStructure(removeRepeats(art.body_markdown));
-    if (link) art.body_markdown = art.body_markdown.replace(MASK, link);
+    art.body_markdown = unmaskLinks(art.body_markdown, masked.links);
     art.faq = art.faq.map((f) => ({ q: swap(f.q), a: swap(f.a) })).filter((f) => f.a.trim());
   };
 
@@ -108,7 +118,7 @@ export async function writeArticle(
     const fix = await call<{ edits?: { find?: string; replace?: string }[] }>(
       fixerPrompt,
       `ARTICLE\n${JSON.stringify(
-        { tldr: article.tldr, excerpt: article.excerpt, email_body: article.email_body, social_post: article.social_post, body_markdown: article.body_markdown.replace(LINK, MASK), faq: article.faq },
+        { tldr: article.tldr, excerpt: article.excerpt, email_body: article.email_body, social_post: article.social_post, body_markdown: maskLinks(article.body_markdown).text, faq: article.faq },
         null,
         1,
       )}\n\nPROBLEMS\n${JSON.stringify(problems, null, 1)}\n\n${facts}`,
@@ -119,7 +129,7 @@ export async function writeArticle(
   }
 
   await progress("Final checks");
-  article.body_markdown = repairLink(article.body_markdown, product.title.split(/\s[–|-]\s/)[0]);
+  if (!guide) article.body_markdown = repairLink(article.body_markdown, product.title.split(/\s[–|-]\s/)[0]);
   for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {
     const t = await call<{ title_tag?: string; meta_description?: string }>(
       'You shorten SEO fields. Return ONLY JSON {"title_tag":"<=60 chars","meta_description":"<=155 chars"}. Keep the meaning and the key facts; do not add claims.',
