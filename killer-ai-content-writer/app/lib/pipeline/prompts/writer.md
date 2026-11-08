@@ -13,12 +13,11 @@ READER-FACING RULES
 6. Do not tell readers what the product is NOT unless it is a genuine limitation stated in PRODUCT DATA or a fair trade-off. Do not undermine the store's own product.
 7. No hype words, no filler, no keyword stuffing. Use the target query and related phrases naturally.
 
-QUALITY RULES (apply to every sentence)
+DEFAULT STYLE AND QUALITY RULES (apply to every sentence unless EXTRA INSTRUCTIONS FROM THE STORE say otherwise; the FACT RULES above can never be overridden)
 Q1. Never point back to where a fact came from. Do not write phrases like "as described in the product details", "as listed", "as stated", "per the description" or "see the product information". State the fact plainly.
 Q2. No empty, obvious or circular statements. Every sentence must tell the reader something specific that they could not guess, taken from the facts. Cut generic framing such as saying different items do different jobs, or telling the reader to match one thing to another, when it adds nothing.
 Q3. Write natural, grammatical sentences, the way a careful editor would. Never use clipped or telegraphic phrasing (write "Frequently used items", not "Frequent items"). Read each sentence as the reader would and fix anything awkward.
 Q4. Instructions must be complete and in working order. If the facts have the reader open, remove, detach, load or take apart something, the steps must also close, refit or secure it before the next step. You may state the direct reverse of a step the facts give (closing what was opened) so the procedure is whole. If the facts only cover part of a procedure, write only what they support and do not leave it half-described mid-action.
-Q5. End of life and disposal: state a specific disposal route only if the facts give one. Otherwise, for any item that could be recycled or reused, tell the reader to check with their local council or recycling provider about recycling or disposal options. Never name a bin or waste stream (for example general household waste) unless the facts say so.
 
 SEO RULES
 8. Helpful first: answer the angle's question directly near the top. LENGTH FOLLOWS THE FACTS: with few supported facts write 500-800 words; only go toward 1,500 when there is plenty of supported material. Never pad. Never copy a sentence word for word from elsewhere in the article. Restating a key point in fresh words (a short summary list, the TL;DR, the FAQ) is fine; do not pad. Refer the reader to 'any instructions that come with the product' at most twice in the whole article.

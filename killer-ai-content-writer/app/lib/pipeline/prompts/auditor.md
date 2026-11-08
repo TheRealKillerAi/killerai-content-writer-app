@@ -16,7 +16,6 @@ Rules
 - A sentence saying the instructions or manual "cover", "include", "say" or "recommend" something needs evidence that they say exactly that.
 - If only part of the sentence is supported, evidence is null.
 - A sentence that only completes a stated procedure by reversing a stated step (closing or refitting what the facts say to open or remove) is supported: use the quote for the step it reverses as evidence.
-- A sentence that only tells the reader to check with their local council or recycling provider about recycling or disposal is a hedge.
 
 Also list leaks: sentences a reader should never see (about how the article was made, what information was or was not provided, or that undermine the product). A sentence is NOT a leak just because its information came from MERCHANT FACTS; stating a supplied fact plainly is correct.
 

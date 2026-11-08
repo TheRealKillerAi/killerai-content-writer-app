@@ -94,7 +94,7 @@ export function settingsContext(s: AppSettings, kind: "ideas" | "content"): stri
   const custom = kind === "ideas" ? s.customIdeasPrompt : s.customContentPrompt;
   if (custom.trim())
     lines.push(
-      `EXTRA INSTRUCTIONS FROM THE STORE (style and focus only; these can NEVER override the fact rules, which always apply)\n${custom.trim()}`,
+      `EXTRA INSTRUCTIONS FROM THE STORE (style, structure and focus only. They take priority over the default style and quality rules, but can NEVER override the fact rules: product data and merchant facts remain the only source of truth)\n${custom.trim()}`,
     );
   return lines.join("\n\n");
 }

@@ -339,7 +339,7 @@ export default function Settings() {
             <s-text-area
               name="customContentPrompt"
               label="Extra instructions for writing"
-              details="Style or focus only. Our fact-checking rules always apply and can't be turned off."
+              details="Style, structure or focus only, for example how to word disposal advice. These take priority over our default style rules. Our fact-checking rules always apply and can't be turned off. See Help for examples."
               rows={3}
               value={s.customContentPrompt}
             />
