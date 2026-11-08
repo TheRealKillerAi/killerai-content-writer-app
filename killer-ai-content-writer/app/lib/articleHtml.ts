@@ -17,8 +17,17 @@ export function linkedHtml(text: string): string {
 export const linkedPlain = (text: string) => text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 ($2)");
 
 /** Turns a bare {{ARTICLE_URL}} token (older articles) into a markdown link on the words leading up to it. */
-export function linkify(text: string | undefined): string | undefined {
+export function linkify(text: string | undefined, kind: "email" | "social" = "email"): string | undefined {
   if (!text) return text;
+  if (!text.includes("{{ARTICLE_URL}}") && !/\[[^\]]+\]\(https?:/.test(text)) {
+    // No link at all (older articles): link the "read the guide" call to action, or the word guide/article/post.
+    if (kind === "email") {
+      const cta = /\b((?:read|see|learn|find|get|take a look at|check out)\b[^.!?\n]{0,60}?\b(?:guide|article|post|blog|steps)\b[^.!?\n]{0,25})/i.exec(text);
+      if (cta) return text.replace(cta[1], `[${cta[1].trim()}]({{ARTICLE_URL}})`);
+    }
+    const word = /\b(guide|article|post)\b/i.exec(text);
+    return word ? text.replace(word[0], `[${word[0]}]({{ARTICLE_URL}})`) : text;
+  }
   const bare = /(^|[^(])\{\{ARTICLE_URL\}\}/;
   if (!bare.test(text)) return text;
   const m = /([^.!?\n:]{3,80}?)\s*[:\u2013\u2014-]?\s*\{\{ARTICLE_URL\}\}/.exec(text.replace(/\]\(\{\{ARTICLE_URL\}\}\)/g, "]()"));

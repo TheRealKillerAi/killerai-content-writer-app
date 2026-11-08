@@ -10,6 +10,7 @@ import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
 import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
+import { RichCopy } from "../components/RichCopy";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -22,8 +23,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const domain = await primaryDomain(admin);
   if (article.result) {
     const a = article.result.article;
-    a.email_body = linkify(a.email_body);
-    a.social_post = linkify(a.social_post);
+    a.email_body = linkify(a.email_body, "email");
+    a.social_post = linkify(a.social_post, "social");
   }
   return {
     images,
@@ -139,6 +140,7 @@ function ArticleReview({
     sendF.submit({ intent: "send", mode }, { method: "POST" });
   };
   const adminUrl = sent ? `https://admin.shopify.com/store/${store}/content/articles/${sent.id.split("/").pop()}` : "";
+  const [resetKey, setResetKey] = useState(0);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [draft, setDraft] = useState<Article>(r.article);
   const dirty = setOf(draft) !== setOf(r.article);
@@ -180,7 +182,7 @@ function ArticleReview({
       <s-link slot="breadcrumb-actions" href={back}>{productTitle || "Product"}</s-link>
       {dirty ? (
         <>
-          <s-button slot="secondary-actions" onClick={() => setDraft(r.article)}>Discard changes</s-button>
+          <s-button slot="secondary-actions" onClick={() => { setDraft(r.article); setResetKey((k) => k + 1); }}>Discard changes</s-button>
           <s-button
             slot="primary-action"
             variant="primary"
@@ -331,7 +333,7 @@ function ArticleReview({
         <s-stack direction="block" gap="base">
           <s-text color="subdued">
             {articleUrl
-              ? "Words in [square brackets] followed by a link are hyperlinks. The link follows your URL handle and blog, and only works once the article is published. Copy keeps the hyperlinks when you paste into an email editor."
+              ? "Linked words show underlined. Select any words and press the button to link them to your article. The link follows your URL handle and blog, and only works once the article is published. Copy keeps the hyperlinks when you paste into an email editor."
               : "The article link couldn't be worked out, so a placeholder is used."}
           </s-text>
           <s-text-field
@@ -342,33 +344,25 @@ function ArticleReview({
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.email_subject ?? "")}>Copy subject</s-button>
           </s-stack>
-          <s-text-area
+          <RichCopy
+            key={`email-${plannedUrl}-${resetKey}`}
             label="Email body"
             rows={8}
+            url={plannedUrl}
             value={shown(draft.email_body)}
-            onInput={(e) => set("email_body", stored(val(e as unknown as Event)))}
+            onChange={(t) => set("email_body", stored(t))}
           />
-          {draft.email_body && /\[[^\]]+\]\(/.test(draft.email_body) ? (
-            <div style={{ border: "1px solid #e3e3e3", borderRadius: 8, padding: 12, fontSize: 14, background: "#fafafa" }}>
-              <div style={{ color: "#6a6a6a", fontSize: 12, marginBottom: 4 }}>How the link will look</div>
-              <div dangerouslySetInnerHTML={{ __html: linkedHtml(shown(draft.email_body)) }} />
-            </div>
-          ) : null}
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.email_body ?? "")}>Copy email body</s-button>
           </s-stack>
-          <s-text-area
+          <RichCopy
+            key={`social-${plannedUrl}-${resetKey}`}
             label="Social post"
             rows={4}
+            url={plannedUrl}
             value={shown(draft.social_post)}
-            onInput={(e) => set("social_post", stored(val(e as unknown as Event)))}
+            onChange={(t) => set("social_post", stored(t))}
           />
-          {draft.social_post && /\[[^\]]+\]\(/.test(draft.social_post) ? (
-            <div style={{ border: "1px solid #e3e3e3", borderRadius: 8, padding: 12, fontSize: 14, background: "#fafafa" }}>
-              <div style={{ color: "#6a6a6a", fontSize: 12, marginBottom: 4 }}>How the link will look</div>
-              <div dangerouslySetInnerHTML={{ __html: linkedHtml(shown(draft.social_post)) }} />
-            </div>
-          ) : null}
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.social_post ?? "")}>Copy social post</s-button>
           </s-stack>
