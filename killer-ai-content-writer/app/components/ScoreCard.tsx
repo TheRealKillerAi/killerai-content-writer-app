@@ -88,11 +88,9 @@ export function ScoreCard({ score, liveUrl }: { score: Score; liveUrl?: string |
         <List checks={score.ai.checks} />
       </details>
       <div style={{ color: "#6a6a6a", fontSize: 12, lineHeight: 1.4 }}>
-        Updates as you edit. Modelled on the Google Lighthouse SEO checks an article can influence, plus checks for AI search.
         {liveUrl ? (
           <>
-            {" "}
-            Once it's live, you can also{" "}
+            Now that it's live, you can{" "}
             <a href={`https://pagespeed.web.dev/analysis?url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noreferrer">
               test the page in PageSpeed Insights
             </a>
