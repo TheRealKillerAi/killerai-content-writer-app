@@ -1,0 +1,12 @@
+{
+  "name": "KillerAi Content Writer",
+  "forwardPorts": [4040],
+  "portsAttributes": {
+    "4040": {
+      "label": "Shopify app",
+      "onAutoForward": "silent"
+    }
+  },
+  // Codespaces ignores a "visibility" setting here, so the port is made public with the GitHub CLI each time you attach.
+  "postAttachCommand": "gh codespace ports visibility 4040:public -c \"$CODESPACE_NAME\" || true"
+}
