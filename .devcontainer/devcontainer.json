@@ -1,5 +1,6 @@
 {
   "name": "KillerAi Content Writer",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
   "forwardPorts": [4040],
   "portsAttributes": {
     "4040": {
@@ -7,6 +8,8 @@
       "onAutoForward": "silent"
     }
   },
+  // Installs the Shopify CLI and the app's packages, and sets up the database, whenever the Codespace is built.
+  "postCreateCommand": "npm install -g @shopify/cli@latest && cd killer-ai-content-writer && npm install && npx prisma generate && npx prisma migrate deploy",
   // Codespaces ignores a "visibility" setting here, so the port is made public with the GitHub CLI each time you attach.
   "postAttachCommand": "gh codespace ports visibility 4040:public -c \"$CODESPACE_NAME\" || true"
 }
