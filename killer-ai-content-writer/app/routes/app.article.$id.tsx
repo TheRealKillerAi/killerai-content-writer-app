@@ -54,7 +54,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           ? e.message
           : /access denied|required access|scope/i.test(msg)
             ? "The app doesn't have permission to publish to your blog yet. Reopen the app and approve the updated permissions."
-            : "Something went wrong sending to Shopify. Please try again.";
+            : `Something went wrong sending to Shopify${msg ? `: ${msg.slice(0, 300)}` : "."} Please try again.`;
       if (!(e instanceof PublishError)) console.error("Send to Shopify failed", e);
       return { saved: false, error };
     }
