@@ -149,10 +149,10 @@ export default function Settings() {
             <s-select
               name="maxWords"
               label="Article length"
-              value={s.maxWords ? String(s.maxWords) : ""}
+              value={s.maxWords ? String(s.maxWords) : "auto"}
               details="Articles are never padded. Short product facts mean a shorter article, whatever you choose."
             >
-              <s-option value="">Let the facts decide (recommended)</s-option>
+              <s-option value="auto">Let the facts decide (recommended)</s-option>
               <s-option value="600">Up to 600 words</s-option>
               <s-option value="1000">Up to 1,000 words</s-option>
               <s-option value="1500">Up to 1,500 words</s-option>
@@ -162,8 +162,8 @@ export default function Settings() {
 
         <s-section heading="Publishing">
           <s-stack direction="block" gap="base">
-            <s-select name="blogId" label="Publish to blog" value={s.blogId} details="Where finished articles are sent in your Shopify store.">
-              <s-option value="">Your store's main blog</s-option>
+            <s-select name="blogId" label="Publish to blog" value={s.blogId.startsWith("gid://") ? s.blogId : "default"} details="Where finished articles are sent in your Shopify store.">
+              <s-option value="default">Your store's main blog</s-option>
               {blogs.map((b) => (
                 <s-option key={b.id} value={b.id}>{b.title}</s-option>
               ))}

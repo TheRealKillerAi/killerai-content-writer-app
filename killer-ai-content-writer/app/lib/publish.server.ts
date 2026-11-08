@@ -89,7 +89,7 @@ export async function sendToShopify(
       return d.articleUpdate;
     }
     // Resolve the blog: the chosen one, else the first, else create a default blog.
-    let blogId = settings.blogId;
+    let blogId = settings.blogId.startsWith("gid://shopify/Blog/") ? settings.blogId : "";
     if (!blogId) {
       const b = await gql<{ blogs: { nodes: { id: string }[] } }>(
         admin,

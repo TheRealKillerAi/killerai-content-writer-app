@@ -25,7 +25,7 @@ export function settingsFromForm(f: FormData): AppSettings {
     businessName: text(f, "businessName", 120),
     whatYouSell: text(f, "whatYouSell", 400),
     audience: text(f, "audience", 400),
-    blogId: text(f, "blogId", 80),
+    blogId: text(f, "blogId", 80).startsWith("gid://shopify/Blog/") ? text(f, "blogId", 80) : "",
     defaultAuthor: text(f, "defaultAuthor", 80),
     publishMode: f.get("publishMode") === "live" ? "live" : "draft",
     keywordsAsTags: flag(f, "keywordsAsTags"),
