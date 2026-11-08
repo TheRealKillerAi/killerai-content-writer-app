@@ -22,8 +22,8 @@ export const TLDR_DEFAULTS: TldrStyle = {
 const SIZES = { normal: "1em", large: "1.15em", xl: "1.3em" } as const;
 const FONTS = {
   theme: "",
-  serif: 'font-family:Georgia,"Times New Roman",serif;',
-  sans: 'font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;',
+  serif: "font-family:Georgia,'Times New Roman',serif;",
+  sans: "font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;",
   mono: 'font-family:ui-monospace,Menlo,Consolas,monospace;',
 } as const;
 
