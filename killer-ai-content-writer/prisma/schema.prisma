@@ -56,10 +56,14 @@ model Article {
   stage     String   @default("Starting")
   result    String?
   error     String?
+  keyword   String? // the search phrase this article targets, kept so later articles don't compete for it
+  title     String? // the working title of the topic
+  sentAs    String? // "draft" or "live" once sent to the blog
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([shop, productId])
+  @@index([shop, keyword])
 }
 
 model ProductAngles {

@@ -15,8 +15,8 @@ export const HELP_TOPICS: HelpTopic[] = [
       ] },
       { h: "Writing your first article", list: [
         "Choose New article, then Product-focused.",
-        "Pick a product. We suggest article angles based on what shoppers search for.",
-        "Select an angle and press Continue.",
+        "Pick a product. We suggest article topics based on what shoppers search for.",
+        "Select a topic and press Continue.",
         "Add any extra details we ask about, or skip them. Then press Continue to write.",
         "Review the article, make any changes you need, and send it to your Shopify blog.",
       ] },

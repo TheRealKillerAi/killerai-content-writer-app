@@ -17,7 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 const STEPS = [
   { n: "1", title: "Pick a product", text: "Choose any product in your store. Its details on Shopify are the source of truth." },
-  { n: "2", title: "Choose an angle", text: "We suggest what shoppers are searching for. Pick the one you like and add any extra details you'd like included." },
+  { n: "2", title: "Choose a topic", text: "We suggest what shoppers are searching for. Pick the one you like and add any extra details you'd like included." },
   { n: "3", title: "Review and publish", text: "Every sentence is checked against your product information. Fine-tune the wording if you like, then send it to your blog." },
 ];
 

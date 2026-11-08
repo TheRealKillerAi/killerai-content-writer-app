@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
+import { redirect, useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
+import { saveChosen } from "../lib/facts.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.server";
@@ -103,6 +104,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       if (!(e instanceof PublishError)) console.error("Send to Shopify failed", e);
       return { saved: false, error };
     }
+  }
+  if (intent === "refine") {
+    const art = await getArticle(session.shop, params.id!);
+    if (!art) return { saved: false };
+    await saveChosen(session.shop, art.productId, art.angle);
+    const ids = parseGuideKey(art.productId);
+    throw redirect(`${ids ? `/app/guide/${ids.join("-")}` : `/app/product/${art.productId}`}?refine=1`);
   }
   if (form.get("intent") === "dedupe") {
     const result = await dedupeArticle(session.shop, params.id!);
@@ -349,11 +357,22 @@ function ArticleReview({
 
       {draft.missing_info_for_merchant?.length ? (
         <s-section heading="Facts that would make this article better">
-          <s-unordered-list>
-            {draft.missing_info_for_merchant.map((m, i) => (
-              <s-list-item key={i}>{m}</s-list-item>
-            ))}
-          </s-unordered-list>
+          <s-stack direction="block" gap="base">
+            <s-unordered-list>
+              {draft.missing_info_for_merchant.map((m, i) => (
+                <s-list-item key={i}>{m}</s-list-item>
+              ))}
+            </s-unordered-list>
+            <s-text color="subdued">
+              Know any of these? Add them and we'll write a new version that includes them. This article stays in your
+              Articles list.
+            </s-text>
+            <s-stack direction="inline">
+              <s-button onClick={() => fetcher.submit({ intent: "refine" }, { method: "POST" })}>
+                Add details and write a new version
+              </s-button>
+            </s-stack>
+          </s-stack>
         </s-section>
       ) : null}
 

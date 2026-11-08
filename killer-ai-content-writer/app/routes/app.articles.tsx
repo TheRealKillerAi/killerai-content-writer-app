@@ -40,6 +40,7 @@ export default function Articles() {
             <s-table-header-row>
               <s-table-header listSlot="primary">Article</s-table-header>
               <s-table-header>Product</s-table-header>
+              <s-table-header>Search phrase</s-table-header>
               <s-table-header>Status</s-table-header>
               <s-table-header>Created</s-table-header>
               <s-table-header />
@@ -51,6 +52,7 @@ export default function Articles() {
                     <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
                   </s-table-cell>
                   <s-table-cell>{parseGuideKey(a.productId) ? "Buying guide" : titles[a.productId] ?? "—"}</s-table-cell>
+                  <s-table-cell>{a.keyword || "—"}</s-table-cell>
                   <s-table-cell>
                     {a.state === "writing" ? (
                       <s-badge tone="info">Writing…</s-badge>
@@ -61,6 +63,7 @@ export default function Articles() {
                     ) : (
                       <s-badge tone="warning">Needs review</s-badge>
                     )}
+                    {a.sentAs ? <s-badge tone={a.sentAs === "live" ? "success" : "neutral"}>{a.sentAs === "live" ? "On blog" : "Blog draft"}</s-badge> : null}
                   </s-table-cell>
                   <s-table-cell>{fmt(a.createdAt)}</s-table-cell>
                   <s-table-cell>

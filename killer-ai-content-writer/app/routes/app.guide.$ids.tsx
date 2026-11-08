@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router";
+import { redirect, useFetcher, useLoaderData, useRouteError, useSearchParams } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
 import { clearChosen, deleteFact, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
 import { askGuideQuestions, findGuideAngles } from "../lib/pipeline/guide.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { listArticles, startArticle } from "../lib/articles.server";
+import { coveredTopics, listArticles, startArticle } from "../lib/articles.server";
+import { findCovered } from "../lib/keywords";
 import { LlmError } from "../lib/pipeline/llm.server";
 import { guideKey, MAX_GUIDE_PRODUCTS } from "../lib/guide";
 import type { Angle, MerchantFacts } from "../lib/pipeline/types";
@@ -41,6 +42,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     savedAngles: await loadAngles(session.shop, key),
     chosen: await loadChosen(session.shop, key),
     articles: await listArticles(session.shop, key),
+    covered: await coveredTopics(session.shop),
   };
 };
 
@@ -90,7 +92,12 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     }
     if (intent === "angles") {
       const kept = form.get("replace") ? [] : await loadAngles(shop, key);
-      const existing = [...(await existingArticleTitles(admin)), ...kept.map((a) => a.working_title)];
+      const covered = await coveredTopics(shop);
+      const existing = [
+        ...(await existingArticleTitles(admin)),
+        ...kept.map((a) => a.working_title),
+        ...covered.flatMap((c) => [c.title, c.keyword].filter((x): x is string => !!x)),
+      ];
       const fresh = await findGuideAngles(products.map((p) => p.facts), existing, factsByHandle, settings);
       const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
       const seen = new Set(kept.flatMap((a) => [norm(a.working_title), norm(a.target_query)]));
@@ -127,7 +134,7 @@ const answerLabel = (n: number) =>
   n >= 3 ? "Fully answerable from your product data" : n === 2 ? "Mostly answerable" : "A few extra details would help";
 
 export default function GuidePage() {
-  const { products, facts, savedAngles, chosen, articles } = useLoaderData<typeof loader>();
+  const { products, facts, savedAngles, chosen, articles, covered } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
@@ -140,6 +147,13 @@ export default function GuidePage() {
   const questionsRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const q = questionsF.data;
+  // Coming back from an article ("add details"): open the questions for the chosen topic straight away.
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("refine") && chosen && !questionsF.data && questionsF.state === "idle") {
+      questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const step = chosen ? 3 : 2;
 
   useEffect(() => {
@@ -163,7 +177,7 @@ export default function GuidePage() {
         {...(anglesBusy ? { loading: true } : {})}
         onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
       >
-        {angles.length ? "Add more topics" : "Find guide topics"}
+        {angles.length ? "Generate more topics" : "Generate guide topics"}
       </s-button>
 
       <s-banner tone="info" heading={step === 2 ? "Step 2 of 4: choose a topic" : "Step 3 of 4: check your facts"}>
@@ -268,12 +282,30 @@ export default function GuidePage() {
                     <s-badge tone={a.answerable_from_data >= 2 ? "success" : "warning"}>{answerLabel(a.answerable_from_data)}</s-badge>
                     {a.risk === "high" ? <s-badge tone="critical">Health or safety topic: extra review</s-badge> : null}
                     {a.overlaps_existing ? <s-badge tone="warning">Similar to an existing article</s-badge> : null}
+                    {(() => {
+                      const c = findCovered(a, covered);
+                      if (!c) return null;
+                      return (
+                        <s-badge tone="warning">
+                          {c.sentAs ? `Already on your blog${c.title ? `: ${c.title}` : ""}` : "You've already written this topic"}
+                        </s-badge>
+                      );
+                    })()}
                   </s-stack>
                   {a.needs_info?.length ? <s-text>Would be better with: {a.needs_info.join("; ")}</s-text> : null}
-                  <s-stack direction="inline">
+                  <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                     <s-button variant={selected === i ? "primary" : "secondary"} onClick={() => setSelected(i)}>
                       {selected === i ? "Selected ✓" : "Select this topic"}
                     </s-button>
+                    {selected === i ? (
+                      <s-button
+                        variant="primary"
+                        {...(questionsBusy ? { loading: true } : {})}
+                        onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(a) }, { method: "POST" })}
+                      >
+                        Continue →
+                      </s-button>
+                    ) : null}
                   </s-stack>
                 </s-stack>
               </s-box>

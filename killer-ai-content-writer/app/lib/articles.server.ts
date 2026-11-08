@@ -3,6 +3,7 @@ import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
 import type { AppSettings } from "./settings";
+import type { Covered } from "./keywords";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
 import type { Angle, Article, ArticleResult, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
 
@@ -16,7 +17,7 @@ export async function startArticle(
   settings: AppSettings,
   guide?: ProductFacts[],
 ): Promise<string> {
-  const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle) } });
+  const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
   // waitUntil keeps the hosted function alive after the response; locally it simply runs.
   waitUntil((async () => {
     const startedAt = Date.now();
@@ -98,6 +99,8 @@ export type ArticleListItem = {
   state: "writing" | "done" | "failed";
   title: string;
   status: string | null;
+  keyword: string | null;
+  sentAs: "draft" | "live" | null;
   createdAt: string;
 };
 
@@ -116,6 +119,8 @@ export async function listArticles(shop: string, productId?: string): Promise<Ar
       state: r.state as ArticleListItem["state"],
       title: result?.article.h1 || angle.working_title,
       status: result?.status ?? null,
+      keyword: r.keyword ?? angle.target_query ?? null,
+      sentAs: r.sentAs === "draft" || r.sentAs === "live" ? r.sentAs : null,
       createdAt: r.createdAt.toISOString(),
     };
   });
@@ -129,5 +134,22 @@ export async function setSent(shop: string, id: string, sent: SentInfo) {
   const row = await db.article.findFirst({ where: { id, shop } });
   if (!row?.result) return;
   const prev = JSON.parse(row.result) as ArticleResult;
-  await db.article.update({ where: { id }, data: { result: JSON.stringify({ ...prev, sent }) } });
+  await db.article.update({
+    where: { id },
+    data: { result: JSON.stringify({ ...prev, sent }), sentAs: sent.published ? "live" : "draft" },
+  });
+}
+
+/** Every article started in this shop, with the search phrase it targets, so new topics can avoid competing with them. */
+export async function coveredTopics(shop: string): Promise<Covered[]> {
+  const rows = await db.article.findMany({
+    where: { shop, state: { in: ["writing", "done"] } },
+    select: { id: true, productId: true, keyword: true, title: true, sentAs: true },
+    orderBy: { createdAt: "desc" },
+    take: 500,
+  });
+  return rows.map((r: { id: string; productId: string; keyword: string | null; title: string | null; sentAs: string | null }) => ({
+    ...r,
+    sentAs: r.sentAs === "draft" || r.sentAs === "live" ? r.sentAs : null,
+  }));
 }

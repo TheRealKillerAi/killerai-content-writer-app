@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router";
+import { redirect, useFetcher, useLoaderData, useRouteError, useSearchParams } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
@@ -8,7 +8,8 @@ import { deleteFact, clearChosen, loadAngles, loadChosen, loadFacts, saveAngles,
 import { findAngles } from "../lib/pipeline/angles.server";
 import { askQuestions } from "../lib/pipeline/questions.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { listArticles, startArticle } from "../lib/articles.server";
+import { coveredTopics, listArticles, startArticle } from "../lib/articles.server";
+import { findCovered } from "../lib/keywords";
 import { LlmError } from "../lib/pipeline/llm.server";
 import type { Angle, Question } from "../lib/pipeline/types";
 import { FactsList, QuestionForm } from "../components/FactsUi";
@@ -33,7 +34,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const savedAngles = await loadAngles(session.shop, params.id!);
   const chosen = await loadChosen(session.shop, params.id!);
   const articles = await listArticles(session.shop, params.id!);
-  return { product, facts, savedAngles, chosen, articles };
+  const covered = await coveredTopics(session.shop);
+  return { product, facts, savedAngles, chosen, articles, covered };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -65,7 +67,12 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     }
     if (intent === "angles") {
       const kept = await loadAngles(session.shop, productId);
-      const existing = [...(await existingArticleTitles(admin)), ...kept.map((a) => a.working_title)];
+      const covered = await coveredTopics(session.shop);
+      const existing = [
+        ...(await existingArticleTitles(admin)),
+        ...kept.map((a) => a.working_title),
+        ...covered.flatMap((c) => [c.title, c.keyword].filter((x): x is string => !!x)),
+      ];
       const { angles: fresh } = await findAngles(product.facts, existing, facts.known, await loadEffectiveSettings(admin, session.shop));
       // Keep what's already there and add genuinely new angles (no duplicates by title or search term).
       const key = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -99,7 +106,7 @@ function answerLabel(n: number) {
 }
 
 export default function ProductPage() {
-  const { product, facts, savedAngles, chosen, articles } = useLoaderData<typeof loader>();
+  const { product, facts, savedAngles, chosen, articles, covered } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
@@ -120,6 +127,13 @@ export default function ProductPage() {
   }, [questionsF.data]);
 
   const q = questionsF.data;
+  // Coming back from an article ("add details"): open the questions for the chosen topic straight away.
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("refine") && chosen && !questionsF.data && questionsF.state === "idle") {
+      questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const step = chosen ? 2 : 1;
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -139,19 +153,19 @@ export default function ProductPage() {
         {...(anglesBusy ? { loading: true } : {})}
         onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
       >
-        {angles.length ? "Refresh article angles" : "Find article angles"}
+        {angles.length ? "Generate more topics" : "Generate article topics"}
       </s-button>
 
-      <s-banner tone="info" heading={step === 1 ? "Step 1 of 3: choose an angle" : "Step 2 of 3: check your facts"}>
+      <s-banner tone="info" heading={step === 1 ? "Step 1 of 3: choose a topic" : "Step 2 of 3: check your facts"}>
         {step === 1
           ? angles.length
-            ? "Select the angle you want to write about, then press Continue. Next we'll check which details would make the article stronger, so you may be asked a few short questions (you can skip them)."
-            : 'Click "Find article angles" (top right). We suggest what shoppers search for, based on your product facts.'
+            ? "Select the topic you want to write about, then press Continue. Next we'll check which details would make the article stronger, so you may be asked a few short questions (you can skip them)."
+            : 'Click "Generate article topics" (top right). We suggest what shoppers search for, based on your product facts.'
           : "Add any extra details below if you'd like (or skip this), then press Continue to write the article."}
       </s-banner>
 
       {step === 2 && chosen ? (
-        <s-section heading="Your chosen angle">
+        <s-section heading="Your chosen topic">
           <s-stack direction="block" gap="small">
             <s-text><strong>{chosen.working_title}</strong></s-text>
             <s-stack direction="inline">
@@ -220,18 +234,18 @@ export default function ProductPage() {
       />
 
       {anglesBusy ? (
-        <s-banner tone="info" heading="Finding article angles">
+        <s-banner tone="info" heading="Finding article topics">
           Reading your product facts and thinking about what shoppers search for. This takes about 10 to 20 seconds.
         </s-banner>
       ) : null}
 
       <div ref={anglesRef} style={{ scrollMarginTop: 90 }} />
       {anglesF.data?.error ? (
-        <s-banner tone="critical" heading="We couldn't find angles">{anglesF.data.error}</s-banner>
+        <s-banner tone="critical" heading="We couldn't find topics">{anglesF.data.error}</s-banner>
       ) : null}
 
       {step === 1 && angles.length ? (
-        <s-section heading="Suggested article angles">
+        <s-section heading="Suggested article topics">
           <s-paragraph>
             These are AI suggestions based on your product facts. They are not measured search volumes. For search volumes, upgrade your plan <s-link href="/app/plans">here</s-link>.
           </s-paragraph>
@@ -248,15 +262,33 @@ export default function ProductPage() {
                     </s-badge>
                     {a.risk === "high" ? <s-badge tone="critical">Health or safety topic: extra review</s-badge> : null}
                     {a.overlaps_existing ? <s-badge tone="warning">Similar to an existing article</s-badge> : null}
+                    {(() => {
+                      const c = findCovered(a, covered);
+                      if (!c) return null;
+                      return (
+                        <s-badge tone="warning">
+                          {c.sentAs ? `Already on your blog${c.title ? `: ${c.title}` : ""}` : "You've already written this topic"}
+                        </s-badge>
+                      );
+                    })()}
                   </s-stack>
                   {a.needs_info?.length ? <s-text>Would be better with: {a.needs_info.join("; ")}</s-text> : null}
-                  <s-stack direction="inline">
+                  <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                     <s-button
                       variant={selected === i ? "primary" : "secondary"}
                       onClick={() => setSelected(i)}
                     >
-                      {selected === i ? "Selected ✓" : "Select this angle"}
+                      {selected === i ? "Selected ✓" : "Select this topic"}
                     </s-button>
+                    {selected === i ? (
+                      <s-button
+                        variant="primary"
+                        {...(questionsBusy ? { loading: true } : {})}
+                        onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(a) }, { method: "POST" })}
+                      >
+                        Continue →
+                      </s-button>
+                    ) : null}
                   </s-stack>
                 </s-stack>
               </s-box>
@@ -302,7 +334,7 @@ export default function ProductPage() {
               {...(clearF.state !== "idle" ? { loading: true } : {})}
               onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
             >
-              ← Back to angles
+              ← Back to topics
             </s-button>
           )}
           {step === 1 ? (
@@ -312,7 +344,7 @@ export default function ProductPage() {
                 {...(anglesBusy ? { loading: true } : {})}
                 onClick={() => anglesF.submit({ intent: "angles" }, { method: "POST" })}
               >
-                {angles.length ? "Refresh article angles" : "Find article angles"}
+                {angles.length ? "Generate more topics" : "Generate article topics"}
               </s-button>
             <s-button
               variant="primary"
