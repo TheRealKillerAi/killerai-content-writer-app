@@ -2,7 +2,7 @@
 import type { Article, AuditReport } from "./types";
 
 const LEAKS =
-  /product (data|information)|according to the (data|information)|store currency|example\.com|\bUNVERIFIED\b|\[(INTERNAL|EXTERNAL)|not going to invent|deliberately not|dollar figure|reputable (health )?organi[sz]ation|for background only|merchant facts/i;
+  /product (data|information|details|description|listing)|as (described|listed|stated|specified|noted|shown) (in|on|by) (the|our) |according to the (data|information)|store currency|example\.com|\bUNVERIFIED\b|\[(INTERNAL|EXTERNAL)|not going to invent|deliberately not|dollar figure|reputable (health )?organi[sz]ation|for background only|merchant facts/i;
 const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
 function shingles(words: string[], n = 7) {
   const s = new Set<string>();

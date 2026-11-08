@@ -50,11 +50,50 @@ export async function listProducts(admin: Admin, search: string, after?: string 
   };
 }
 
+const UNITS: Record<string, string> = { KILOGRAMS: "kg", GRAMS: "g", POUNDS: "lb", OUNCES: "oz" };
+function variantWeights(variants: { title: string; inventoryItem: { measurement: { weight: { value: number; unit: string } | null } | null } | null }[]) {
+  const out: { variant: string; weight: string }[] = [];
+  for (const v of variants) {
+    const w = v.inventoryItem?.measurement?.weight;
+    if (!w || !w.value) continue;
+    out.push({ variant: v.title, weight: `${w.value} ${UNITS[w.unit] ?? w.unit.toLowerCase()}` });
+  }
+  return out.slice(0, 20);
+}
+
+const SKIP_NAMESPACES = /^(global|shopify--discovery.*|mm-google-shopping|reviews|instant_search|seo|judgeme|yotpo|stamped|loox|ali_reviews)$/i;
+const SKIP_TYPES = /reference|file|json|rich_text|^id$|url|link/i;
+/** Readable custom product fields (size, material, care...). Skips SEO, review-app and reference fields. */
+function productDetails(nodes: { namespace: string; key: string; type: string; value: string; definition: { name: string } | null }[]) {
+  const out: { name: string; value: string }[] = [];
+  for (const m of nodes) {
+    if (SKIP_NAMESPACES.test(m.namespace) || SKIP_TYPES.test(m.type) || !m.value?.trim()) continue;
+    let value = m.value.trim();
+    if (m.type.startsWith("list.")) {
+      try {
+        const arr = JSON.parse(value);
+        if (Array.isArray(arr)) value = arr.map((x) => (typeof x === "object" && x ? [x.value, x.unit].filter(Boolean).join(" ") : String(x))).join(", ");
+      } catch { /* keep raw */ }
+    } else if (/^(dimension|weight|volume)$/.test(m.type)) {
+      try {
+        const o = JSON.parse(value);
+        value = `${o.value} ${String(o.unit).toLowerCase()}`;
+      } catch { /* keep raw */ }
+    }
+    if (value.length > 600) continue;
+    out.push({ name: m.definition?.name ?? m.key.replace(/[_-]+/g, " "), value });
+  }
+  return out.slice(0, 30);
+}
+
 export async function getProduct(admin: Admin, id: string) {
   const data = await gql<{
     product: {
       id: string; title: string; handle: string; status: string; vendor: string; productType: string;
       tags: string[]; descriptionHtml: string;
+      category: { fullName: string } | null;
+      metafields: { nodes: { namespace: string; key: string; type: string; value: string; definition: { name: string } | null }[] };
+      variants: { nodes: { title: string; inventoryItem: { measurement: { weight: { value: number; unit: string } | null } | null } | null }[] };
       options: { name: string; values: string[] }[];
       featuredMedia: { preview: { image: { url: string } | null } | null } | null;
     } | null;
@@ -64,6 +103,9 @@ export async function getProduct(admin: Admin, id: string) {
     query Product($id: ID!) {
       product(id: $id) {
         id title handle status vendor productType tags descriptionHtml
+        category { fullName }
+        metafields(first: 40) { nodes { namespace key type value definition { name } } }
+        variants(first: 50) { nodes { title inventoryItem { measurement { weight { value unit } } } } }
         options { name values }
         featuredMedia { preview { image { url } } }
       }
@@ -75,6 +117,9 @@ export async function getProduct(admin: Admin, id: string) {
   const facts: ProductFacts = {
     title: p.title, handle: p.handle, vendor: p.vendor, productType: p.productType,
     tags: p.tags, options: p.options.filter((o) => o.name !== "Title"), description_html: p.descriptionHtml,
+    category: p.category?.fullName,
+    variant_weights: variantWeights(p.variants.nodes),
+    details: productDetails(p.metafields.nodes),
   };
   return { id: p.id, status: p.status, imageUrl: p.featuredMedia?.preview?.image?.url ?? null, facts };
 }

@@ -250,11 +250,13 @@ export default function GuidePage() {
       {step === 2 && angles.length ? (
         <s-section heading="Suggested guide topics">
           <s-paragraph>These are AI suggestions based on your product facts. They are not measured search volumes. For search volumes, upgrade your plan <s-link href="/app/plans">here</s-link>.</s-paragraph>
-          <s-stack direction="inline">
-            <s-button {...(anglesBusy ? { loading: true } : {})} onClick={() => anglesF.submit({ intent: "angles", replace: "1" }, { method: "POST" })}>
-              Clear this list and start again
-            </s-button>
-          </s-stack>
+          <s-box paddingBlockEnd="base">
+            <s-stack direction="inline">
+              <s-button {...(anglesBusy ? { loading: true } : {})} onClick={() => anglesF.submit({ intent: "angles", replace: "1" }, { method: "POST" })}>
+                Clear this list and start again
+              </s-button>
+            </s-stack>
+          </s-box>
           <s-stack direction="block" gap="base">
             {angles.map((a, i) => (
               <s-box key={i} padding="base" borderWidth="base" borderRadius="base">

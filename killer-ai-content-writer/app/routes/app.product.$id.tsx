@@ -196,6 +196,10 @@ export default function ProductPage() {
           {f.options.length ? (
             <s-text>Options: {f.options.map((o) => `${o.name} (${o.values.join(", ")})`).join(" · ")}</s-text>
           ) : null}
+          {f.variant_weights?.length ? (
+            <s-text>Recorded weight: {f.variant_weights.map((w) => `${w.variant} ${w.weight}`).join(" · ")}</s-text>
+          ) : null}
+          {f.details?.length ? <s-text>Product fields: {f.details.map((d) => `${d.name}: ${d.value}`).join(" · ")}</s-text> : null}
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <div dangerouslySetInnerHTML={{ __html: f.description_html || "<em>No description yet.</em>" }} />
           </s-box>

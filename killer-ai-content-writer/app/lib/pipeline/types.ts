@@ -6,6 +6,11 @@ export type ProductFacts = {
   tags: string[];
   options: { name: string; values: string[] }[];
   description_html: string;
+  category?: string;
+  /** Weight recorded in the store for each variant (may include packaging). */
+  variant_weights?: { variant: string; weight: string }[];
+  /** Custom product fields the merchant has set (size, material, care and so on). */
+  details?: { name: string; value: string }[];
 };
 
 export type Angle = {
