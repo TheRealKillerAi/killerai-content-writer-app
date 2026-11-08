@@ -6,6 +6,16 @@ import type { Article } from "./pipeline/types";
 export const safeHandle = (h: string, fallback: string) =>
   (h || fallback).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "article";
 
+/** Turns [anchor](url) links into HTML anchors (rest is escaped, newlines become <br>). */
+export function linkedHtml(text: string): string {
+  return esc(text)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_m, a: string, u: string) => `<a href="${u}">${a}</a>`)
+    .replace(/\n/g, "<br>");
+}
+
+/** Plain-text version: "anchor (url)". */
+export const linkedPlain = (text: string) => text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 ($2)");
+
 export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, settings?: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrFontSize" | "tldrFont">): string {

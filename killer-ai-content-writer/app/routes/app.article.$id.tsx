@@ -9,7 +9,7 @@ import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
-import { buildBodyHtml, safeHandle } from "../lib/articleHtml";
+import { buildBodyHtml, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -150,7 +150,15 @@ function ArticleReview({
   const copy = (text: string) => {
     const hasToken = text.includes("{{ARTICLE_URL}}");
     const out = articleUrl ? text.replaceAll("{{ARTICLE_URL}}", articleUrl) : text;
-    void navigator.clipboard?.writeText(out);
+    const hasLink = /\[[^\]]+\]\(https?:\/\//.test(out);
+    // Rich copy: pasting into an email editor gives a real hyperlink; plain-text fields get "anchor (url)".
+    if (hasLink && typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      void navigator.clipboard
+        .write([new ClipboardItem({ "text/html": new Blob([linkedHtml(out)], { type: "text/html" }), "text/plain": new Blob([linkedPlain(out)], { type: "text/plain" }) })])
+        .catch(() => void navigator.clipboard?.writeText(linkedPlain(out)));
+    } else {
+      void navigator.clipboard?.writeText(linkedPlain(out));
+    }
     try {
       (window as unknown as { shopify?: { toast?: { show: (m: string) => void } } }).shopify?.toast?.show(
         hasToken && !articleUrl ? "Copied. We couldn't work out your store address, so the link is a placeholder." : "Copied",
@@ -318,7 +326,7 @@ function ArticleReview({
         <s-stack direction="block" gap="base">
           <s-text color="subdued">
             {articleUrl
-              ? "The link below follows your URL handle and blog. It only works once the article is published."
+              ? "Words in [square brackets] followed by a link are hyperlinks. The link follows your URL handle and blog, and only works once the article is published. Copy keeps the hyperlinks when you paste into an email editor."
               : "The article link couldn't be worked out, so a placeholder is used."}
           </s-text>
           <s-text-field
@@ -335,6 +343,12 @@ function ArticleReview({
             value={shown(draft.email_body)}
             onInput={(e) => set("email_body", stored(val(e as unknown as Event)))}
           />
+          {draft.email_body && /\[[^\]]+\]\(/.test(draft.email_body) ? (
+            <div style={{ border: "1px solid #e3e3e3", borderRadius: 8, padding: 12, fontSize: 14, background: "#fafafa" }}>
+              <div style={{ color: "#6a6a6a", fontSize: 12, marginBottom: 4 }}>How the link will look</div>
+              <div dangerouslySetInnerHTML={{ __html: linkedHtml(shown(draft.email_body)) }} />
+            </div>
+          ) : null}
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.email_body ?? "")}>Copy email body</s-button>
           </s-stack>
@@ -344,6 +358,12 @@ function ArticleReview({
             value={shown(draft.social_post)}
             onInput={(e) => set("social_post", stored(val(e as unknown as Event)))}
           />
+          {draft.social_post && /\[[^\]]+\]\(/.test(draft.social_post) ? (
+            <div style={{ border: "1px solid #e3e3e3", borderRadius: 8, padding: 12, fontSize: 14, background: "#fafafa" }}>
+              <div style={{ color: "#6a6a6a", fontSize: 12, marginBottom: 4 }}>How the link will look</div>
+              <div dangerouslySetInnerHTML={{ __html: linkedHtml(shown(draft.social_post)) }} />
+            </div>
+          ) : null}
           <s-stack direction="inline">
             <s-button onClick={() => copy(draft.social_post ?? "")}>Copy social post</s-button>
           </s-stack>
@@ -430,34 +450,6 @@ function ArticleReview({
         )}
       </s-section>
 
-      <s-section slot="aside" heading="Organization">
-        <s-stack direction="block" gap="base">
-          <s-text-field label="Author" value={org.author} onInput={(e) => setOrg("author", val(e as unknown as Event))} />
-          {blogs.length ? (
-            <s-select label="Blog" value={org.blogId} onChange={(e) => setOrg("blogId", val(e as unknown as Event))}>
-              {blogs.map((b) => (
-                <s-option key={b.id} value={b.id}>{b.title}</s-option>
-              ))}
-            </s-select>
-          ) : (
-            <s-text color="subdued">No blog found, so we'll create one called "News" when you send.</s-text>
-          )}
-          <s-text-field
-            label="Tags"
-            details="Separate tags with commas."
-            value={org.tags}
-            onInput={(e) => setOrg("tags", val(e as unknown as Event))}
-          />
-          <s-text-field
-            label="Theme template"
-            details="Leave blank for your theme's default blog post. Otherwise enter the template name, for example: recipe."
-            value={org.templateSuffix}
-            onInput={(e) => setOrg("templateSuffix", val(e as unknown as Event))}
-          />
-          {sent ? <s-text color="subdued">After sending, use "Update in Shopify" to apply changes here.</s-text> : null}
-        </s-stack>
-      </s-section>
-
       <s-section slot="aside" heading="Featured image">
         <s-stack direction="block" gap="base">
           {!img?.url ? (
@@ -515,6 +507,34 @@ function ArticleReview({
           {draft.image_prompts?.[0] ? (
             <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
           ) : null}
+        </s-stack>
+      </s-section>
+
+      <s-section slot="aside" heading="Organization">
+        <s-stack direction="block" gap="base">
+          <s-text-field label="Author" value={org.author} onInput={(e) => setOrg("author", val(e as unknown as Event))} />
+          {blogs.length ? (
+            <s-select label="Blog" value={org.blogId} onChange={(e) => setOrg("blogId", val(e as unknown as Event))}>
+              {blogs.map((b) => (
+                <s-option key={b.id} value={b.id}>{b.title}</s-option>
+              ))}
+            </s-select>
+          ) : (
+            <s-text color="subdued">No blog found, so we'll create one called "News" when you send.</s-text>
+          )}
+          <s-text-field
+            label="Tags"
+            details="Separate tags with commas."
+            value={org.tags}
+            onInput={(e) => setOrg("tags", val(e as unknown as Event))}
+          />
+          <s-text-field
+            label="Theme template"
+            details="Leave blank for your theme's default blog post. Otherwise enter the template name, for example: recipe."
+            value={org.templateSuffix}
+            onInput={(e) => setOrg("templateSuffix", val(e as unknown as Event))}
+          />
+          {sent ? <s-text color="subdued">After sending, use "Update in Shopify" to apply changes here.</s-text> : null}
         </s-stack>
       </s-section>
 
