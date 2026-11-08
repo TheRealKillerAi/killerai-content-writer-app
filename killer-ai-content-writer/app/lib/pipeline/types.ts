@@ -67,6 +67,8 @@ export interface ArticleResult {
   issues: string[];
   remaining: AuditProblem[];
   tokens: number;
+  /** How long the whole write took, start to finish. */
+  seconds?: number;
   edited?: boolean;
   sent?: SentInfo;
 }

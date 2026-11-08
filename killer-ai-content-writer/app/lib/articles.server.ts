@@ -17,13 +17,14 @@ export async function startArticle(
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle) } });
   void (async () => {
+    const startedAt = Date.now();
     try {
       const result = await writeArticle(product, angle, merchant, async (stage) => {
         await db.article.update({ where: { id: row.id }, data: { stage } });
       }, settings, guide);
       await db.article.update({
         where: { id: row.id },
-        data: { state: "done", stage: "Done", result: JSON.stringify(result) },
+        data: { state: "done", stage: "Done", result: JSON.stringify({ ...result, seconds: Math.round((Date.now() - startedAt) / 1000) }) },
       });
     } catch (e) {
       const message = e instanceof LlmError ? e.message : "Something went wrong while writing. Please try again.";
