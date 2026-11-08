@@ -154,7 +154,13 @@ export default function GuidePage() {
       questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const step = chosen ? 3 : 2;
+  // The facts step only shows while a topic is open in this visit. Coming back later always starts at the saved topics.
+  const [inFacts, setInFacts] = useState(false);
+  useEffect(() => {
+    if (questionsF.data?.angle) setInFacts(true);
+  }, [questionsF.data]);
+  const active = inFacts ? q?.angle ?? null : null;
+  const step = active ? 3 : 2;
 
   useEffect(() => {
     if (anglesF.data) anglesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -202,14 +208,14 @@ export default function GuidePage() {
         </s-stack>
       </s-section>
 
-      {step === 3 && chosen ? (
+      {step === 3 && active ? (
         <s-section heading="Your chosen topic">
           <s-stack direction="block" gap="small">
-            <s-text><strong>{chosen.working_title}</strong></s-text>
+            <s-text><strong>{active.working_title}</strong></s-text>
             <s-stack direction="inline">
               <s-button
                 {...(questionsBusy ? { loading: true } : {})}
-                onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" })}
+                onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(active) }, { method: "POST" })}
               >
                 Check for extra details
               </s-button>
@@ -352,7 +358,10 @@ export default function GuidePage() {
           ) : (
             <s-button
               {...(clearF.state !== "idle" ? { loading: true } : {})}
-              onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
+              onClick={() => {
+                setInFacts(false);
+                clearF.submit({ intent: "clear" }, { method: "POST" });
+              }}
             >
               ← Back to topics
             </s-button>
@@ -367,7 +376,7 @@ export default function GuidePage() {
               Continue →
             </s-button>
           ) : (
-            <s-button variant="primary" {...(writeF.state !== "idle" ? { loading: true } : {})} onClick={() => chosen && write(chosen)}>
+            <s-button variant="primary" {...(writeF.state !== "idle" ? { loading: true } : {})} onClick={() => active && write(active)}>
               Continue: write the guide →
             </s-button>
           )}

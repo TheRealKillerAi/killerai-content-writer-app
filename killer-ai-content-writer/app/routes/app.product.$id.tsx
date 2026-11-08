@@ -134,7 +134,13 @@ export default function ProductPage() {
       questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const step = chosen ? 2 : 1;
+  // The facts step only shows while a topic is open in this visit. Coming back later always starts at the saved topics.
+  const [inFacts, setInFacts] = useState(false);
+  useEffect(() => {
+    if (questionsF.data?.angle) setInFacts(true);
+  }, [questionsF.data]);
+  const active = inFacts ? q?.angle ?? null : null;
+  const step = active ? 2 : 1;
   const [selected, setSelected] = useState<number | null>(null);
 
   // After answers are saved, automatically re-check whether anything else is missing for this angle.
@@ -164,14 +170,14 @@ export default function ProductPage() {
           : "Add any extra details below if you'd like (or skip this), then press Continue to write the article."}
       </s-banner>
 
-      {step === 2 && chosen ? (
+      {step === 2 && active ? (
         <s-section heading="Your chosen topic">
           <s-stack direction="block" gap="small">
-            <s-text><strong>{chosen.working_title}</strong></s-text>
+            <s-text><strong>{active.working_title}</strong></s-text>
             <s-stack direction="inline">
               <s-button
                 {...(questionsBusy ? { loading: true } : {})}
-                onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(chosen) }, { method: "POST" })}
+                onClick={() => questionsF.submit({ intent: "questions", angle: JSON.stringify(active) }, { method: "POST" })}
               >
                 Check for extra details
               </s-button>
@@ -332,7 +338,10 @@ export default function ProductPage() {
           ) : (
             <s-button
               {...(clearF.state !== "idle" ? { loading: true } : {})}
-              onClick={() => clearF.submit({ intent: "clear" }, { method: "POST" })}
+              onClick={() => {
+                setInFacts(false);
+                clearF.submit({ intent: "clear" }, { method: "POST" });
+              }}
             >
               ← Back to topics
             </s-button>
@@ -362,7 +371,7 @@ export default function ProductPage() {
             <s-button
               variant="primary"
               {...(writeF.state !== "idle" ? { loading: true } : {})}
-              onClick={() => chosen && writeF.submit({ intent: "write", angle: JSON.stringify(chosen) }, { method: "POST" })}
+              onClick={() => active && writeF.submit({ intent: "write", angle: JSON.stringify(active) }, { method: "POST" })}
             >
               Continue: write the article →
             </s-button>
