@@ -29,7 +29,15 @@ export default function Help() {
         </s-grid>
       </s-section>
       <s-section>
-        <s-text color="subdued">Need something else? Email hello@killerai.au.</s-text>
+        <s-stack direction="block" gap="small">
+          <s-text color="subdued">
+            Need something else? Email <s-link href="mailto:support@killerai.co">support@killerai.co</s-link> or send
+            feedback below.
+          </s-text>
+          <s-stack direction="inline">
+            <s-button variant="primary" href="/app/feedback?from=help">Send feedback</s-button>
+          </s-stack>
+        </s-stack>
       </s-section>
     </s-page>
   );

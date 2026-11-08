@@ -1,0 +1,17 @@
+import db from "../db.server";
+
+export const SUPPORT_EMAIL = "support@killerai.co";
+
+export async function saveFeedback(
+  shop: string,
+  input: { kind: "message" | "thumb"; rating?: number | null; message?: string; context?: string },
+) {
+  const message = input.message?.trim().slice(0, 4000) || null;
+  const rating = input.rating === 1 || input.rating === -1 ? input.rating : null;
+  if (input.kind === "message" && !message) return false;
+  if (input.kind === "thumb" && rating === null) return false;
+  await db.feedback.create({
+    data: { shop, kind: input.kind, rating, message, context: input.context?.slice(0, 200) || null },
+  });
+  return true;
+}

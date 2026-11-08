@@ -15,6 +15,7 @@ import { RichCopy } from "../components/RichCopy";
 import { BodyEditor } from "../components/BodyEditor";
 import { renderMarkdown } from "../lib/markdown";
 import { ScoreCard } from "../components/ScoreCard";
+import { Thumbs } from "../components/Thumbs";
 import { scoreArticle } from "../lib/score";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -115,6 +116,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 const setOf = (a: Article) => JSON.stringify(a);
 
 function ArticleReview({
+  articleId,
   r,
   back,
   productTitle,
@@ -132,6 +134,7 @@ function ArticleReview({
   keyword,
 }: {
   keyword: string;
+  articleId: string;
   blogs: BlogRow[];
   domain: string;
   orgDefaults: { author: string; blogId: string; tags: string; templateSuffix: string };
@@ -566,6 +569,10 @@ function ArticleReview({
         </s-stack>
       </s-section>
 
+      <s-section slot="aside" heading="How did we do?">
+        <Thumbs context={`article:${articleId}`} question="Happy with this article?" />
+      </s-section>
+
     </s-page>
   );
 }
@@ -618,7 +625,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} blogs={blogs} domain={domain} orgDefaults={orgDefaults} keyword={keyword} />;
+  return <ArticleReview key={JSON.stringify(r)} articleId={article.id} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} blogs={blogs} domain={domain} orgDefaults={orgDefaults} keyword={keyword} />;
 }
 
 export function ErrorBoundary() {

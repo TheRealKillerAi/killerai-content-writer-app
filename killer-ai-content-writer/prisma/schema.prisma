@@ -76,3 +76,15 @@ model ShopSettings {
   data      String
   updatedAt DateTime @updatedAt
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  shop      String
+  kind      String // "message" or "thumb"
+  rating    Int? // 1 = helpful, -1 = not helpful
+  message   String?
+  context   String? // where it came from, for example "help:getting-started" or "article:<id>"
+  createdAt DateTime @default(now())
+
+  @@index([shop])
+}

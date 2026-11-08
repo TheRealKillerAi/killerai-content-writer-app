@@ -3,6 +3,7 @@ import { useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { HELP_TOPICS } from "../lib/help";
+import { Thumbs } from "../components/Thumbs";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   await authenticate.admin(request);
@@ -32,6 +33,9 @@ export default function HelpTopic() {
             </s-stack>
           ))}
         </s-stack>
+      </s-section>
+      <s-section>
+        <Thumbs context={`help:${topic.slug}`} />
       </s-section>
       <s-section>
         <s-button href="/app/help">← All help topics</s-button>
