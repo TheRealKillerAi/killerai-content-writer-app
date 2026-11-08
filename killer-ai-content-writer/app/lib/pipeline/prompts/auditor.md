@@ -9,7 +9,7 @@ Label EVERY sentence. For each give:
   - hedge: a plain referral such as "follow any instructions that come with the product", "speak to a qualified health professional", "stop if you feel pain"
   - general_background: neutral, widely known information about the product CATEGORY that does not tell the reader what to do
   - other: introductions, transitions, reassurance, invitations
-- evidence: for product_fact, usage_step and health_advice, an EXACT quote (or a list of exact quotes when the sentence combines several facts) copied word for word from PRODUCT DATA or MERCHANT FACTS that supports the whole sentence, or null if there is none. Never paraphrase. Never invent a quote.
+- evidence: for product_fact, usage_step and health_advice, an EXACT quote (or a list of exact quotes when the sentence combines several facts) copied word for word from PRODUCT DATA or MERCHANT FACTS that supports the whole sentence, or null if there is none. Never paraphrase. Never invent a quote. When a sentence combines several facts (a summary or recap sentence, for example), give a LIST of short exact quotes, one for each fact in the sentence, rather than one long quote or a reworded one; a quote that is not found word for word is rejected.
 
 Rules
 - Tips, storage advice, hygiene advice and reasons ("cold water prevents stains") are usage_step or health_advice and need evidence like anything else.
