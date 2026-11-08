@@ -13,6 +13,8 @@ import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../
 import { RichCopy } from "../components/RichCopy";
 import { BodyEditor } from "../components/BodyEditor";
 import { renderMarkdown } from "../lib/markdown";
+import { ScoreCard } from "../components/ScoreCard";
+import { scoreArticle } from "../lib/score";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -52,6 +54,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     productTitle: product?.facts.title ?? "",
     publishMode: settings.publishMode,
     toc: settings.toc,
+    keyword: article.angle.target_query ?? "",
     author: settings.defaultAuthor.trim() || settings.businessName,
     store: session.shop.replace(".myshopify.com", ""),
   };
@@ -117,7 +120,9 @@ function ArticleReview({
   blogs,
   domain,
   orgDefaults,
+  keyword,
 }: {
+  keyword: string;
   blogs: BlogRow[];
   domain: string;
   orgDefaults: { author: string; blogId: string; tags: string; templateSuffix: string };
@@ -177,6 +182,12 @@ function ArticleReview({
     }
   };
   const img = draft.featured_image;
+  const score = scoreArticle(draft, {
+    html: buildBodyHtml(draft, handle, toc, tldrStyle),
+    keyword,
+    productHandle: handle,
+    author: org.author,
+  });
   const set = <K extends keyof Article>(k: K, v: Article[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   return (
@@ -406,6 +417,10 @@ function ArticleReview({
         </s-banner>
       ) : null}
 
+      <s-section slot="aside" heading="Article score">
+        <ScoreCard score={score} liveUrl={sent?.published ? sent.url : null} />
+      </s-section>
+
       <s-section slot="aside" heading="Send to your Shopify blog">
         {sent ? (
           <s-stack direction="block" gap="base">
@@ -547,7 +562,7 @@ function ArticleReview({
 }
 
 export default function ArticlePage() {
-  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author, blogs, domain, orgDefaults } = useLoaderData<typeof loader>();
+  const { article, handle, productTitle, publishMode, store, images, tldrStyle, toc, author, blogs, domain, orgDefaults, keyword } = useLoaderData<typeof loader>();
   const { revalidate, state } = useRevalidator();
 
   useEffect(() => {
@@ -594,7 +609,7 @@ export default function ArticlePage() {
   }
 
   const url = handle ? `/products/${handle}` : "#";
-  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} blogs={blogs} domain={domain} orgDefaults={orgDefaults} />;
+  return <ArticleReview key={JSON.stringify(r)} r={r} back={back} productTitle={productTitle} url={url} publishMode={publishMode} store={store} images={images} tldrStyle={tldrStyle} toc={toc} author={author} handle={handle} blogs={blogs} domain={domain} orgDefaults={orgDefaults} keyword={keyword} />;
 }
 
 export function ErrorBoundary() {
