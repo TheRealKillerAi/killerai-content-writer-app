@@ -1,3 +1,4 @@
+import { waitUntil } from "@vercel/functions";
 import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
@@ -16,7 +17,8 @@ export async function startArticle(
   guide?: ProductFacts[],
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle) } });
-  void (async () => {
+  // waitUntil keeps the hosted function alive after the response; locally it simply runs.
+  waitUntil((async () => {
     const startedAt = Date.now();
     try {
       const result = await writeArticle(product, angle, merchant, async (stage) => {
@@ -31,7 +33,7 @@ export async function startArticle(
       if (!(e instanceof LlmError)) console.error("Article job failed", e);
       await db.article.update({ where: { id: row.id }, data: { state: "failed", error: message } });
     }
-  })();
+  })());
   return row.id;
 }
 
