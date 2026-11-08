@@ -80,6 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       });
       const angles = [...kept, ...added].slice(0, 30);
       await saveAngles(session.shop, productId, angles);
+      await clearChosen(session.shop, productId); // new angles are shown on step 1
       return { intent, error: null, angles };
     }
     const angle = JSON.parse(String(form.get("angle"))) as Angle;

@@ -14,7 +14,9 @@ Label EVERY sentence. For each give:
 Rules
 - Tips, storage advice, hygiene advice and reasons ("cold water prevents stains") are usage_step or health_advice and need evidence like anything else.
 - A sentence saying the instructions or manual "cover", "include", "say" or "recommend" something needs evidence that they say exactly that.
-- If only part of the sentence is supported, evidence is null.
+- If only part of the sentence is supported, evidence is null. Extra detail that the quote does not state (how a part is attached or made, a reason, a step order, a condition) makes the sentence unsupported even when the rest is supported.
+- For MERCHANT FACTS only the ANSWER is evidence. The wording of the question is NOT evidence: a question that mentions something does not make it true. If the answer does not address the point, there is no support.
+- A sentence that refers back with "both", "it" or "this" (for example "It is made from both") is judged together with the sentence it refers to.
 - A sentence that only completes a stated procedure by reversing a stated step (closing or refitting what the facts say to open or remove) is supported: use the quote for the step it reverses as evidence.
 
 Also list leaks: sentences a reader should never see (about how the article was made, what information was or was not provided, or that undermine the product). A sentence is NOT a leak just because its information came from MERCHANT FACTS; stating a supplied fact plainly is correct.

@@ -4,4 +4,6 @@ Decide the FACT BUDGET (low, ok or good) for comparing these products for this a
 
 Set "product" on every question to the exact handle of the product it is about. Never repeat, rephrase or narrow a question already in that product's MERCHANT FACTS (known or unknown), and never ask anything listed as unknown for that product. If every useful question is answered, return an empty list.
 
+Each question must ask about ONE thing only. Never combine two topics in one question.
+
 Return ONLY JSON: {"fact_budget":"low|ok|good","questions":[{"product":"handle","q":"","why":""}]}
