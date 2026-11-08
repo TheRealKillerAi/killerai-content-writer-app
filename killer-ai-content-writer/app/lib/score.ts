@@ -6,15 +6,17 @@ export type Score = {
   ai: { passed: number; total: number; checks: Check[] };
 };
 
-const STOP = new Set(["a", "an", "the", "to", "of", "for", "and", "or", "in", "on", "with", "how", "what", "is", "are", "your", "do", "does", "best"]);
+const STOP = new Set("a an the to of for and or in on at by from with how what why when where which who is are be can do does your you it its this that as vs best my we i".split(" "));
+const stem = (w: string) => (w.length > 4 ? w.replace(/(ing|ed|es|ly|s)$/, "") : w);
 const strip = (h: string) => h.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 const words = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
 const tokens = (k: string) => k.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w && !STOP.has(w));
+/** True when most of the important words of the keyword appear (word forms like switch/switching count). Long keywords can't always fit whole in a 60 character title. */
 const hasKeyword = (text: string, keyword: string) => {
-  const t = tokens(keyword);
+  const t = tokens(keyword).map(stem);
   if (!t.length) return true;
-  const low = text.toLowerCase();
-  return t.every((w) => low.includes(w.replace(/s$/, "")));
+  const have = new Set(tokens(text).map(stem));
+  return t.filter((w) => have.has(w)).length / t.length >= 0.75;
 };
 
 const VAGUE_LINK = /^(click here|here|read more|more|learn more|this|this link|link|click|see more)$/i;

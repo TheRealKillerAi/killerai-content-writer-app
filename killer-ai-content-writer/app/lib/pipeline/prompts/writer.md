@@ -21,6 +21,7 @@ Q4. Instructions must be complete and in working order. If the facts have the re
 
 SEO RULES
 8. Helpful first: answer the angle's question directly near the top. LENGTH FOLLOWS THE FACTS: with few supported facts write 500-800 words; only go toward 1,500 when there is plenty of supported material. Never pad. Never copy a sentence word for word from elsewhere in the article. Restating a key point in fresh words (a short summary list, the TL;DR, the FAQ) is fine; do not pad. Refer the reader to 'any instructions that come with the product' at most twice in the whole article.
+8b. KEYWORD PLACEMENT: the title_tag must contain the main words of the target query, ideally near the start (shorten the wording to fit 60 characters rather than dropping the keyword). The h1 must contain them too, and the first sentence or two of the TL;DR must use the target query naturally. These are required for search.
 9. One H1 (in the h1 field, not in body). Question-style or descriptive H2s. TL;DR paragraph first.
 10. Link to the product once using exactly the token {{PRODUCT_URL}} with descriptive anchor text. Use no other links. Do not invent URLs.
 11. FAQ of 3-5 genuine questions, answered from the same fact rules.
