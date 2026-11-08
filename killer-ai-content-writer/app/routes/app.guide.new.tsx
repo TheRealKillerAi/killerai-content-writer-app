@@ -46,8 +46,8 @@ export default function NewGuide() {
       </s-button>
 
       <s-banner tone="info" heading="Step 1 of 4: choose the products">
-        Tick between 2 and {MAX_GUIDE_PRODUCTS} products that shoppers would choose between. Your guide will link to each one.
-        {tooMany ? ` You've picked ${ids.length}, so please untick a few.` : ""}
+        Select between 2 and {MAX_GUIDE_PRODUCTS} products that shoppers would choose between. Your guide will link to each one.
+        {tooMany ? ` You've picked ${ids.length}, so please deselect a few.` : ""}
       </s-banner>
 
       <s-section>
@@ -87,7 +87,7 @@ export default function NewGuide() {
                 return (
                   <s-table-row key={p.id}>
                     <s-table-cell>
-                      <s-stack direction="inline" gap="base" alignItems="center">
+                      <s-grid gridTemplateColumns="auto auto 1fr" gap="base" alignItems="center">
                         <s-checkbox
                           label={p.title}
                           labelAccessibilityVisibility="exclusive"
@@ -96,7 +96,7 @@ export default function NewGuide() {
                         />
                         {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : null}
                         <s-text>{p.title}</s-text>
-                      </s-stack>
+                      </s-grid>
                     </s-table-cell>
                     <s-table-cell>
                       <s-badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>{p.status.toLowerCase()}</s-badge>
@@ -110,11 +110,22 @@ export default function NewGuide() {
         )}
       </s-section>
 
-      {pageInfo.hasNextPage && pageInfo.endCursor ? (
-        <s-section>
-          <s-button onClick={() => go({ ...(q ? { q } : {}), after: pageInfo.endCursor as string })}>Next page</s-button>
-        </s-section>
-      ) : null}
+      <s-section>
+        <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+          {pageInfo.hasNextPage && pageInfo.endCursor ? (
+            <s-button onClick={() => go({ ...(q ? { q } : {}), after: pageInfo.endCursor as string })}>More products</s-button>
+          ) : (
+            <span />
+          )}
+          <s-button
+            variant="primary"
+            {...(ids.length < 2 || tooMany ? { disabled: true } : {})}
+            onClick={() => navigate(`/app/guide/${ids.join("-")}`)}
+          >
+            Continue with {ids.length || ""} product{ids.length === 1 ? "" : "s"} →
+          </s-button>
+        </s-stack>
+      </s-section>
     </s-page>
   );
 }

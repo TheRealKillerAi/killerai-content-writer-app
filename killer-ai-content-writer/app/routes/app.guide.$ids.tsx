@@ -89,7 +89,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       throw redirect(`/app/article/${id}`);
     }
     if (intent === "angles") {
-      const kept = await loadAngles(shop, key);
+      const kept = form.get("replace") ? [] : await loadAngles(shop, key);
       const existing = [...(await existingArticleTitles(admin)), ...kept.map((a) => a.working_title)];
       const fresh = await findGuideAngles(products.map((p) => p.facts), existing, factsByHandle, settings);
       const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -102,7 +102,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
         seen.add(k2);
         return true;
       });
-      const angles = [...kept, ...added].slice(0, 30);
+      const angles = form.get("replace") ? fresh : [...kept, ...added].slice(0, 30);
       await saveAngles(shop, key, angles);
       return { intent, error: null, angles };
     }
@@ -250,6 +250,11 @@ export default function GuidePage() {
       {step === 2 && angles.length ? (
         <s-section heading="Suggested guide topics">
           <s-paragraph>These are AI suggestions based on your product facts. They are not measured search volumes.</s-paragraph>
+          <s-stack direction="inline">
+            <s-button {...(anglesBusy ? { loading: true } : {})} onClick={() => anglesF.submit({ intent: "angles", replace: "1" }, { method: "POST" })}>
+              Replace these with new topics
+            </s-button>
+          </s-stack>
           <s-stack direction="block" gap="base">
             {angles.map((a, i) => (
               <s-box key={i} padding="base" borderWidth="base" borderRadius="base">
