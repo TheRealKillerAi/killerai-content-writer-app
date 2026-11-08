@@ -16,6 +16,19 @@ export function linkedHtml(text: string): string {
 /** Plain-text version: "anchor (url)". */
 export const linkedPlain = (text: string) => text.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 ($2)");
 
+/** Turns a bare {{ARTICLE_URL}} token (older articles) into a markdown link on the words leading up to it. */
+export function linkify(text: string | undefined): string | undefined {
+  if (!text) return text;
+  const bare = /(^|[^(])\{\{ARTICLE_URL\}\}/;
+  if (!bare.test(text)) return text;
+  const m = /([^.!?\n:]{3,80}?)\s*[:\u2013\u2014-]?\s*\{\{ARTICLE_URL\}\}/.exec(text.replace(/\]\(\{\{ARTICLE_URL\}\}\)/g, "]()"));
+  const lead = m?.[1]?.trim().replace(/[:\u2013\u2014-]+$/, "").trim();
+  if (m && lead && lead.split(/\s+/).length <= 10 && !lead.includes("[")) {
+    return text.replace(new RegExp(`${lead.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*[:\u2013\u2014-]?\\s*\\{\\{ARTICLE_URL\\}\\}`), `[${lead}]({{ARTICLE_URL}})`);
+  }
+  return text.replace(/\{\{ARTICLE_URL\}\}/, "[Read the full guide]({{ARTICLE_URL}})");
+}
+
 export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, settings?: Pick<AppSettings, "tldrEnabled" | "tldrLabel" | "tldrBg" | "tldrText" | "tldrCorners" | "tldrFontSize" | "tldrFont">): string {

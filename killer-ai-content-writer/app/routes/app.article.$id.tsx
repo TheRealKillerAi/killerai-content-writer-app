@@ -9,7 +9,7 @@ import { PublishError, sendToShopify } from "../lib/publish.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
-import { buildBodyHtml, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
+import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -20,6 +20,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const images = await productImages(admin, `gid://shopify/Product/${article.productId}`);
   const blogs = await listBlogs(admin);
   const domain = await primaryDomain(admin);
+  if (article.result) {
+    const a = article.result.article;
+    a.email_body = linkify(a.email_body);
+    a.social_post = linkify(a.social_post);
+  }
   return {
     images,
     blogs,
