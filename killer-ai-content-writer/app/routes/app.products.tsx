@@ -55,10 +55,10 @@ export default function Products() {
               {products.map((p) => (
                 <s-table-row key={p.id}>
                   <s-table-cell>
-                    <s-stack direction="inline" gap="base" alignItems="center">
-                      {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : null}
+                    <s-grid gridTemplateColumns="auto 1fr" gap="base" alignItems="center">
+                      {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : <s-box />}
                       <s-link href={productPath(p.id)}>{p.title}</s-link>
-                    </s-stack>
+                    </s-grid>
                   </s-table-cell>
                   <s-table-cell>
                     <s-badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>{p.status.toLowerCase()}</s-badge>
