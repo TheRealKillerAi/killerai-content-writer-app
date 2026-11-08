@@ -4,16 +4,17 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 
 import { authenticate } from "../shopify.server";
+import { isAdminShop } from "../lib/feedback.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
   // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  return { apiKey: process.env.SHOPIFY_API_KEY || "", isAdmin: isAdminShop(session.shop) };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData<typeof loader>();
+  const { apiKey, isAdmin } = useLoaderData<typeof loader>();
 
   return (
     <AppProvider apiKey={apiKey}>
@@ -23,6 +24,7 @@ export default function App() {
         <s-link href="/app/articles">Articles</s-link>
         <s-link href="/app/settings">Settings</s-link>
         <s-link href="/app/help">Help</s-link>
+        {isAdmin ? <s-link href="/app/admin/feedback">Feedback inbox</s-link> : null}
       </s-app-nav>
       <Outlet />
     </AppProvider>

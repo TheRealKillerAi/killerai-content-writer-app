@@ -15,3 +15,16 @@ export async function saveFeedback(
   });
   return true;
 }
+
+/** Stores allowed to see all feedback: the app owner's stores. Set ADMIN_SHOPS (comma separated) to change. */
+export function isAdminShop(shop: string) {
+  const list = (process.env.ADMIN_SHOPS ?? "killerai-writer-app.myshopify.com")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(shop.toLowerCase());
+}
+
+export async function listFeedback(limit = 200) {
+  return db.feedback.findMany({ orderBy: { createdAt: "desc" }, take: limit });
+}
