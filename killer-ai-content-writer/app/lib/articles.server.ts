@@ -84,7 +84,7 @@ export async function dedupeArticle(shop: string, id: string) {
   const row = await db.article.findFirst({ where: { id, shop } });
   if (!row?.result) return null;
   const prev = JSON.parse(row.result) as ArticleResult;
-  const article = { ...prev.article, body_markdown: cleanStructure(removeRepeats(prev.article.body_markdown)) };
+  const article = { ...prev.article, body_markdown: cleanStructure(removeRepeats(prev.article.body_markdown)), body_html: undefined };
   return saveEdits(shop, id, article);
 }
 

@@ -49,23 +49,6 @@ export function RichCopy({
   }, []);
 
   const emit = () => ref.current && onChange(toMarkdown(ref.current));
-  const selectionInside = () => {
-    const sel = window.getSelection();
-    return sel && !sel.isCollapsed && ref.current?.contains(sel.anchorNode) ? sel : null;
-  };
-  const link = () => {
-    if (!selectionInside() || !url) return;
-    document.execCommand("createLink", false, url);
-    emit();
-  };
-  const unlink = () => {
-    if (!selectionInside()) return;
-    document.execCommand("unlink");
-    emit();
-  };
-  const btn = { padding: "6px 12px", border: "1px solid #c9c9c9", borderRadius: 8, background: "#f1f1f1", cursor: "pointer", fontSize: 13 } as const;
-  const keep = (e: { preventDefault: () => void }) => e.preventDefault();
-
   return (
     <div>
       <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>{label}</div>
@@ -86,11 +69,6 @@ export function RichCopy({
           outline: "none",
         }}
       />
-      <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
-        <button type="button" style={btn} onMouseDown={keep} onClick={link}>Link selected words to the article</button>
-        <button type="button" style={btn} onMouseDown={keep} onClick={unlink}>Remove link</button>
-        <span style={{ color: "#6a6a6a", fontSize: 12 }}>Select some words, then press the button.</span>
-      </div>
     </div>
   );
 }

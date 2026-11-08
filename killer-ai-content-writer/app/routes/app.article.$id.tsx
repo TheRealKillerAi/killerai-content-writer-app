@@ -11,6 +11,8 @@ import { getProduct, listBlogs, primaryDomain, productImages, type BlogRow, type
 import type { AppSettings } from "../lib/settings";
 import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
 import { RichCopy } from "../components/RichCopy";
+import { BodyEditor } from "../components/BodyEditor";
+import { renderMarkdown } from "../lib/markdown";
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
@@ -249,12 +251,15 @@ function ArticleReview({
             value={draft.tldr}
             onInput={(e) => set("tldr", val(e as unknown as Event))}
           />
-          <s-text-area
-            label="Body (markdown: ## for headings, - for bullets, **bold**)"
-            rows={22}
-            value={draft.body_markdown}
-            onInput={(e) => set("body_markdown", val(e as unknown as Event))}
-          />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Body</div>
+            <BodyEditor
+              key={`body-${resetKey}`}
+              html={draft.body_html ?? renderMarkdown(draft.body_markdown, `/products/${handle}`)}
+              productUrl={`/products/${handle}`}
+              onChange={(h, md) => setDraft((d) => ({ ...d, body_html: h, body_markdown: md }))}
+            />
+          </div>
         </s-stack>
       </s-section>
 
@@ -333,7 +338,7 @@ function ArticleReview({
         <s-stack direction="block" gap="base">
           <s-text color="subdued">
             {articleUrl
-              ? "Linked words show underlined. Select any words and press the button to link them to your article. The link follows your URL handle and blog, and only works once the article is published. Copy keeps the hyperlinks when you paste into an email editor."
+              ? "Linked words show underlined. The link follows your URL handle and blog, and only works once the article is published. Copy keeps the hyperlinks when you paste into an email editor."
               : "The article link couldn't be worked out, so a placeholder is used."}
           </s-text>
           <s-text-field

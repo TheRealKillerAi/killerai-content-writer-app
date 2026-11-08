@@ -1,4 +1,4 @@
-import { renderMarkdown, tocEntries } from "./markdown";
+import { renderMarkdown, slug, tocEntries } from "./markdown";
 import { tldrHtml } from "./tldr";
 import type { AppSettings } from "./settings";
 import type { Article } from "./pipeline/types";
@@ -44,7 +44,21 @@ export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, s
   const productUrl = `/products/${productHandle}`;
   const parts: string[] = [];
   if (!settings || settings.tldrEnabled) parts.push(settings ? tldrHtml(a.tldr, settings) : `<p><strong>TL;DR:</strong> ${esc(a.tldr)}</p>`);
-  const entries = toc ? tocEntries(a.body_markdown) : [];
+  let entries = toc ? tocEntries(a.body_markdown) : [];
+  let customBody = a.body_html;
+  if (customBody !== undefined) {
+    const used = new Set<string>();
+    const found: { id: string; text: string }[] = [];
+    customBody = customBody.replace(/<h2([^>]*)>([\s\S]*?)<\/h2>/gi, (_m, attrs: string, inner: string) => {
+      const text = inner.replace(/<[^>]+>/g, "").trim();
+      let id = slug(text);
+      for (let n = 2; used.has(id); n++) id = `${slug(text)}-${n}`;
+      used.add(id);
+      found.push({ id, text });
+      return toc ? `<h2${attrs.replace(/\sid="[^"]*"/, "")} id="${id}">${inner}</h2>` : _m;
+    });
+    entries = toc ? found : [];
+  }
   if (entries.length >= 3) {
     parts.push(
       `<p><strong>In this article</strong></p>\n<ul>${entries
@@ -52,7 +66,7 @@ export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, s
         .join("")}</ul>`,
     );
   }
-  parts.push(renderMarkdown(a.body_markdown, productUrl, entries.length >= 3));
+  parts.push(customBody !== undefined ? customBody : renderMarkdown(a.body_markdown, productUrl, entries.length >= 3));
   if (a.faq.length) {
     parts.push(
       `<h2>Frequently asked questions</h2>`,
