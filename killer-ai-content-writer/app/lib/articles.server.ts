@@ -2,6 +2,8 @@ import { waitUntil } from "@vercel/functions";
 import db from "../db.server";
 import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
+import { buildBodyHtml } from "./articleHtml";
+import { scoreArticle } from "./score";
 import type { AppSettings } from "./settings";
 import type { Covered } from "./keywords";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
@@ -124,6 +126,7 @@ export type ArticleListItem = {
   status: string | null;
   keyword: string | null;
   sentAs: "draft" | "live" | null;
+  seo: number | null;
   createdAt: string;
 };
 
@@ -136,7 +139,22 @@ export async function listArticles(shop: string, productId?: string): Promise<Ar
   return rows.map((r) => {
     const result = r.result ? (JSON.parse(r.result) as ArticleResult) : null;
     const angle = JSON.parse(r.angle) as Angle;
+    let seo: number | null = null;
+    if (result) {
+      try {
+        // The product link is always added by the writer, so a stand-in handle keeps that check from failing here.
+        seo = scoreArticle(result.article, {
+          html: buildBodyHtml(result.article, "x", false),
+          keyword: r.keyword ?? angle.target_query ?? "",
+          productHandle: "x",
+          author: "",
+        }).seo.score;
+      } catch {
+        seo = null;
+      }
+    }
     return {
+      seo,
       id: r.id,
       productId: r.productId,
       state: r.state as ArticleListItem["state"],

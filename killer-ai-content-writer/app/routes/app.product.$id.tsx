@@ -142,6 +142,23 @@ export default function ProductPage() {
   const active = inFacts ? q?.angle ?? null : null;
   const step = active ? 2 : 1;
   const [selected, setSelected] = useState<number | null>(null);
+  const [own, setOwn] = useState("");
+  const useOwn = () => {
+    const t = own.trim();
+    if (!t) return;
+    const angle: Angle = {
+      working_title: t,
+      target_query: t.toLowerCase().replace(/[?.!]+$/, ""),
+      intent: "informational",
+      why_it_fits: "A topic you chose yourself.",
+      answerable_from_data: 2,
+      needs_outside_evidence: false,
+      needs_info: [],
+      risk: "normal",
+      overlaps_existing: false,
+    };
+    questionsF.submit({ intent: "questions", angle: JSON.stringify(angle) }, { method: "POST" });
+  };
 
   // After answers are saved, automatically re-check whether anything else is missing for this angle.
   useEffect(() => {
@@ -328,6 +345,28 @@ export default function ProductPage() {
             onWrite={() => writeF.submit({ intent: "write", angle: JSON.stringify(q.angle) }, { method: "POST" })}
             onSave={(items) => saveF.submit({ intent: "save", items: JSON.stringify(items) }, { method: "POST" })}
           />
+        </s-section>
+      ) : null}
+
+      {step === 1 ? (
+        <s-section heading="Or write about your own topic">
+          <s-stack direction="block" gap="small">
+            <s-text-field
+              label="Your topic"
+              details="A title or the question you'd like answered, for example: How do I look after my cup?"
+              value={own}
+              onInput={(e) => setOwn((e.currentTarget as unknown as { value: string }).value)}
+            />
+            <s-stack direction="inline">
+              <s-button
+                {...(!own.trim() ? { disabled: true } : {})}
+                {...(questionsBusy ? { loading: true } : {})}
+                onClick={useOwn}
+              >
+                Use my topic →
+              </s-button>
+            </s-stack>
+          </s-stack>
         </s-section>
       ) : null}
 

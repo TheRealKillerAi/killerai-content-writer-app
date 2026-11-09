@@ -41,6 +41,7 @@ export default function Articles() {
               <s-table-header listSlot="primary">Article</s-table-header>
               <s-table-header>Product</s-table-header>
               <s-table-header>Search phrase</s-table-header>
+              <s-table-header>SEO score</s-table-header>
               <s-table-header>Status</s-table-header>
               <s-table-header>Created</s-table-header>
               <s-table-header />
@@ -53,6 +54,9 @@ export default function Articles() {
                   </s-table-cell>
                   <s-table-cell>{parseGuideKey(a.productId) ? "Buying guide" : titles[a.productId] ?? "—"}</s-table-cell>
                   <s-table-cell>{a.keyword || "—"}</s-table-cell>
+                  <s-table-cell>
+                    {a.seo === null ? "—" : <s-badge tone={a.seo >= 80 ? "success" : a.seo >= 60 ? "warning" : "critical"}>{String(Math.round(a.seo))}</s-badge>}
+                  </s-table-cell>
                   <s-table-cell>
                     {a.state === "writing" ? (
                       <s-badge tone="info">Writing…</s-badge>

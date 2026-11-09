@@ -5,6 +5,8 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { loadEffectiveSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
 import { listAuthors } from "../lib/authors.server";
+import { monthlyUsage } from "../lib/usage.server";
+import { UsageMeter } from "../components/UsageMeter";
 import { shopInfo } from "../lib/schedule.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
@@ -26,14 +28,15 @@ type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; v
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const [settings, blogs, authors, info] = await Promise.all([
+  const [settings, blogs, authors, info, usage] = await Promise.all([
     loadEffectiveSettings(admin, session.shop),
     listBlogs(admin),
     listAuthors(session.shop),
     shopInfo(admin),
+    monthlyUsage(session.shop),
   ]);
   const zones = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.("timeZone") ?? [info.tz];
-  return { settings, blogs, authors: authors.map((a) => ({ id: a.id, name: a.name, kind: a.kind })), shopTz: info.tz, shopEmail: info.email, zones };
+  return { settings, blogs, authors: authors.map((a) => ({ id: a.id, name: a.name, kind: a.kind })), usage, shopTz: info.tz, shopEmail: info.email, zones };
 };
 
 export const action = async ({ request }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -73,7 +76,7 @@ const toast = (msg: string) => {
 };
 
 export default function Settings() {
-  const { settings: s, blogs, authors, shopTz, shopEmail, zones } = useLoaderData<typeof loader>();
+  const { settings: s, blogs, authors, usage, shopTz, shopEmail, zones } = useLoaderData<typeof loader>();
   const saveF = useFetcher<ActionResult>();
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
@@ -355,6 +358,13 @@ export default function Settings() {
               <s-option value="draft">Save as a draft (recommended)</s-option>
               <s-option value="live">Publish straight away</s-option>
             </s-select>
+            <s-checkbox
+              name="disclaimerEnabled"
+              label="Add a short disclaimer at the end of articles"
+              details="For example, a general-information note for health or wellbeing topics."
+              checked={s.disclaimerEnabled}
+            />
+            <s-text-field name="disclaimerText" label="Disclaimer wording" value={s.disclaimerText} />
             <s-checkbox name="keywordsAsTags" label="Add the target keywords as article tags" checked={s.keywordsAsTags} />
             <s-checkbox
               name="linkToOtherArticles"
@@ -509,14 +519,15 @@ export default function Settings() {
         </div>
         <div hidden={tab !== "plan"}>
         <s-section heading="Your plan">
-          <s-stack direction="block" gap="small">
+          <s-stack direction="block" gap="base">
             <s-stack direction="inline" gap="small" alignItems="center">
-              <s-text><strong>Free plan</strong></s-text>
-              <s-badge>Placeholder</s-badge>
+              <s-text><strong>{usage.plan}</strong></s-text>
+              <s-badge>Testing</s-badge>
             </s-stack>
-            <s-text color="subdued">Plan limits and usage will show here.</s-text>
+            <UsageMeter usage={usage} />
+            <s-text color="subdued">Plans and billing arrive at launch. Until then, this shows how many articles you've written this month.</s-text>
             <s-stack direction="inline">
-              <s-button href="/app/plans">Upgrade plan</s-button>
+              <s-button href="/app/plans">See plans</s-button>
             </s-stack>
           </s-stack>
         </s-section>

@@ -26,6 +26,8 @@ export type AppSettings = TldrStyle & {
   keywordsAsTags: boolean;
   linkToOtherArticles: boolean;
   articleTemplate: string;
+  disclaimerEnabled: boolean;
+  disclaimerText: string;
   // Writing
   language: "en-AU";
   maxWords: number | null; // null = let the facts decide
@@ -70,6 +72,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   keywordsAsTags: true,
   linkToOtherArticles: false,
   articleTemplate: "",
+  disclaimerEnabled: false,
+  disclaimerText: "This article is general information only and is not professional advice.",
   language: "en-AU",
   maxWords: null,
   scheduleEnabled: false,

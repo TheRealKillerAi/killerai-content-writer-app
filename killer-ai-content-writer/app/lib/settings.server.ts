@@ -50,6 +50,8 @@ export function settingsFromForm(f: FormData): AppSettings {
     keywordsAsTags: flag(f, "keywordsAsTags"),
     linkToOtherArticles: flag(f, "linkToOtherArticles"),
     articleTemplate: text(f, "articleTemplate", 80),
+    disclaimerEnabled: flag(f, "disclaimerEnabled"),
+    disclaimerText: text(f, "disclaimerText", 400) || DEFAULT_SETTINGS.disclaimerText,
     language: "en-AU",
     maxWords: [600, 1000, 1500].includes(maxWords) ? maxWords : null,
     scheduleEnabled: flag(f, "scheduleEnabled"),

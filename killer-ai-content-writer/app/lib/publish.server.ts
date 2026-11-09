@@ -51,7 +51,10 @@ export async function sendToShopify(
   const base = {
     title: a.h1,
     handle,
-    body: buildBodyHtml(a, opts.productHandle, settings.toc, settings) + aboutBox,
+    body:
+      buildBodyHtml(a, opts.productHandle, settings.toc, settings) +
+      (settings.disclaimerEnabled && settings.disclaimerText.trim() ? `<p><em>${esc(settings.disclaimerText.trim())}</em></p>` : "") +
+      aboutBox,
     summary: `<p>${esc(a.excerpt?.trim() || a.tldr)}</p>`,
     ...(a.featured_image?.url ? { image: { url: a.featured_image.url, altText: a.featured_image.alt || a.h1 } } : {}),
     author: { name: authorName },

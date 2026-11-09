@@ -3,12 +3,23 @@ import { useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { listArticles } from "../lib/articles.server";
+import { listAuthors } from "../lib/authors.server";
+import { monthlyUsage } from "../lib/usage.server";
+import { UsageMeter } from "../components/UsageMeter";
 import { loadSettings } from "../lib/settings.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
-  const [settings, articles] = await Promise.all([loadSettings(session.shop), listArticles(session.shop)]);
+  const [settings, articles, authors, usage] = await Promise.all([
+    loadSettings(session.shop),
+    listArticles(session.shop),
+    listAuthors(session.shop),
+    monthlyUsage(session.shop),
+  ]);
   return {
+    usage,
+    authorDone: authors.length > 0,
+    scheduleDone: settings.scheduleEnabled,
     voiceDone: settings.brandDescription.trim().length > 0,
     wroteDone: articles.some((a) => a.state === "done"),
     recent: articles.slice(0, 5),
@@ -29,7 +40,7 @@ const POINTS = [
 ];
 
 export default function Home() {
-  const { voiceDone, wroteDone, recent } = useLoaderData<typeof loader>();
+  const { voiceDone, wroteDone, recent, usage, authorDone, scheduleDone } = useLoaderData<typeof loader>();
 
   return (
     <s-page heading="Welcome to KillerAi Content Writer">
@@ -48,21 +59,25 @@ export default function Home() {
 
       <s-section heading="Get started">
         <s-stack direction="block" gap="base">
-          <s-stack direction="inline" gap="base" alignItems="center" justifyContent="space-between">
-            <s-stack direction="inline" gap="small" alignItems="center">
-              <s-badge tone={voiceDone ? "success" : "neutral"}>{voiceDone ? "Done" : "To do"}</s-badge>
-              <s-text>Set your brand voice</s-text>
+          {[
+            { done: voiceDone, text: "Set your brand voice", href: "/app/settings", cta: voiceDone ? "Review" : "Open settings" },
+            { done: wroteDone, text: "Write your first article", href: "/app/new", cta: "Write an article", primary: !wroteDone },
+            { done: authorDone, text: "Add an author (a real person or an AI persona)", href: "/app/authors", cta: authorDone ? "Manage" : "Add an author" },
+            { done: scheduleDone, text: "Turn on automatic articles", href: "/app/settings", cta: scheduleDone ? "Review" : "Set up schedule" },
+          ].map((row) => (
+            <s-stack key={row.text} direction="inline" gap="base" alignItems="center" justifyContent="space-between">
+              <s-stack direction="inline" gap="small" alignItems="center">
+                <s-badge tone={row.done ? "success" : "neutral"}>{row.done ? "Done" : "To do"}</s-badge>
+                <s-text>{row.text}</s-text>
+              </s-stack>
+              <s-button variant={row.primary ? "primary" : "secondary"} href={row.href}>{row.cta}</s-button>
             </s-stack>
-            <s-button href="/app/settings">{voiceDone ? "Review" : "Open settings"}</s-button>
-          </s-stack>
-          <s-stack direction="inline" gap="base" alignItems="center" justifyContent="space-between">
-            <s-stack direction="inline" gap="small" alignItems="center">
-              <s-badge tone={wroteDone ? "success" : "neutral"}>{wroteDone ? "Done" : "To do"}</s-badge>
-              <s-text>Write your first article</s-text>
-            </s-stack>
-            <s-button variant={wroteDone ? "secondary" : "primary"} href="/app/new">Write an article</s-button>
-          </s-stack>
+          ))}
         </s-stack>
+      </s-section>
+
+      <s-section heading="Your usage">
+        <UsageMeter usage={usage} />
       </s-section>
 
       <s-section heading="How it works">
