@@ -64,7 +64,7 @@ export async function writeArticle(
 
   const audit = async (art: Article): Promise<AuditReport> => {
     const sentences = splitSentences(art);
-    const listing = (ss: typeof sentences) => ss.map((x) => `${x.id}: ${x.text}`).join("\n");
+    const listing = (ss: typeof sentences) => ss.map((x) => `${x.id} [where=${x.where}]: ${x.text}`).join("\n");
     type Raw = Parameters<typeof verifyLabels>[1];
     let raw = await call<Raw>(auditorPrompt, `${facts}\n\nSENTENCES\n${listing(sentences)}`, 0);
     let res = verifyLabels(sentences, raw, facts, merchant.known);
@@ -106,6 +106,24 @@ export async function writeArticle(
   };
 
   article.body_markdown = cleanStructure(removeRepeats(article.body_markdown));
+
+  // Short of the 500-word target: one expansion pass that only develops facts already supplied.
+  if (runChecks(article).words < 500) {
+    await progress("Developing the article further");
+    const more = await call<Partial<Article>>(
+      "You expand an article that is slightly under 500 words in its tldr, body and FAQ. Return the SAME JSON object with the same keys, rewritten to reach at least 540 words in total across tldr, body_markdown and faq. Develop facts already present in PRODUCT DATA and MERCHANT FACTS more fully: add a short section, explain how a supplied fact helps the reader, or give fuller FAQ answers. NEVER pad, repeat yourself, or add any claim, number, benefit or suitability statement that is not in the facts. Anything under UNKNOWN TO THE MERCHANT must not appear anywhere, including email_body and social_post. Keep every {{PRODUCT_URL...}} link and {{ARTICLE_URL}} exactly as written, keep the voice, and keep the email and social copy to supplied facts only.",
+      `VOICE GUIDE\n${voiceGuide(settings)}\n\n${facts}\n\nARTICLE\n${JSON.stringify(article)}`,
+      0.4,
+    );
+    if (more && typeof more.body_markdown === "string" && more.body_markdown.length > article.body_markdown.length) {
+      const keep = { ...article };
+      Object.assign(article, more, { guide: keep.guide });
+      article.faq = Array.isArray(article.faq) ? article.faq : keep.faq;
+      article.tldr = article.tldr ?? keep.tldr;
+      article.body_markdown = cleanStructure(removeRepeats(article.body_markdown));
+      if (runChecks(article).words < runChecks(keep).words) Object.assign(article, keep);
+    }
+  }
 
   await progress("Checking every sentence against your facts");
   let report = await audit(article);
