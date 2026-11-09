@@ -28,6 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     usage: await monthlyUsage(session.shop),
     enabled: settings.scheduleEnabled,
+    planDays: settings.planDays,
     publishMode: settings.publishMode,
     tz,
     days: settings.scheduleDays,
@@ -80,11 +81,11 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
     const tz = effectiveZone(settings, (await shopInfo(admin)).tz);
     const open = await openSlotCount(shop, settings, tz);
     if (open > 0) {
-      runInBackground(fillAndNotify(shop, admin, settings, tz));
+      runInBackground(fillAndNotify(shop, admin, settings, tz, true));
       return { message: `Finding topics for ${open} open day${open === 1 ? "" : "s"}. This takes a minute or so. We'll email them to you when they're ready.` };
     }
     const d = await sendTopicsEmail(shop, admin, settings, tz);
-    const upcoming = "The next 7 days are already lined up, so there's nothing new to find. More days are added each night as the week moves on.";
+    const upcoming = `Your next ${settings.planDays} days are already lined up, so there's nothing new to find. More are added automatically as the days pass.`;
     if (d.status === "sent") return { message: `${upcoming} We've emailed ${d.count} topic${d.count === 1 ? "" : "s"} to ${d.to}.` };
     if (d.status === "failed") return { error: `${upcoming} We couldn't send the email to ${d.to || "your store address"}. Please try again in a minute.` };
     if (d.status === "off") return { message: `${upcoming} Topic emails are switched off in Settings.` };
@@ -193,7 +194,7 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
 }
 
 export default function Schedule() {
-  const { enabled, publishMode, tz, posts, days, time, usage } = useLoaderData<typeof loader>();
+  const { enabled, publishMode, tz, posts, days, time, usage, planDays } = useLoaderData<typeof loader>();
   const fill = useFetcher<Result>();
   const rv = useRevalidator();
   const [waitUntilMs, setWaitUntilMs] = useState(0);
@@ -231,7 +232,7 @@ export default function Schedule() {
         </s-banner>
       ) : (
         <s-banner tone="info">
-          {summary} at {time} ({tz.replace(/_/g, " ")}). {publishMode === "live" ? "Articles go live automatically." : "Articles are saved as drafts."} Topics are lined up a week ahead and each article is written about a day before it goes out.
+          {summary} at {time} ({tz.replace(/_/g, " ")}). {publishMode === "live" ? "Articles go live automatically." : "Articles are saved as drafts."} Topics are lined up {planDays} days ahead and each article is written about a day before it goes out.
         </s-banner>
       )}
       <s-section>

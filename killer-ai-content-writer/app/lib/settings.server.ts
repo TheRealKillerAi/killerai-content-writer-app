@@ -60,6 +60,8 @@ export function settingsFromForm(f: FormData): AppSettings {
     scheduleTime: /^([01]\d|2[0-3]):[0-5]\d$/.test(text(f, "scheduleTime", 5)) ? text(f, "scheduleTime", 5) : DEFAULT_SETTINGS.scheduleTime,
     timeZone: validZone(text(f, "timeZone", 60)) ? text(f, "timeZone", 60) : "",
     scheduleImage: f.get("scheduleImage") === "none" ? "none" : "product",
+    planDays: ([7, 14, 30] as const).find((d) => d === Number(f.get("planDays"))) ?? 7,
+    refillDays: [0, 3, 7, 14].includes(Number(f.get("refillDays"))) ? Number(f.get("refillDays")) : 0,
     notifyEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text(f, "notifyEmail", 120)) ? text(f, "notifyEmail", 120) : "",
     notifyFailure: f.get("notifyFailure") === "skip" ? "skip" : "tell",
     notifyUpcoming: f.get("notifyUpcoming") === "off" ? "off" : "weekly",

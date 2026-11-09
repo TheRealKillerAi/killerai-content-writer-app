@@ -14,8 +14,7 @@ import { loadEffectiveSettings, validZone } from "./settings.server";
 import type { AppSettings } from "./settings";
 import type { Angle } from "./pipeline/types";
 
-/** How far ahead topics are scheduled, and how long before publishing the article is written. */
-const HORIZON_DAYS = 7;
+/** How long before publishing the article is written. */
 const WRITE_WINDOW_HOURS = 36;
 
 // ---------- time zones ----------
@@ -44,17 +43,18 @@ function localDate(now: Date, tz: string) {
   return { y: +p.year, m: +p.month, d: +p.day };
 }
 
-/** Publish times the schedule calls for in the next week. */
+/** Publish times the schedule calls for within the planning window (7, 14 or 30 days). */
 export function upcomingSlots(s: AppSettings, tz: string, now = new Date()): Date[] {
   const days = new Set(s.scheduleDays.split(",").map(Number));
   const [hh, mm] = s.scheduleTime.split(":").map(Number);
   const { y, m, d } = localDate(now, tz);
   const out: Date[] = [];
-  for (let i = 0; i <= HORIZON_DAYS + 1; i++) {
+  const horizon = s.planDays || 7;
+  for (let i = 0; i <= horizon + 1; i++) {
     const day = new Date(Date.UTC(y, m - 1, d) + i * 86400000);
     if (!days.has(day.getUTCDay())) continue;
     const at = zonedToUtc(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), hh, mm, tz);
-    if (at.getTime() > now.getTime() + 3600000 && at.getTime() <= now.getTime() + HORIZON_DAYS * 86400000) out.push(at);
+    if (at.getTime() > now.getTime() + 3600000 && at.getTime() <= now.getTime() + horizon * 86400000) out.push(at);
   }
   return out;
 }
@@ -88,9 +88,14 @@ function pickAngle(angles: Angle[], taken: Set<string>, covered: Awaited<ReturnT
 }
 
 /** Adds topics for any upcoming publish slot that doesn't have one yet. Topics only: the article is written later. */
-export async function topUpSchedule(shop: string, admin: Admin, settings: AppSettings, tz: string): Promise<number> {
+export async function topUpSchedule(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false): Promise<number> {
   const now = new Date();
   const existing = await db.scheduledPost.findMany({ where: { shop, publishAt: { gte: now } } });
+  // "Top up when N days are left": wait until the schedule is about to run out, then fill the whole window again.
+  if (!force && settings.refillDays > 0 && existing.length) {
+    const last = Math.max(...existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
+    if ((last - now.getTime()) / 86400000 > settings.refillDays) return 0;
+  }
   const have = new Set(existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
   const missing = upcomingSlots(settings, tz, now).filter((s) => !have.has(s.getTime()));
   if (!missing.length) return 0;
@@ -287,8 +292,8 @@ export async function processDue(shop: string, admin: Admin, settings: AppSettin
 }
 
 /** Lines up topics and emails them (what "Find topics now" does). Writing happens later, about a day before each is due. */
-export async function fillAndNotify(shop: string, admin: Admin, settings: AppSettings, tz: string) {
-  await topUpSchedule(shop, admin, settings, tz);
+export async function fillAndNotify(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false) {
+  await topUpSchedule(shop, admin, settings, tz, force);
   return sendDigest(shop, admin, settings, tz);
 }
 

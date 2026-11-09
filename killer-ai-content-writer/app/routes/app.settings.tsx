@@ -380,7 +380,7 @@ export default function Settings() {
         <s-section heading="Schedule">
           <s-stack direction="block" gap="base">
             <s-paragraph>
-              Choose when articles go out. Topics are lined up a week ahead, and each article is written about a day before it
+              Choose when articles go out. Topics are lined up ahead of time, and each article is written about a day before it
               is published, using only the facts you've given us.
             </s-paragraph>
             <s-checkbox name="scheduleEnabled" label="Write and publish articles automatically" checked={s.scheduleEnabled} />
@@ -405,6 +405,29 @@ export default function Settings() {
                 {zones.map((z) => (
                   <s-option key={z} value={z}>{z.replace(/_/g, " ")}</s-option>
                 ))}
+              </s-select>
+            </s-grid>
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(220px, 1fr))" gap="base">
+              <s-select
+                name="planDays"
+                label="Line up topics"
+                value={String(s.planDays)}
+                details="How many days of topics to plan ahead. Each article is still written about a day before it goes out."
+              >
+                <s-option value="7">7 days ahead</s-option>
+                <s-option value="14">14 days ahead</s-option>
+                <s-option value="30">30 days ahead</s-option>
+              </s-select>
+              <s-select
+                name="refillDays"
+                label="Plan the next batch"
+                value={String(s.refillDays)}
+                details="For example, plan 14 days, then plan the next 14 when 7 days are left."
+              >
+                <s-option value="0">Every night, to keep it topped up</s-option>
+                <s-option value="3">When 3 days are left</s-option>
+                <s-option value="7">When 7 days are left</s-option>
+                <s-option value="14">When 14 days are left</s-option>
               </s-select>
             </s-grid>
             <s-select
