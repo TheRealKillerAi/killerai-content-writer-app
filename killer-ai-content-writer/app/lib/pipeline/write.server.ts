@@ -15,7 +15,8 @@ import {
   splitSentences,
   verifyLabels,
 } from "./checks";
-import { addInternalLinks, type LinkTargets } from "./links";
+import { addInternalLinks, addLinkOnPhrase, type LinkTargets } from "./links";
+import { sameKeyword } from "../keywords";
 import type { Angle, Article, ArticleResult, AuditProblem, AuditReport, MerchantFacts, ProductFacts } from "./types";
 
 const LINKS = /\[[^\]]+\]\(\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}\)/g;
@@ -179,6 +180,30 @@ export async function writeArticle(
       articles: settings.linkToOtherArticles,
     }, article.h1 || "");
     article.body_markdown = withLinks.md;
+    // No article matched on shared words: ask the model which existing article a reader would genuinely want next,
+    // including broader themes (plastic-free living, low waste kitchens). It only chooses a title and quotes words
+    // already in this article to link; code confirms those words exist, so nothing new can be added.
+    const candidates = links.articles.filter((a) => !(a.keyword && links.selfKeyword && sameKeyword(a.keyword, links.selfKeyword))).slice(0, 100);
+    if (settings.linkToOtherArticles && !withLinks.added.some((x) => x.kind === "article") && candidates.length) {
+      try {
+        await progress("Looking for a related article to link");
+        const pick = await call<{ index?: number | null; anchor?: string }>(
+          'You choose ONE existing blog article that readers of a new article would genuinely want to read next, or none. Return ONLY JSON {"index": <number from the list, or null>, "anchor": "<2 to 5 words copied exactly from the NEW ARTICLE BODY>"}. Choose an article on the same subject or a closely related broader theme (for example a reusable bag article can link to plastic-free living or single-use plastic articles; a kitchen product can link to low-waste kitchen articles). Do NOT choose an article that covers the same topic or search phrase as the new article, nor one only loosely connected by a single shared word. If nothing is clearly useful to the reader, return {"index": null, "anchor": ""}. The anchor must be words that already appear in an ordinary paragraph of the NEW ARTICLE BODY (not a heading, not the first paragraph) and that point naturally to the chosen article\'s subject.',
+          `NEW ARTICLE TITLE\n${article.h1}\n\nNEW ARTICLE SEARCH PHRASE\n${links.selfKeyword}\n\nNEW ARTICLE BODY\n${article.body_markdown.replace(/\]\([^)]*\)/g, "]")}\n\nEXISTING ARTICLES\n${candidates.map((a, i) => `${i}: ${a.title}`).join("\n")}`,
+          0,
+        );
+        const chosen = typeof pick?.index === "number" ? candidates[pick.index] : undefined;
+        if (chosen && pick.anchor) {
+          const placed = addLinkOnPhrase(article.body_markdown, pick.anchor, chosen.path);
+          if (placed) {
+            article.body_markdown = placed.md;
+            withLinks.added.push({ kind: "article", phrase: placed.phrase, path: chosen.path });
+          }
+        }
+      } catch (e) {
+        console.error("Related article lookup failed", e);
+      }
+    }
     console.log(`Internal links: ${links.collections.length} collections and ${links.articles.length} articles considered, ${withLinks.added.length} added`);
   }
   for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {

@@ -183,3 +183,25 @@ export function addInternalLinks(
 
   return { md: lines.map((l) => l.text).join("\n"), added };
 }
+
+/**
+ * Puts a link on a phrase that is already in the article (exact words, any capitalisation), in the first usable
+ * paragraph or list item. Returns null when the phrase is not there, so an invented anchor can never be used.
+ */
+export function addLinkOnPhrase(md: string, phrase: string, path: string): { md: string; phrase: string } | null {
+  const words = phrase.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 1 || words.length > 6 || phrase.replace(/[^A-Za-z]/g, "").length < 4) return null;
+  const re = new RegExp(`(?<![A-Za-z0-9])(${words.map(esc).join("\\s+")})(?![A-Za-z0-9])`, "i");
+  const lines = prepare(md);
+  for (const l of lines) {
+    if (!l.ok) continue;
+    const m = re.exec(l.text);
+    if (!m) continue;
+    const before = l.text.slice(0, m.index);
+    const after = l.text.slice(m.index + m[1].length);
+    if (/[*_`[]$/.test(before) || /^[*_`\]]/.test(after)) continue;
+    l.text = `${before}[${m[1]}](${path})${after}`;
+    return { md: lines.map((x) => x.text).join("\n"), phrase: m[1] };
+  }
+  return null;
+}
