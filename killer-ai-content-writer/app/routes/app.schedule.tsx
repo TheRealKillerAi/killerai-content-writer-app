@@ -134,11 +134,23 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <IconBtn label={p.imageUrl ? "Change image" : "Add image"} onClick={pick.pick} path={ICONS.image} />
               <IconBtn label="Use the product photo" onClick={() => f.submit({ intent: "product-image", id: p.id }, { method: "POST" })} path={ICONS.product} />
-              {p.imageUrl ? <IconBtn label="Remove image" onClick={() => f.submit({ intent: "set-image", id: p.id, url: "" }, { method: "POST" })} path={ICONS.trash} /> : null}
             </div>
           ) : null}
           {p.imageUrl ? (
-            <img src={p.imageUrl} alt={p.imageAlt || p.title} width={64} height={64} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }} />
+            <div className="ka-thumb" style={{ position: "relative", width: 64, height: 64 }}>
+              <img src={p.imageUrl} alt={p.imageAlt || p.title} width={64} height={64} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)", display: "block" }} />
+              {editable ? (
+                <button
+                  type="button"
+                  className="ka-thumb-x"
+                  title="Remove image"
+                  aria-label="Remove image"
+                  onClick={() => f.submit({ intent: "set-image", id: p.id, url: "" }, { method: "POST" })}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+                </button>
+              ) : null}
+            </div>
           ) : (
             <div style={{ width: 64, height: 64, borderRadius: 8, border: "1px dashed rgba(0,0,0,0.25)", display: "grid", placeItems: "center", fontSize: 11, opacity: 0.6 }}>No image</div>
           )}
@@ -184,6 +196,11 @@ export default function Schedule() {
 
   return (
     <s-page heading="Schedule">
+      <style>{`
+        .ka-thumb-x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:none;background:#d72c0d;color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;opacity:0;transition:opacity .12s}
+        .ka-thumb:hover .ka-thumb-x,.ka-thumb-x:focus-visible{opacity:1}
+        @media (hover:none){.ka-thumb-x{opacity:1}}
+      `}</style>
       <s-button
         slot="primary-action"
         variant="primary"
