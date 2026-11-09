@@ -137,3 +137,20 @@ model ScheduleStatus {
   working   Boolean  @default(false) // topics are still being found in the background
   updatedAt DateTime @updatedAt
 }
+
+/// A merchant's decision on a sentence the fact-check flagged: kept as an audit record, and accepted sentences are remembered so they are not flagged again.
+model SentenceReview {
+  id        String   @id @default(cuid())
+  shop      String
+  articleId String
+  sentence  String
+  key       String // the sentence in lower case without punctuation, for matching later articles
+  problem   String
+  decision  String // "accepted" (this is correct) or "ignored"
+  note      String   @default("")
+  decidedBy String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([shop, articleId])
+  @@index([shop, decision, key])
+}

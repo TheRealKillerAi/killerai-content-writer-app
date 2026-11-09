@@ -34,6 +34,26 @@ export function sections(md: string) {
   return out;
 }
 
+/** The last H2 section of the body: where the closing call to action lives. */
+export function closingSection(md: string): { start: number; heading: string; body: string } | null {
+  const idx = [...md.matchAll(/^## .*$/gm)];
+  const last = idx[idx.length - 1];
+  if (!last || last.index === undefined) return null;
+  const heading = last[0].replace(/^##\s*/, "").trim();
+  return { start: last.index, heading, body: md.slice(last.index + last[0].length).trim() };
+}
+
+const WEAK_HEADING = /^(a\s+)?(final\s+(note|thoughts?|word)|conclusion|summary|wrapping up|wrap[- ]up|in summary|making your choice|the bottom line|to sum up|closing thoughts?)\b/i;
+const WEAK_CLOSER = /\b(see if (it|they|this) (fits?|suits?|works?)|fits? your (needs|routine|lifestyle|requirements)|view the [^.]{0,60} on our (store|site|website)|on our (store|site|website) to|check (it|them) out|take a look|learn more|explore (our|the) (range|collection|products)|visit our (store|shop|website)|browse our)\b/i;
+
+/** True when the closing section is vague: a stock heading, a vague closer, or too thin to say anything. */
+export function genericClosing(md: string): boolean {
+  const c = closingSection(md);
+  if (!c) return false;
+  const words = c.body.split(/\s+/).filter(Boolean).length;
+  return WEAK_HEADING.test(c.heading) || WEAK_CLOSER.test(c.body) || words < 25;
+}
+
 export function runChecks(a: Article) {
   const all = articleText(a);
   const words = [a.tldr, a.body_markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, ""), ...a.faq.map((f) => f.q + " " + f.a)].join("\n").split(/\s+/).filter(Boolean).length;
@@ -61,6 +81,7 @@ export function runChecks(a: Article) {
   if (LEAKS.test(all)) issues.push(`Leaked wording: "${all.match(LEAKS)![0]}"`);
   const stray = PLACEHOLDERS.find(([re]) => re.test(all));
   if (stray) issues.push(`Contains ${stray[1]}`);
+  if (genericClosing(a.body_markdown)) issues.push("The closing call to action is vague: make it specific");
   if (/\$\s?\d/.test(all)) issues.push("Mentions a price");
   return { words, h2, productLinks, issues };
 }

@@ -14,17 +14,22 @@ export async function loadLinkTargets(
 ): Promise<LinkTargets | undefined> {
   if (!admin || (!settings.linkToCollections && !settings.linkToOtherArticles)) return undefined;
   const targets: LinkTargets = { collections: [], articles: [], selfKeyword };
-  try {
-    if (settings.linkToCollections) {
+  // Each lookup has its own safety net: if one fails the other still works, and the article is always written.
+  if (settings.linkToCollections) {
+    try {
       const d = await gql<{ collections: { nodes: { title: string; handle: string; productsCount: { count: number } | null }[] } }>(
         admin,
         `#graphql
         query LinkCollections { collections(first: 100, query: "published_status:published", sortKey: TITLE) { nodes { title handle productsCount { count } } } }`,
       );
       targets.collections = d.collections.nodes.filter((c) => (c.productsCount?.count ?? 1) > 0).map((c) => ({ title: c.title, handle: c.handle }));
+    } catch (e) {
+      console.error("Could not load collections for links", e);
     }
-    if (settings.linkToOtherArticles) {
-      const seen = new Set<string>();
+  }
+  if (settings.linkToOtherArticles) {
+    const seen = new Set<string>();
+    try {
       // Articles this app wrote and published (we know the search phrase each one targets).
       const rows = await db.article.findMany({
         where: { shop, sentAs: "live", ...(selfId ? { id: { not: selfId } } : {}) },
@@ -44,20 +49,24 @@ export async function loadLinkTargets(
           /* skip an unreadable row */
         }
       }
-      // Anything else already published on the blog (matched on its title only).
-      const d = await gql<{ articles: { nodes: { title: string; handle: string; blog: { handle: string } }[] } }>(
+    } catch (e) {
+      console.error("Could not load this app's published articles for links", e);
+    }
+    try {
+      // Anything else already on the blogs (matched on its title only). Newest first; published ones only.
+      const d = await gql<{ articles: { nodes: { title: string; handle: string; isPublished: boolean; blog: { handle: string } }[] } }>(
         admin,
         `#graphql
-        query LinkArticles { articles(first: 50, query: "published_status:published", sortKey: PUBLISHED_AT, reverse: true) { nodes { title handle blog { handle } } } }`,
+        query LinkArticles { articles(first: 100, sortKey: PUBLISHED_AT, reverse: true) { nodes { title handle isPublished blog { handle } } } }`,
       );
       for (const a of d.articles.nodes) {
+        if (!a.isPublished) continue;
         const path = `/blogs/${a.blog.handle}/${a.handle}`;
         if (!seen.has(path)) targets.articles.push({ title: a.title, keyword: null, path });
       }
+    } catch (e) {
+      console.error("Could not load blog articles for links", e);
     }
-  } catch (e) {
-    // Links are a nice-to-have: never stop an article from being written because they couldn't be looked up.
-    console.error("Could not load link targets", e);
   }
   return targets;
 }

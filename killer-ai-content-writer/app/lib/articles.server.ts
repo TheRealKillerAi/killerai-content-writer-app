@@ -9,7 +9,13 @@ import type { Admin } from "./products.server";
 import type { AppSettings } from "./settings";
 import type { Covered } from "./keywords";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
-import type { Angle, Article, ArticleResult, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
+import type { Angle, Article, ArticleResult, AuditProblem, ReviewedSentence, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
+
+/** A sentence in lower case without punctuation, so the same sentence is recognised in a later article. */
+const reviewKey = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().slice(0, 160);
+const isRepeat = (p: AuditProblem) => /^copies an earlier/.test(p.problem);
+const statusOf = (remaining: AuditProblem[], issues: string[]): ArticleResult["status"] =>
+  remaining.length === 0 && issues.length === 0 ? "READY FOR MERCHANT APPROVAL" : "NEEDS REVIEW";
 
 async function execute(
   rowId: string,
@@ -23,9 +29,25 @@ async function execute(
   const startedAt = Date.now();
   try {
     const links = shopAndAdmin ? await loadLinkTargets(shopAndAdmin.admin, shopAndAdmin.shop, settings, angle.target_query ?? "", rowId) : undefined;
-    const result = await writeArticle(product, angle, merchant, async (stage) => {
+    let result = await writeArticle(product, angle, merchant, async (stage) => {
       await db.article.update({ where: { id: rowId }, data: { stage } });
     }, settings, guide, links);
+    // Sentences the merchant has already confirmed as correct in an earlier article are not flagged again.
+    if (shopAndAdmin && result.remaining.length) {
+      try {
+        const accepted = await db.sentenceReview.findMany({ where: { shop: shopAndAdmin.shop, decision: "accepted" }, select: { key: true }, take: 1000 });
+        const keys = new Set(accepted.map((a) => a.key));
+        const known = result.remaining.filter((p) => !isRepeat(p) && keys.has(reviewKey(p.text)));
+        if (known.length) {
+          const remaining = result.remaining.filter((p) => !known.includes(p));
+          const at = new Date().toISOString();
+          const reviewed: ReviewedSentence[] = known.map((p) => ({ text: p.text, problem: p.problem, decision: "accepted", by: "an earlier decision", at, remembered: true }));
+          result = { ...result, remaining, reviewed: [...(result.reviewed ?? []), ...reviewed], status: statusOf(remaining, result.issues) };
+        }
+      } catch (e) {
+        console.error("Could not apply earlier sentence decisions", e);
+      }
+    }
     await db.article.update({
       where: { id: rowId },
       data: { state: "done", stage: "Done", result: JSON.stringify({ ...result, seconds: Math.round((Date.now() - startedAt) / 1000) }) },
@@ -102,7 +124,7 @@ export async function saveEdits(shop: string, id: string, article: Article) {
     ...prev.remaining.filter(
       (p) => !/^copies an earlier/.test(p.problem) && text.includes(p.text.replace(/^[-*+\d.\s]+/, "").slice(0, 60)),
     ),
-    ...findRepeats(article.body_markdown),
+    ...findRepeats(article.body_markdown).filter((p) => !(prev.reviewed ?? []).some((r) => reviewKey(r.text) === reviewKey(p.text))),
   ];
   const next: ArticleResult = {
     ...prev,
@@ -110,9 +132,29 @@ export async function saveEdits(shop: string, id: string, article: Article) {
     words: checks.words,
     issues: checks.issues,
     remaining,
-    status: remaining.length === 0 && checks.issues.length === 0 ? "READY FOR MERCHANT APPROVAL" : "NEEDS REVIEW",
+    status: statusOf(remaining, checks.issues),
     edited: true,
   };
+  await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
+  return next;
+}
+
+/**
+ * The merchant confirms a flagged sentence is correct ("accepted") or chooses to leave it ("ignored").
+ * Either way it stops blocking the article, and the decision is kept as an audit record.
+ */
+export async function reviewSentence(shop: string, id: string, text: string, decision: "accepted" | "ignored", by: string) {
+  const row = await db.article.findFirst({ where: { id, shop } });
+  if (!row?.result) return null;
+  const prev = JSON.parse(row.result) as ArticleResult;
+  const found = prev.remaining.find((p) => p.text === text);
+  if (!found) return prev;
+  const remaining = prev.remaining.filter((p) => p !== found);
+  const reviewed: ReviewedSentence[] = [...(prev.reviewed ?? []), { text: found.text, problem: found.problem, decision, by, at: new Date().toISOString() }];
+  const next: ArticleResult = { ...prev, remaining, reviewed, status: statusOf(remaining, prev.issues) };
+  await db.sentenceReview.create({
+    data: { shop, articleId: id, sentence: found.text, key: reviewKey(found.text), problem: found.problem, decision, decidedBy: by },
+  });
   await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
   return next;
 }

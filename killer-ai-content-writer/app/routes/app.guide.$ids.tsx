@@ -20,6 +20,7 @@ type ActionResult = {
   angles?: Angle[];
   angle?: Angle;
   factBudget?: string;
+  alreadyKnown?: string[];
   questions?: { q: string; why: string; product: string; productId: string }[];
   saved?: boolean;
 };
@@ -115,13 +116,14 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     }
     const angle = JSON.parse(String(form.get("angle"))) as Angle;
     await saveChosen(shop, key, angle);
-    const { factBudget, questions } = await askGuideQuestions(products.map((p) => p.facts), angle, factsByHandle);
+    const { factBudget, questions, alreadyKnown } = await askGuideQuestions(products.map((p) => p.facts), angle, factsByHandle);
     const byHandle = new Map(products.map((p) => [p.facts.handle, p]));
     return {
       intent,
       error: null,
       angle,
       factBudget,
+      alreadyKnown,
       questions: questions.map((x) => ({ q: x.q, why: x.why, product: byHandle.get(x.product)!.facts.title, productId: byHandle.get(x.product)!.id })),
     };
   } catch (e) {
@@ -332,6 +334,11 @@ export default function GuidePage() {
             <s-banner tone="success" heading="Saved">
               Your answers are saved as facts for these products. We've checked again for any other helpful details.
             </s-banner>
+          ) : null}
+          {q.alreadyKnown?.length ? (
+            <s-paragraph color="subdued">
+              We checked your product details and custom fields first, so we didn't ask about: {q.alreadyKnown.join("; ")}.
+            </s-paragraph>
           ) : null}
           <QuestionForm
             key={q.angle.working_title + (q.questions?.length ?? 0)}

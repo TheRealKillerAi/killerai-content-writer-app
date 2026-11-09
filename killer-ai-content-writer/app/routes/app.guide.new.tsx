@@ -3,24 +3,25 @@ import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useNavigate, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { listProducts } from "../lib/products.server";
+import { listProducts, listProductTypes } from "../lib/products.server";
+import { ProductFilters } from "../components/ProductFilters";
 import { MAX_GUIDE_PRODUCTS } from "../lib/guide";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const url = new URL(request.url);
   const q = url.searchParams.get("q") ?? "";
+  const type = url.searchParams.get("type") ?? "";
   const after = url.searchParams.get("after");
-  const { products, pageInfo } = await listProducts(admin, q, after);
-  return { products, pageInfo, q };
+  const [{ products, pageInfo }, types] = await Promise.all([listProducts(admin, q, after, type), listProductTypes(admin)]);
+  return { products, pageInfo, q, type, types };
 };
 
 const numericId = (gid: string) => gid.split("/").pop()!;
 
 export default function NewGuide() {
-  const { products, pageInfo, q } = useLoaderData<typeof loader>();
+  const { products, pageInfo, q, type, types } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const [search, setSearch] = useState(q);
   const [picked, setPicked] = useState<Record<string, string>>({}); // id -> title, kept across searches
   const ids = Object.keys(picked);
   const go = (params: Record<string, string>) => navigate(`/app/guide/new?${new URLSearchParams(params).toString()}`);
@@ -51,20 +52,10 @@ export default function NewGuide() {
       </s-banner>
 
       <s-section>
-        <s-stack direction="inline" gap="base" alignItems="end">
-          <s-search-field
-            label="Search products"
-            labelAccessibilityVisibility="exclusive"
-            placeholder="Search your products"
-            value={search}
-            onInput={(e) => setSearch((e.currentTarget as unknown as { value: string }).value)}
-            onChange={() => go(search ? { q: search } : {})}
-          />
-          <s-button onClick={() => go(search ? { q: search } : {})}>Search</s-button>
-        </s-stack>
+        <ProductFilters q={q} type={type} types={types} go={go} />
         {ids.length ? (
           <s-box paddingBlockStart="base">
-            <s-text color="subdued">Selected: {Object.values(picked).join(" · ")}</s-text>
+            <s-paragraph><strong>Selected {ids.length} of {MAX_GUIDE_PRODUCTS}:</strong> {Object.values(picked).join(" · ")}</s-paragraph>
           </s-box>
         ) : null}
       </s-section>
@@ -72,7 +63,7 @@ export default function NewGuide() {
       <s-section padding="none">
         {products.length === 0 ? (
           <s-box padding="large">
-            <s-paragraph>No products found{q ? ` for "${q}"` : ""}.</s-paragraph>
+            <s-paragraph>No products found{q ? ` for "${q}"` : ""}{type ? ` of type "${type}"` : ""}.</s-paragraph>
           </s-box>
         ) : (
           <s-table>
@@ -87,7 +78,7 @@ export default function NewGuide() {
                 return (
                   <s-table-row key={p.id}>
                     <s-table-cell>
-                      <s-grid gridTemplateColumns="auto auto 1fr" gap="base" alignItems="center">
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 220, maxWidth: 440, whiteSpace: "normal", overflowWrap: "anywhere" }}>
                         <s-checkbox
                           label={p.title}
                           labelAccessibilityVisibility="exclusive"
@@ -95,8 +86,8 @@ export default function NewGuide() {
                           onChange={(e) => toggle(id, p.title, (e.currentTarget as unknown as { checked: boolean }).checked)}
                         />
                         {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : null}
-                        <s-text>{p.title}</s-text>
-                      </s-grid>
+                        <span>{p.title}</span>
+                      </div>
                     </s-table-cell>
                     <s-table-cell>
                       <s-badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>{p.status.toLowerCase()}</s-badge>
@@ -113,7 +104,7 @@ export default function NewGuide() {
       <s-section>
         <s-stack direction="inline" justifyContent="space-between" alignItems="center">
           {pageInfo.hasNextPage && pageInfo.endCursor ? (
-            <s-button onClick={() => go({ ...(q ? { q } : {}), after: pageInfo.endCursor as string })}>More products</s-button>
+            <s-button onClick={() => go({ ...(q ? { q } : {}), ...(type ? { type } : {}), after: pageInfo.endCursor as string })}>More products</s-button>
           ) : (
             <span />
           )}

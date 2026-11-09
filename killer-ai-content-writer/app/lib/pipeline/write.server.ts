@@ -6,7 +6,9 @@ import { DEFAULT_SETTINGS, settingsContext, voiceGuide, type AppSettings } from 
 import { chatJson } from "./llm.server";
 import {
   cleanStructure,
+  closingSection,
   findRepeats,
+  genericClosing,
   removeRepeats,
   repairLink,
   runChecks,
@@ -127,6 +129,26 @@ export async function writeArticle(
     }
   }
 
+  // A vague closing ("view it on our store to see if it fits your needs") gets one targeted rewrite from the facts.
+  if (genericClosing(article.body_markdown)) {
+    await progress("Sharpening the closing call to action");
+    const c = closingSection(article.body_markdown);
+    const tokensIn = (t: string) => (t.match(/\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}/g) || []).sort().join("|");
+    if (c) {
+      const rewrite = await call<{ heading?: string; body_markdown?: string }>(
+        "You rewrite ONLY the closing section of a blog article so its call to action is specific and useful. Return JSON {\"heading\":\"\",\"body_markdown\":\"\"}. Rules: the heading is specific and benefit-led and names the decision the reader is making (never 'Conclusion', 'Final thoughts', 'A final note', 'Summary', 'Wrapping up' or 'Making your choice'). The body is 2 to 4 sentences: sentence one answers the question the article asked using one or two concrete facts from PRODUCT DATA or MERCHANT FACTS (a material, size, capacity or care instruction); if a sentence about who it suits is supported, add it; the last sentence is a direct next step that names the product and keeps its existing {{PRODUCT_URL...}} link on the product's name, ending on the most decisive supported fact. NEVER use vague closers such as 'to see if it fits your needs', 'view it on our store', 'check it out', 'take a look', 'learn more', 'explore our range'. Use only supported facts: no pressure, urgency, discounts, promises or new claims; nothing from UNKNOWN TO THE MERCHANT. Keep every {{PRODUCT_URL...}} token that is in the current closing section exactly as written and add no other links. If the current section ends with a short general-information note, keep that paragraph unchanged as the last paragraph.",
+        `VOICE GUIDE\n${voiceGuide(settings)}\n\n${facts}\n\nARTICLE TITLE\n${article.h1}\n\nCURRENT CLOSING SECTION\n## ${c.heading}\n\n${c.body}`,
+        0.3,
+      );
+      const body = rewrite?.body_markdown?.trim();
+      const heading = rewrite?.heading?.replace(/^#+\s*/, "").trim();
+      if (body && heading && tokensIn(body) === tokensIn(c.body) && !/\]\((?!\{\{PRODUCT_URL)[^)]*\)/.test(body) && body.split(/\s+/).length >= 25) {
+        const next = `${article.body_markdown.slice(0, c.start)}## ${heading}\n\n${body}\n`;
+        if (!genericClosing(next)) article.body_markdown = next;
+      }
+    }
+  }
+
   await progress("Checking every sentence against your facts");
   let report = await audit(article);
   for (let round = 1; round <= 2; round++) {
@@ -155,8 +177,9 @@ export async function writeArticle(
     const withLinks = addInternalLinks(article.body_markdown, links, {
       collections: settings.linkToCollections,
       articles: settings.linkToOtherArticles,
-    });
+    }, article.h1 || "");
     article.body_markdown = withLinks.md;
+    console.log(`Internal links: ${links.collections.length} collections and ${links.articles.length} articles considered, ${withLinks.added.length} added`);
   }
   for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {
     const t = await call<{ title_tag?: string; meta_description?: string }>(

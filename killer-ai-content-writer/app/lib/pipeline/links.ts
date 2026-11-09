@@ -1,5 +1,7 @@
 // Internal links added to a finished article. No AI involved: a link is only ever placed on words that are
-// already in the text and match the collection or article's own name, so no new claims can slip in.
+// already in the text, so no new claims can slip in. Which collection or article to link is decided by how
+// relevant it is to the article (shared topic words), not by an exact title match, because nobody's
+// collection called "Reusable Household Products" appears word for word in an article.
 import { STOP, sameKeyword } from "../keywords";
 
 export type LinkCollection = { title: string; handle: string };
@@ -14,14 +16,38 @@ export type AddedLink = { kind: "collection" | "article"; phrase: string; path: 
 
 const MAX_COLLECTIONS = 2;
 const MAX_ARTICLES = 1; // one related article is plenty; more links dilute the page and distract the reader
-const GENERIC_COLLECTION = new Set(["all", "frontpage", "home", "home page", "homepage", "featured", "new", "sale", "best sellers", "bestsellers"]);
+
+/** Words that say little about a topic: shop-speak and title filler. A collection made only of these is never linked. */
+const GENERIC = new Set(
+  ("eco ecofriendly friendly sustainable sustainability product products item items home homes house essential essentials australia australian " +
+    "zero waste new best selling seller sellers featured swap swaps solution solutions affiliate affiliates return returns free all range collection " +
+    "shop store sale top guide ultimate complete reason reasons truth game changer tip tips week need know everything about why what switch benefit " +
+    "benefits way ways make made better good great right actually really just more most real day days year years use using used get your our us " +
+    "frontpage page may not but was has had will have been into than then them they their also very much many some such only even still ever " +
+    "like long short high low full part first last next other another every each both either neither being does done").split(" "),
+);
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const plainWords = (s: string) => s.toLowerCase().replace(/&/g, " and ").split(/[^a-z0-9]+/).filter(Boolean);
 
-/** A regex for a phrase that tolerates plurals, hyphens and case ("reusable bag" finds "Reusable-bags"). */
-function phraseRegex(words: string[]): RegExp {
-  const parts = words.map((w) => (/s$/.test(w) ? esc(w.replace(/e?s$/, "")) + "(?:e?s)?" : esc(w) + "(?:e?s)?"));
-  return new RegExp(`(?<![A-Za-z0-9])(${parts.join("[\\s-]+")})(?![A-Za-z0-9])`, "i");
+/** A crude word stem so reuse / reusable / reused, or bag / bags, count as the same topic word. */
+export function topicStem(word: string): string {
+  const w = word.toLowerCase().replace(/'/g, "");
+  for (const suf of ["ables", "able", "ing", "ers", "er", "ed", "es", "s", "e"]) {
+    if (w.length - suf.length >= 3 && w.endsWith(suf)) return w.slice(0, -suf.length);
+  }
+  return w;
+}
+
+/** The topic words of a title or phrase, as stems: no stop words, filler, numbers or years. */
+function topicStems(text: string): string[] {
+  const out: string[] = [];
+  for (const w of plainWords(text)) {
+    if (STOP.has(w) || GENERIC.has(w) || GENERIC.has(topicStem(w)) || /^\d/.test(w) || w.length < 4) continue;
+    const s = topicStem(w);
+    if (!out.includes(s)) out.push(s);
+  }
+  return out;
 }
 
 type Line = { text: string; ok: boolean };
@@ -40,49 +66,86 @@ function prepare(md: string): Line[] {
   });
 }
 
-/** Finds the first place in the ok lines where the phrase appears as plain text (not in bold/italic markers). */
-function place(lines: Line[], words: string[]): { line: number; start: number; end: number; text: string } | null {
-  const re = phraseRegex(words);
-  for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].ok) continue;
-    const m = re.exec(lines[i].text);
-    if (!m) continue;
-    const before = lines[i].text.slice(0, m.index);
-    const after = lines[i].text.slice(m.index + m[1].length);
-    if (/[*_`]$/.test(before) || /^[*_`]/.test(after)) continue; // inside emphasis: skip rather than break the markup
-    return { line: i, start: m.index, end: m.index + m[1].length, text: m[1] };
+/** How often each topic stem is used in the article's own words (links, URLs and image lines don't count). */
+function stemCounts(md: string): Map<string, number> {
+  const clean = md
+    .split("\n")
+    .filter((l) => !/^!\[/.test(l.trim()))
+    .join("\n")
+    .replace(/\]\([^)]*\)/g, "]")
+    .replace(/\{\{[^}]*\}\}/g, " ");
+  const counts = new Map<string, number>();
+  for (const w of plainWords(clean)) {
+    const s = topicStem(w);
+    counts.set(s, (counts.get(s) ?? 0) + 1);
+  }
+  return counts;
+}
+
+type Found = { line: number; start: number; end: number; text: string };
+
+/**
+ * Finds a place to put a link for a set of topic stems (most important first): the first usable line that
+ * uses one of them. The link goes on that word plus a neighbouring word that reads naturally with it
+ * ("reusable bags"), never across bold or italic markers.
+ */
+function place(lines: Line[], stems: string[]): Found | null {
+  for (const stemWord of stems) {
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].ok) continue;
+      const text = lines[i].text;
+      const re = /[A-Za-z][A-Za-z'-]*/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(text))) {
+        if (topicStem(m[0]) !== stemWord) continue;
+        let start = m.index;
+        let end = m.index + m[0].length;
+        const before = text.slice(0, start);
+        const after = text.slice(end);
+        if (/[*_`[]$/.test(before) || /^[*_`\]]/.test(after)) continue; // inside emphasis or a link: skip rather than break it
+        const next = /^ ([A-Za-z][A-Za-z-]*)(?![A-Za-z-])/.exec(after);
+        const prev = /(?<![A-Za-z-])([A-Za-z][A-Za-z-]*) $/.exec(before);
+        const ok = (w: string) => !STOP.has(w.toLowerCase()) && w.length > 2;
+        const other = stems.filter((s) => s !== stemWord);
+        if (prev && ok(prev[1]) && (other.includes(topicStem(prev[1])) || !next || !ok(next[1]))) {
+          start -= prev[1].length + 1;
+        } else if (next && ok(next[1])) {
+          end += next[1].length + 1;
+        }
+        // Never end the link on a trailing space or punctuation, and avoid a lone very short word.
+        const phrase = text.slice(start, end);
+        if (phrase.replace(/[^A-Za-z]/g, "").length < 4) continue;
+        return { line: i, start, end, text: phrase };
+      }
+    }
   }
   return null;
 }
 
-const plainWords = (s: string) => s.toLowerCase().replace(/&/g, " and ").split(/[^a-z0-9]+/).filter(Boolean);
+type Scored = { stems: string[]; shared: string[]; score: number };
 
-function collectionWords(title: string): string[] {
-  const w = plainWords(title).filter((x) => !["collection", "collections", "range", "shop"].includes(x));
-  return w;
-}
-
-/** Contiguous runs of a phrase's words that carry meaning, longest first (3+ words), for matching an article's topic. */
-function runs(words: string[], min: number): string[][] {
-  const out: string[][] = [];
-  for (let len = words.length; len >= min; len--) {
-    for (let i = 0; i + len <= words.length; i++) {
-      const run = words.slice(i, i + len);
-      if (STOP.has(run[0]) || STOP.has(run[run.length - 1])) continue;
-      out.push(run);
-    }
-  }
-  return out;
+/** How relevant a collection or article is to this text, from the topic words they share. */
+function relevance(candidate: string, counts: Map<string, number>, selfStems: Set<string>): Scored | null {
+  const stems = topicStems(candidate);
+  if (!stems.length) return null;
+  const shared = stems.filter((s) => (counts.get(s) ?? 0) >= 1);
+  if (!shared.length) return null;
+  const strongest = Math.max(...shared.map((s) => counts.get(s) ?? 0));
+  const score = shared.reduce((n, s) => n + Math.min(counts.get(s) ?? 0, 3) + (selfStems.has(s) ? 2 : 0), 0);
+  return { stems, shared: shared.sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0)), score: score + (shared.length / stems.length) * 2 + (strongest >= 2 ? 0 : -10) };
 }
 
 export function addInternalLinks(
   md: string,
   targets: LinkTargets,
   want: { collections: boolean; articles: boolean },
+  selfTitle = "",
 ): { md: string; added: AddedLink[] } {
   const lines = prepare(md);
   const added: AddedLink[] = [];
-  const link = (kind: AddedLink["kind"], found: NonNullable<ReturnType<typeof place>>, path: string) => {
+  const counts = stemCounts(md);
+  const selfStems = new Set([...topicStems(targets.selfKeyword), ...topicStems(selfTitle)]);
+  const link = (kind: AddedLink["kind"], found: Found, path: string) => {
     const l = lines[found.line];
     l.text = `${l.text.slice(0, found.start)}[${found.text}](${path})${l.text.slice(found.end)}`;
     l.ok = false; // at most one added link per paragraph
@@ -90,41 +153,30 @@ export function addInternalLinks(
   };
 
   if (want.articles) {
-    let best: { found: NonNullable<ReturnType<typeof place>>; score: number; path: string } | null = null;
-    for (const a of targets.articles) {
-      if (a.keyword && targets.selfKeyword && sameKeyword(a.keyword, targets.selfKeyword)) continue;
-      // Whole search phrase or whole title first (2+ words), then long runs of them (3+ words).
-      const phrases: string[][] = [];
-      for (const src of [a.keyword ?? "", ...a.title.split(/[:–—|]/)]) {
-        const w = plainWords(src);
-        if (w.filter((x) => !STOP.has(x)).length >= 2) phrases.push(w);
-      }
-      const longer = [a.keyword ?? "", a.title].flatMap((src) => runs(plainWords(src), 3));
-      for (const words of [...phrases, ...longer]) {
-        const found = place(lines, words);
-        if (!found) continue;
-        const score = words.filter((x) => !STOP.has(x)).length;
-        if (score >= 2 && (!best || score > best.score)) best = { found, score, path: a.path };
-        break; // the first (longest) phrase that fits is this article's best match
+    const ranked = targets.articles
+      .filter((a) => !(a.keyword && targets.selfKeyword && sameKeyword(a.keyword, targets.selfKeyword)))
+      .map((a) => ({ a, r: relevance(`${a.keyword ?? ""} ${a.title}`, counts, selfStems) }))
+      // A related article must share at least two topic words with this one, one of them used more than once.
+      .filter((x): x is { a: LinkArticle; r: Scored } => !!x.r && x.r.shared.length >= 2 && x.r.shared.length / x.r.stems.length >= 0.5 && x.r.score >= 4)
+      .sort((x, y) => y.r.score - x.r.score);
+    for (const { a, r } of ranked) {
+      const found = place(lines, r.shared);
+      if (found) {
+        link("article", found, a.path);
+        break;
       }
     }
-    if (best && added.filter((x) => x.kind === "article").length < MAX_ARTICLES) link("article", best.found, best.path);
   }
 
   if (want.collections) {
-    const text = md.toLowerCase();
     const ranked = targets.collections
-      .map((c) => ({ c, words: collectionWords(c.title) }))
-      .filter(({ c, words }) => words.length && !GENERIC_COLLECTION.has(plainWords(c.title).join(" ")) && !GENERIC_COLLECTION.has(c.handle))
-      .sort((x, y) => y.words.length - x.words.length);
-    for (const { c, words } of ranked) {
+      .map((c) => ({ c, r: relevance(c.title, counts, selfStems) }))
+      // A collection is relevant when its topic word (e.g. "reusable", "kitchen") is a real theme of the article.
+      .filter((x): x is { c: LinkCollection; r: Scored } => !!x.r && x.r.score >= 3 && x.r.shared.length / x.r.stems.length >= 0.5)
+      .sort((x, y) => y.r.score - x.r.score);
+    for (const { c, r } of ranked) {
       if (added.filter((x) => x.kind === "collection").length >= MAX_COLLECTIONS) break;
-      // A one-word collection (like "Bamboo") is too loose unless the word is a real topic of the article.
-      if (words.length === 1) {
-        const hits = text.split(new RegExp(`\\b${esc(words[0])}`)).length - 1;
-        if (words[0].length < 5 || hits < 3) continue;
-      }
-      const found = place(lines, words);
+      const found = place(lines, r.shared);
       if (found) link("collection", found, `/collections/${c.handle}`);
     }
   }

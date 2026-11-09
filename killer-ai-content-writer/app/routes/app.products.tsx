@@ -1,27 +1,27 @@
-import { useState } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { UsageMeter } from "../components/UsageMeter";
 import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
-import { listProducts } from "../lib/products.server";
+import { listProducts, listProductTypes } from "../lib/products.server";
+import { ProductFilters } from "../components/ProductFilters";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const url = new URL(request.url);
   const q = url.searchParams.get("q") ?? "";
+  const type = url.searchParams.get("type") ?? "";
   const after = url.searchParams.get("after");
-  const { products, pageInfo } = await listProducts(admin, q, after);
-  return { products, pageInfo, q, usage: await monthlyUsage(session.shop) };
+  const [{ products, pageInfo }, types] = await Promise.all([listProducts(admin, q, after, type), listProductTypes(admin)]);
+  return { products, pageInfo, q, type, types, usage: await monthlyUsage(session.shop) };
 };
 
 const productPath = (gid: string) => `/app/product/${gid.split("/").pop()}`;
 
 export default function Products() {
-  const { products, pageInfo, q, usage } = useLoaderData<typeof loader>();
+  const { products, pageInfo, q, type, types, usage } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const [search, setSearch] = useState(q);
   const go = (params: Record<string, string>) => navigate(`/app/products?${new URLSearchParams(params).toString()}`);
 
   return (
@@ -31,23 +31,13 @@ export default function Products() {
         <UsageMeter usage={usage} />
       </s-section>
       <s-section>
-        <s-stack direction="inline" gap="base" alignItems="end">
-          <s-search-field
-            label="Search products"
-            labelAccessibilityVisibility="exclusive"
-            placeholder="Search your products"
-            value={search}
-            onInput={(e) => setSearch((e.currentTarget as unknown as { value: string }).value)}
-            onChange={() => go(search ? { q: search } : {})}
-          />
-          <s-button onClick={() => go(search ? { q: search } : {})}>Search</s-button>
-        </s-stack>
+        <ProductFilters q={q} type={type} types={types} go={go} />
       </s-section>
 
       <s-section padding="none">
         {products.length === 0 ? (
           <s-box padding="large">
-            <s-paragraph>No products found{q ? ` for "${q}"` : ""}.</s-paragraph>
+            <s-paragraph>No products found{q ? ` for "${q}"` : ""}{type ? ` of type "${type}"` : ""}.</s-paragraph>
           </s-box>
         ) : (
           <s-table>
@@ -82,7 +72,7 @@ export default function Products() {
 
       {pageInfo.hasNextPage && pageInfo.endCursor ? (
         <s-section>
-          <s-button onClick={() => go({ ...(q ? { q } : {}), after: pageInfo.endCursor as string })}>
+          <s-button onClick={() => go({ ...(q ? { q } : {}), ...(type ? { type } : {}), after: pageInfo.endCursor as string })}>
             Next page
           </s-button>
         </s-section>

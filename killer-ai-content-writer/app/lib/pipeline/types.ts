@@ -70,7 +70,19 @@ export interface ArticleResult {
   /** How long the whole write took, start to finish. */
   seconds?: number;
   edited?: boolean;
+  /** Flagged sentences the merchant has confirmed or chosen to ignore (the audit trail also lives in the SentenceReview table). */
+  reviewed?: ReviewedSentence[];
   sent?: SentInfo;
+}
+
+export interface ReviewedSentence {
+  text: string;
+  problem: string;
+  decision: "accepted" | "ignored";
+  by: string;
+  at: string;
+  /** True when an earlier accepted decision was reused instead of asking again. */
+  remembered?: boolean;
 }
 
 export interface SentInfo {

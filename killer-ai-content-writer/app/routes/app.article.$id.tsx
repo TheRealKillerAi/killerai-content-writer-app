@@ -4,7 +4,7 @@ import { redirect, useFetcher, useLoaderData, useRevalidator, useRouteError } fr
 import { saveChosen } from "../lib/facts.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.server";
+import { dedupeArticle, getArticle, reviewSentence, saveEdits, setSent } from "../lib/articles.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import { pickedImage } from "../lib/files.server";
@@ -127,6 +127,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const ids = parseGuideKey(art.productId);
     throw redirect(`${ids ? `/app/guide/${ids.join("-")}` : `/app/product/${art.productId}`}?refine=1`);
   }
+  if (intent === "review") {
+    const decision = form.get("decision") === "accepted" ? "accepted" : "ignored";
+    const by = (session as { email?: string | null }).email || session.shop;
+    const next = await reviewSentence(session.shop, params.id!, String(form.get("text") ?? ""), decision, by);
+    return { saved: !!next };
+  }
   if (form.get("intent") === "dedupe") {
     const result = await dedupeArticle(session.shop, params.id!);
     return { saved: !!result };
@@ -174,6 +180,7 @@ function ArticleReview({
   store: string;
 }) {
   const fetcher = useFetcher<{ saved: boolean }>();
+  const reviewF = useFetcher<{ saved: boolean }>();
   const sendF = useFetcher<{ saved: boolean; error?: string; warning?: string; sentOk?: boolean }>();
   const sending = sendF.state !== "idle";
   const sent: SentInfo | undefined = r.sent;
@@ -280,9 +287,15 @@ function ArticleReview({
 
       {tab === "edit" ? (
       <>
-      {r.remaining.length || r.issues.length ? (
+      {r.remaining.length || r.issues.length || r.reviewed?.length ? (
         <s-section heading="Things to check">
-          <s-stack direction="block" gap="small">
+          <s-stack direction="block" gap="base">
+            {r.remaining.length ? (
+              <s-text color="subdued">
+                If one of these is actually true for your product, choose "This is correct" and it won't be flagged again. You're confirming it's true. Choose "Ignore" to leave it as it is.
+                {dirty ? " Save your changes first to use these buttons." : ""}
+              </s-text>
+            ) : null}
             {r.remaining.some((p) => /^copies an earlier/.test(p.problem)) && !dirty ? (
               <s-stack direction="inline">
                 <s-button
@@ -294,13 +307,40 @@ function ArticleReview({
               </s-stack>
             ) : null}
             {r.remaining.map((p, i) => (
-              <s-text key={"p" + i}>
-                <strong>"{p.text.replace(/\*\*/g, "").slice(0, 140)}"</strong> — {p.problem}
-              </s-text>
+              <s-stack key={"p" + i} direction="block" gap="small-300">
+                <s-paragraph>
+                  <strong>"{p.text.replace(/\*\*/g, "").slice(0, 140)}"</strong> — {p.problem}
+                </s-paragraph>
+                <s-stack direction="inline" gap="small">
+                  <s-button
+                    {...(dirty || reviewF.state !== "idle" ? { disabled: true } : {})}
+                    onClick={() => reviewF.submit({ intent: "review", decision: "accepted", text: p.text }, { method: "POST" })}
+                  >
+                    This is correct
+                  </s-button>
+                  <s-button
+                    variant="tertiary"
+                    {...(dirty || reviewF.state !== "idle" ? { disabled: true } : {})}
+                    onClick={() => reviewF.submit({ intent: "review", decision: "ignored", text: p.text }, { method: "POST" })}
+                  >
+                    Ignore
+                  </s-button>
+                </s-stack>
+              </s-stack>
             ))}
             {r.issues.map((i, n) => (
               <s-text key={"i" + n}>{i}</s-text>
             ))}
+            {r.reviewed?.length ? (
+              <s-stack direction="block" gap="small-300">
+                <s-text color="subdued"><strong>Checked by you</strong></s-text>
+                {r.reviewed.map((v, n) => (
+                  <s-paragraph key={"v" + n} color="subdued">
+                    {v.decision === "accepted" ? "Confirmed correct" : "Ignored"} {v.remembered ? "from an earlier decision" : `by ${v.by} on ${new Date(v.at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`}: "{v.text.replace(/\*\*/g, "").slice(0, 120)}"
+                  </s-paragraph>
+                ))}
+              </s-stack>
+            ) : null}
           </s-stack>
         </s-section>
       ) : null}
@@ -610,12 +650,19 @@ function ArticleReview({
             </s-stack>
           )}
           {picker.error ? <s-banner tone="critical">{picker.error}</s-banner> : null}
-          {draft.image_prompts?.[0] ? (
-            <s-stack direction="block" gap="small-300">
-              <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
-              <s-text color="subdued">Suggested size: 1200 × 800 pixels (3:2, landscape), under 3 MB. Some themes crop the edges, so keep the main subject near the centre.</s-text>
-            </s-stack>
-          ) : null}
+          {(() => {
+            // Older drafts sometimes hold just the placeholder word ("hero"): only show a real, descriptive idea.
+            const ideas = (draft.image_prompts ?? []).filter((x) => x && x.trim().split(/\s+/).length >= 4);
+            return (
+              <s-stack direction="block" gap="small-300">
+                <s-paragraph><strong>Need a new picture?</strong></s-paragraph>
+                {ideas.map((idea, i) => (
+                  <s-paragraph key={i} color="subdued">{i === 0 ? "Hero idea" : "In-use idea"}: {idea}</s-paragraph>
+                ))}
+                <s-paragraph color="subdued">Suggested size: 1200 × 800 pixels (3:2, landscape), under 3 MB. Some themes crop the edges, so keep the main subject near the centre.</s-paragraph>
+              </s-stack>
+            );
+          })()}
         </s-stack>
       </s-section>
 

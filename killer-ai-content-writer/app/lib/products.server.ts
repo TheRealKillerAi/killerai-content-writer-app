@@ -18,7 +18,21 @@ export type ProductRow = {
   imageUrl: string | null;
 };
 
-export async function listProducts(admin: Admin, search: string, after?: string | null) {
+/** The product types used in the store, for the type filter. */
+export async function listProductTypes(admin: Admin): Promise<string[]> {
+  try {
+    const d = await gql<{ productTypes: { edges: { node: string }[] } }>(
+      admin,
+      `#graphql
+      query ProductTypes { productTypes(first: 250) { edges { node } } }`,
+    );
+    return d.productTypes.edges.map((e) => e.node).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  } catch {
+    return []; // the filter is a convenience: the list still works without it
+  }
+}
+
+export async function listProducts(admin: Admin, search: string, after?: string | null, type?: string | null) {
   const data = await gql<{
     products: {
       pageInfo: { hasNextPage: boolean; endCursor: string | null };
@@ -39,7 +53,7 @@ export async function listProducts(admin: Admin, search: string, after?: string 
         }
       }
     }`,
-    { query: search || null, after: after || null },
+    { query: [search, type ? `product_type:'${type.replace(/['\\]/g, " ")}'` : ""].filter(Boolean).join(" ") || null, after: after || null },
   );
   return {
     pageInfo: data.products.pageInfo,
