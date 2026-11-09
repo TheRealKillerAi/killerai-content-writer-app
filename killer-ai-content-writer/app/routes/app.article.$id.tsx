@@ -611,7 +611,10 @@ function ArticleReview({
           )}
           {picker.error ? <s-banner tone="critical">{picker.error}</s-banner> : null}
           {draft.image_prompts?.[0] ? (
-            <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
+            <s-stack direction="block" gap="small-300">
+              <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
+              <s-text color="subdued">Suggested size: 1200 × 800 pixels (3:2, landscape), under 3 MB. Some themes crop the edges, so keep the main subject near the centre.</s-text>
+            </s-stack>
           ) : null}
         </s-stack>
       </s-section>

@@ -32,6 +32,7 @@ export default function Articles() {
 
   return (
     <s-page heading="Your articles">
+      <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
       <s-button slot="primary-action" variant="primary" href="/app/new">Write an article</s-button>
       <s-section>
         <UsageMeter usage={usage} />

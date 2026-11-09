@@ -17,6 +17,7 @@ const TABS = [
   { id: "brand", label: "Brand and voice", blurb: "How your articles sound, and what you sell." },
   { id: "writing", label: "Writing", blurb: "Language, length and the summary box." },
   { id: "publish", label: "Publish settings", blurb: "Where articles go and how." },
+  { id: "authors", label: "Authors", blurb: "Who your articles are written by." },
   { id: "schedule", label: "Schedule", blurb: "Automatic articles on the days and time you choose." },
   { id: "notifications", label: "Notifications", blurb: "Emails about problems and upcoming topics." },
   { id: "advanced", label: "Advanced", blurb: "Schema, templates and custom instructions." },
@@ -121,6 +122,7 @@ export default function Settings() {
       onReset={() => setResetKey((k) => k + 1)}
     >
       <s-page heading="Settings">
+      <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
           <nav aria-label="Settings sections" style={{ flex: "0 0 220px", minWidth: 180, display: "flex", flexDirection: "column", gap: 2 }}>
             {TABS.map((t) => (
@@ -382,6 +384,32 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "authors"}>
+        <s-section heading="Authors">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              Add real people or AI personas as the authors of your articles. The default author is chosen in Publish settings.
+            </s-paragraph>
+            {authors.length ? (
+              <s-stack direction="block" gap="small">
+                {authors.map((a) => (
+                  <s-stack key={a.id} direction="inline" gap="small" alignItems="center">
+                    <s-link href={`/app/authors/${a.id}`}>{a.name}</s-link>
+                    <s-badge tone={a.kind === "persona" ? "info" : "neutral"}>{a.kind === "persona" ? "AI persona" : "Real person"}</s-badge>
+                    {a.id === s.defaultAuthorId ? <s-badge tone="success">Default</s-badge> : null}
+                  </s-stack>
+                ))}
+              </s-stack>
+            ) : (
+              <s-paragraph>You haven't added an author yet.</s-paragraph>
+            )}
+            <s-stack direction="inline" gap="small">
+              <s-button href="/app/authors">{authors.length ? "Manage authors" : "Add an author"}</s-button>
+              <s-button href="/app/authors/new" variant="secondary">Add a new author</s-button>
+            </s-stack>
+          </s-stack>
+        </s-section>
         </div>
         <div hidden={tab !== "schedule"}>
         <s-section heading="Schedule">

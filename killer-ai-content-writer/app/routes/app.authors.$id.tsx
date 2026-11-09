@@ -115,7 +115,7 @@ export default function EditAuthor() {
 
   return (
     <s-page heading={id ? "Edit author" : "Add author"}>
-      <s-button slot="breadcrumb-actions" href="/app/authors">Authors</s-button>
+      <s-link slot="breadcrumb-actions" href="/app/authors">Authors</s-link>
       <s-button slot="primary-action" variant="primary" onClick={save} {...(saveF.state !== "idle" ? { loading: true } : {})}>
         Save author
       </s-button>

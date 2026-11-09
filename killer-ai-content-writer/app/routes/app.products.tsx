@@ -26,6 +26,7 @@ export default function Products() {
 
   return (
     <s-page heading="Choose a product to write about">
+      <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
       <s-section>
         <UsageMeter usage={usage} />
       </s-section>
@@ -60,10 +61,10 @@ export default function Products() {
               {products.map((p) => (
                 <s-table-row key={p.id}>
                   <s-table-cell>
-                    <s-grid gridTemplateColumns="auto 1fr" gap="base" alignItems="center">
-                      {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : <s-box />}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 180, maxWidth: 420, whiteSpace: "normal", overflowWrap: "anywhere" }}>
+                      {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.title} size="small" /> : null}
                       <s-link href={productPath(p.id)}>{p.title}</s-link>
-                    </s-grid>
+                    </div>
                   </s-table-cell>
                   <s-table-cell>
                     <s-badge tone={p.status === "ACTIVE" ? "success" : "neutral"}>{p.status.toLowerCase()}</s-badge>

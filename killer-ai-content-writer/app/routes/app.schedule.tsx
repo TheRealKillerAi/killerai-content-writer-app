@@ -212,6 +212,7 @@ export default function Schedule() {
 
   return (
     <s-page heading="Schedule">
+      <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
       <style>{`
         .ka-thumb-x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:none;background:#d72c0d;color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;opacity:0;transition:opacity .12s}
         .ka-thumb:hover .ka-thumb-x,.ka-thumb-x:focus-visible{opacity:1}

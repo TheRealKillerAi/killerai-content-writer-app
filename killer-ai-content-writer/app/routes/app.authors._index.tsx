@@ -33,6 +33,7 @@ export default function Authors() {
   const fetcher = useFetcher();
   return (
     <s-page heading="Authors">
+      <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
       <s-button slot="primary-action" variant="primary" href="/app/authors/new">
         Add author
       </s-button>

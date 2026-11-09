@@ -124,9 +124,6 @@ export default function ProductPage() {
   useEffect(() => {
     if (anglesF.data) anglesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [anglesF.data]);
-  useEffect(() => {
-    if (questionsF.data) questionsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [questionsF.data]);
 
   const q = questionsF.data;
   // Coming back from an article ("add details"): open the questions for the chosen topic straight away.
@@ -143,6 +140,13 @@ export default function ProductPage() {
   }, [questionsF.data]);
   const active = inFacts ? q?.angle ?? null : null;
   const step = active ? 2 : 1;
+  // Scroll to the start of "Before we write" once it is on the page (not before, or the page is too short to reach it).
+  const factsTitle = active?.working_title ?? "";
+  useEffect(() => {
+    if (!factsTitle) return;
+    const t = setTimeout(() => questionsRef.current?.scrollIntoView({ behavior: "auto", block: "start" }), 80);
+    return () => clearTimeout(t);
+  }, [factsTitle]);
   const [selected, setSelected] = useState<number | null>(null);
   const [own, setOwn] = useState("");
   const useOwn = () => {
