@@ -57,9 +57,10 @@ export async function writeArticleNow(
   angle: Angle,
   merchant: MerchantFacts,
   settings: AppSettings,
+  guide?: ProductFacts[],
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
-  await execute(row.id, product, angle, merchant, settings);
+  await execute(row.id, product, angle, merchant, settings, guide);
   return row.id;
 }
 

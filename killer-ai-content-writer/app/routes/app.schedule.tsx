@@ -25,7 +25,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     listAuthors(session.shop),
   ]);
   const names = new Map(authors.map((a: { id: string; name: string }) => [a.id, a.name]));
+  const status = await db.scheduleStatus.findUnique({ where: { shop: session.shop } });
   return {
+    note: status?.note ?? "",
     usage: await monthlyUsage(session.shop),
     enabled: settings.scheduleEnabled,
     planDays: settings.planDays,
@@ -194,7 +196,7 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
 }
 
 export default function Schedule() {
-  const { enabled, publishMode, tz, posts, days, time, usage, planDays } = useLoaderData<typeof loader>();
+  const { enabled, publishMode, tz, posts, days, time, usage, planDays, note } = useLoaderData<typeof loader>();
   const fill = useFetcher<Result>();
   const rv = useRevalidator();
   const [waitUntilMs, setWaitUntilMs] = useState(0);
@@ -238,6 +240,7 @@ export default function Schedule() {
       <s-section>
         <UsageMeter usage={usage} />
       </s-section>
+      {note ? <s-banner tone="warning" heading="Some days couldn't be filled">{note}</s-banner> : null}
       {fill.data?.error ? <s-banner tone="critical">{fill.data.error}</s-banner> : null}
       {fill.data?.message ? <s-banner tone="success">{fill.data.message}</s-banner> : null}
       <s-section padding="none">

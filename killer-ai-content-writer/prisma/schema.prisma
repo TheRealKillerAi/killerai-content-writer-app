@@ -130,3 +130,9 @@ model ScheduledPost {
 
   @@index([shop, publishAt])
 }
+
+model ScheduleStatus {
+  shop      String   @id
+  note      String   @default("") // why the schedule couldn't be filled, shown to the merchant
+  updatedAt DateTime @updatedAt
+}

@@ -81,6 +81,7 @@ export default function Settings() {
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
   const [tab, setTab] = useState<TabId>("brand");
+  const [plan, setPlan] = useState<number>(s.planDays);
   const voiceRef = useRef<HTMLElement & { value: string }>(null);
   const [pv, setPv] = useState<TldrStyle>({
     tldrEnabled: s.tldrEnabled,
@@ -411,7 +412,8 @@ export default function Settings() {
               <s-select
                 name="planDays"
                 label="Line up topics"
-                value={String(s.planDays)}
+                value={String(plan)}
+                onChange={(e) => setPlan(Number(val(e as unknown as Event)))}
                 details="How many days of topics to plan ahead. Each article is still written about a day before it goes out."
               >
                 <s-option value="7">7 days ahead</s-option>
@@ -419,17 +421,29 @@ export default function Settings() {
                 <s-option value="30">30 days ahead</s-option>
               </s-select>
               <s-select
+                key={plan}
                 name="refillDays"
                 label="Plan the next batch"
-                value={String(s.refillDays)}
-                details="For example, plan 14 days, then plan the next 14 when 7 days are left."
+                value={[3, 7, 14].includes(s.refillDays) && s.refillDays < plan ? String(s.refillDays) : "0"}
+                details={plan > 7 ? `For example, plan ${plan} days, then plan the next ${plan} when 7 days are left.` : "Plan 14 or 30 days ahead to choose a later top-up."}
               >
                 <s-option value="0">Every night, to keep it topped up</s-option>
-                <s-option value="3">When 3 days are left</s-option>
-                <s-option value="7">When 7 days are left</s-option>
-                <s-option value="14">When 14 days are left</s-option>
+                {[3, 7, 14].filter((d) => d < plan).map((d) => (
+                  <s-option key={d} value={String(d)}>{`When ${d} days are left`}</s-option>
+                ))}
               </s-select>
             </s-grid>
+            <s-stack direction="block" gap="small">
+              <s-text><strong>What to write</strong></s-text>
+              <s-checkbox name="mixProduct" label="Product articles" details="About one product, from its facts." checked={s.mixProduct} />
+              <s-checkbox
+                name="mixGuides"
+                label="Buying guides"
+                details="Help shoppers choose between a few related products. Needs at least two products of the same type."
+                checked={s.mixGuides}
+              />
+              <s-checkbox label="Topic articles" details="Care tips, how-tos and questions that aren't about one product. Coming soon." disabled />
+            </s-stack>
             <s-select
               name="scheduleImage"
               label="Featured image"

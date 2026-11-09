@@ -37,6 +37,8 @@ export type AppSettings = TldrStyle & {
   scheduleTime: string; // "HH:MM" in the chosen time zone
   timeZone: string; // IANA name, "" = the store's own
   scheduleImage: "product" | "none";
+  mixProduct: boolean; // schedule product articles
+  mixGuides: boolean; // schedule buying guides
   planDays: 7 | 14 | 30; // how many days of topics to line up
   refillDays: number; // 0 = keep topped up every night; otherwise top up when this many days or fewer are left
   // Notifications
@@ -83,6 +85,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   scheduleTime: "09:00",
   timeZone: "",
   scheduleImage: "product",
+  mixProduct: true,
+  mixGuides: false,
   planDays: 7,
   refillDays: 0,
   notifyEmail: "",

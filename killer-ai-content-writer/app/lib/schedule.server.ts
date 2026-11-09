@@ -8,6 +8,8 @@ import { coveredTopics, getArticle, saveEdits, setSent, writeArticleNow } from "
 import { loadAngles, loadFacts, saveAngles } from "./facts.server";
 import { findCovered } from "./keywords";
 import { findAngles } from "./pipeline/angles.server";
+import { findGuideAngles } from "./pipeline/guide.server";
+import { guideKey, parseGuideKey } from "./guide";
 import { sendToShopify } from "./publish.server";
 import { existingArticleTitles, getProduct, gql, listProducts, productImages, type Admin } from "./products.server";
 import { loadEffectiveSettings, validZone } from "./settings.server";
@@ -87,35 +89,59 @@ function pickAngle(angles: Angle[], taken: Set<string>, covered: Awaited<ReturnT
   return ok.filter((a) => a.needs_info.length <= 1).sort((a, b) => rank(a) - rank(b))[0] ?? null;
 }
 
+type Candidate = { key: string; kind: "product" | "guide"; ids: string[]; title: string };
+const numeric = (gid: string) => gid.split("/").pop()!;
+const MIN_GAP_DAYS = 3; // the same product or guide is never scheduled twice within this many days
+
+async function setNote(shop: string, note: string) {
+  if (!note) await db.scheduleStatus.deleteMany({ where: { shop } });
+  else await db.scheduleStatus.upsert({ where: { shop }, create: { shop, note }, update: { note } });
+}
+
 /** Adds topics for any upcoming publish slot that doesn't have one yet. Topics only: the article is written later. */
 export async function topUpSchedule(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false): Promise<number> {
   const now = new Date();
   const existing = await db.scheduledPost.findMany({ where: { shop, publishAt: { gte: now } } });
-  // "Top up when N days are left": wait until the schedule is about to run out, then fill the whole window again.
+  // "Plan the next batch when N days are left": wait until the schedule is about to run out, then fill the whole window again.
   if (!force && settings.refillDays > 0 && existing.length) {
     const last = Math.max(...existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
     if ((last - now.getTime()) / 86400000 > settings.refillDays) return 0;
   }
   const have = new Set(existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
   const missing = upcomingSlots(settings, tz, now).filter((s) => !have.has(s.getTime()));
-  if (!missing.length) return 0;
+  if (!missing.length) {
+    await setNote(shop, "");
+    return 0;
+  }
 
   // Products, least recently used first.
-  const rows: { id: string; title: string }[] = [];
+  const rows: { id: string; title: string; type: string }[] = [];
   let after: string | null = null;
   for (let i = 0; i < 3; i++) {
     const page = await listProducts(admin, "status:active", after);
-    rows.push(...page.products.map((p) => ({ id: p.id, title: p.title })));
+    rows.push(...page.products.map((p) => ({ id: p.id, title: p.title, type: (p.productType || "").trim() })));
     if (!page.pageInfo.hasNextPage) break;
     after = page.pageInfo.endCursor;
   }
-  const numeric = (gid: string) => gid.split("/").pop()!;
   const lastUsed = new Map<string, number>();
   for (const a of await db.article.findMany({ where: { shop }, select: { productId: true, createdAt: true } }))
     lastUsed.set(a.productId, Math.max(lastUsed.get(a.productId) ?? 0, a.createdAt.getTime()));
   for (const e of await db.scheduledPost.findMany({ where: { shop }, select: { productId: true, publishAt: true } }))
     lastUsed.set(e.productId, Math.max(lastUsed.get(e.productId) ?? 0, e.publishAt.getTime()));
   const order = rows.sort((a, b) => (lastUsed.get(numeric(a.id)) ?? 0) - (lastUsed.get(numeric(b.id)) ?? 0));
+
+  const products: Candidate[] = order.map((p) => ({ key: numeric(p.id), kind: "product", ids: [numeric(p.id)], title: p.title }));
+  const guides: Candidate[] = [];
+  if (settings.mixGuides) {
+    const byType = new Map<string, typeof order>();
+    for (const p of order) if (p.type) byType.set(p.type, [...(byType.get(p.type) ?? []), p]);
+    for (const [type, list] of byType) {
+      if (list.length < 2) continue;
+      const pick = list.slice(0, 4);
+      const ids = pick.map((p) => numeric(p.id));
+      guides.push({ key: guideKey(ids), kind: "guide", ids, title: `Buying guide: ${type}` });
+    }
+  }
 
   const taken = new Set<string>();
   for (const e of existing) {
@@ -124,54 +150,115 @@ export async function topUpSchedule(shop: string, admin: Admin, settings: AppSet
     taken.add(key(a.target_query));
   }
   const covered = await coveredTopics(shop);
-  const used = new Set<string>();
-  const tried = new Set<string>();
-  let created = 0;
+  const lastSlot = new Map<string, number>(); // candidate key -> latest scheduled publish time
+  for (const e of existing) lastSlot.set(e.productId, Math.max(lastSlot.get(e.productId) ?? 0, e.publishAt.getTime()));
+  const exhausted = new Set<string>(); // candidates with no topic that can be written right now
+  const usedThisRun = new Set<string>();
+  const gap = MIN_GAP_DAYS * 86400000;
 
-  for (const slot of missing) {
-    let placed = false;
-    for (const p of order) {
-      if (placed) break;
-      const pid = numeric(p.id);
-      if (used.has(pid) || tried.has(pid)) continue;
-      tried.add(pid);
-      const product = await getProduct(admin, p.id);
-      if (!product) continue;
-      const facts = await loadFacts(shop, pid);
-      let angles = await loadAngles(shop, pid);
+  const evaluate = async (c: Candidate) => {
+    if (c.kind === "product") {
+      const product = await getProduct(admin, `gid://shopify/Product/${c.ids[0]}`);
+      if (!product) return null;
+      const facts = await loadFacts(shop, c.ids[0]);
+      let angles = await loadAngles(shop, c.key);
       let angle = pickAngle(angles, taken, covered);
       if (!angle) {
         try {
-          const titles = [...(await existingArticleTitles(admin)), ...angles.map((a) => a.working_title), ...covered.flatMap((c) => [c.title, c.keyword].filter((x): x is string => !!x))];
+          const titles = [...(await existingArticleTitles(admin)), ...angles.map((a) => a.working_title), ...covered.flatMap((x) => [x.title, x.keyword].filter((t): t is string => !!t))];
           const { angles: fresh } = await findAngles(product.facts, titles, facts.known, settings);
           const seen = new Set(angles.flatMap((a) => [key(a.working_title), key(a.target_query)]));
           angles = [...angles, ...fresh.filter((a) => !seen.has(key(a.working_title)) && !seen.has(key(a.target_query)))].slice(0, 30);
-          await saveAngles(shop, pid, angles);
+          await saveAngles(shop, c.key, angles);
           angle = pickAngle(angles, taken, covered);
         } catch (e) {
           console.error("Topic search failed", e);
         }
       }
-      if (!angle) continue;
-      const image = settings.scheduleImage === "product" ? (await productImages(admin, p.id))[0] : undefined;
-      await db.scheduledPost.create({
-        data: {
-          shop,
-          productId: pid,
-          productTitle: p.title,
-          angle: JSON.stringify(angle),
-          publishAt: slot,
-          authorId: settings.defaultAuthorId,
-          imageUrl: image?.url ?? "",
-          imageAlt: image?.alt || p.title,
-        },
-      });
-      taken.add(key(angle.working_title));
-      taken.add(key(angle.target_query));
-      used.add(pid);
-      created++;
-      placed = true;
+      return angle ? { angle, title: c.title } : null;
     }
+    const prods = (await Promise.all(c.ids.map((id) => getProduct(admin, `gid://shopify/Product/${id}`)))).flatMap((p, i) => (p ? [{ ...p, id: c.ids[i] }] : []));
+    if (prods.length < 2) return null;
+    const factsByHandle: Record<string, Awaited<ReturnType<typeof loadFacts>>> = {};
+    for (const p of prods) factsByHandle[p.facts.handle] = await loadFacts(shop, p.id);
+    let angles = await loadAngles(shop, c.key);
+    let angle = pickAngle(angles, taken, covered);
+    if (!angle) {
+      try {
+        const titles = [...(await existingArticleTitles(admin)), ...angles.map((a) => a.working_title), ...covered.flatMap((x) => [x.title, x.keyword].filter((t): t is string => !!t))];
+        const fresh = await findGuideAngles(prods.map((p) => p.facts), titles, factsByHandle, settings);
+        const seen = new Set(angles.flatMap((a) => [key(a.working_title), key(a.target_query)]));
+        angles = [...angles, ...fresh.filter((a) => !seen.has(key(a.working_title)) && !seen.has(key(a.target_query)))].slice(0, 30);
+        await saveAngles(shop, c.key, angles);
+        angle = pickAngle(angles, taken, covered);
+      } catch (e) {
+        console.error("Guide topic search failed", e);
+      }
+    }
+    return angle ? { angle, title: `Buying guide: ${prods.map((p) => p.facts.title).slice(0, 3).join(", ")}${prods.length > 3 ? " and more" : ""}` } : null;
+  };
+
+  let created = 0;
+  let index = 0;
+  for (const slot of missing) {
+    // With both kinds ticked, every third article is a buying guide.
+    const guideTurn = settings.mixGuides && (!settings.mixProduct || index % 3 === 2);
+    const lists = guideTurn ? [guides, settings.mixProduct ? products : []] : [settings.mixProduct ? products : [], guides];
+    let placed = false;
+    for (const list of lists) {
+      for (const pass of [1, 2]) {
+        if (placed) break;
+        for (const c of list) {
+          if (placed) break;
+          if (exhausted.has(c.key)) continue;
+          const used = usedThisRun.has(c.key);
+          if (pass === 1 && used) continue;
+          if (pass === 2 && !used) continue;
+          const near = Math.abs(slot.getTime() - (lastSlot.get(c.key) ?? -Infinity)) < gap;
+          if (near) continue;
+          const found = await evaluate(c);
+          if (!found) {
+            exhausted.add(c.key);
+            continue;
+          }
+          const image = settings.scheduleImage === "product" ? (await productImages(admin, `gid://shopify/Product/${c.ids[0]}`))[0] : undefined;
+          await db.scheduledPost.create({
+            data: {
+              shop,
+              productId: c.key,
+              productTitle: found.title,
+              angle: JSON.stringify(found.angle),
+              publishAt: slot,
+              authorId: settings.defaultAuthorId,
+              imageUrl: image?.url ?? "",
+              imageAlt: image?.alt || found.title,
+            },
+          });
+          taken.add(key(found.angle.working_title));
+          taken.add(key(found.angle.target_query));
+          usedThisRun.add(c.key);
+          lastSlot.set(c.key, slot.getTime());
+          created++;
+          placed = true;
+        }
+      }
+      if (placed) break;
+    }
+    index++;
+  }
+
+  // Say plainly why any day couldn't be filled.
+  if (created < missing.length) {
+    const total = (settings.mixProduct ? products.length : 0) + guides.length;
+    const parts = [`Filled ${created} of ${missing.length} open days.`];
+    if (!settings.mixProduct && !guides.length) parts.push("There are no buying guides to write yet: guides need at least two products of the same type.");
+    else if (!total) parts.push("There are no active products to write about.");
+    else if (exhausted.size >= total) parts.push(`Every product${guides.length ? " and guide" : ""} has already been used or has no new topic we can write from the facts we have.`);
+    else parts.push("The remaining products were scheduled recently, so we spaced them out to avoid repeating a product within three days.");
+    parts.push(settings.mixGuides ? "Adding details to your products will unlock more topics." : "Adding details to your products, or turning on buying guides in Settings, will unlock more topics.");
+    await setNote(shop, parts.join(" "));
+  } else {
+    await setNote(shop, "");
   }
   return created;
 }
@@ -205,11 +292,12 @@ async function sendDigest(shop: string, admin: Admin, settings: AppSettings, tz:
     })
     .join("");
   const to = await recipient(settings, admin);
+  const status = await db.scheduleStatus.findUnique({ where: { shop } });
   const ok = await sendEmail({
     to,
     subject: `Your upcoming articles: ${fresh.length} scheduled`,
     html: wrap(
-      `<h2 style="margin:0 0 8px">Your upcoming articles</h2><p>These topics are scheduled. Each article is written about a day before it goes out, so there's time to change a topic or picture, or remove one you don't want.</p><table style="width:100%;border-collapse:collapse">${items}</table><p><a href="${scheduleLink(shop)}" style="display:inline-block;background:#303030;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Review your schedule</a></p><p style="color:#6d7175;font-size:13px">You can switch these emails off in Settings under Notifications.</p>`,
+      `<h2 style="margin:0 0 8px">Your upcoming articles</h2><p>These topics are scheduled. Each article is written about a day before it goes out, so there's time to change a topic or picture, or remove one you don't want.</p>${status?.note ? `<p style="background:#fff5ea;border-radius:8px;padding:10px 12px">${esc(status.note)}</p>` : ""}<table style="width:100%;border-collapse:collapse">${items}</table><p><a href="${scheduleLink(shop)}" style="display:inline-block;background:#303030;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Review your schedule</a></p><p style="color:#6d7175;font-size:13px">You can switch these emails off in Settings under Notifications.</p>`,
     ),
   });
   if (ok) await db.scheduledPost.updateMany({ where: { id: { in: fresh.map((f: { id: string }) => f.id) } }, data: { notified: true } });
@@ -242,10 +330,26 @@ async function processPost(shop: string, admin: Admin, baseSettings: AppSettings
   const angle = JSON.parse(post.angle) as Angle;
   const title = angle.working_title;
   try {
-    const gid = `gid://shopify/Product/${post.productId}`;
-    const product = await getProduct(admin, gid);
+    const guideIds = parseGuideKey(post.productId);
+    let product: Awaited<ReturnType<typeof getProduct>>;
+    let articleId: string;
+    if (guideIds) {
+      const found = (await Promise.all(guideIds.map((pid) => getProduct(admin, `gid://shopify/Product/${pid}`)))).flatMap((p, i) => (p ? [{ ...p, id: guideIds[i] }] : []));
+      if (found.length < 2) throw new Error("We couldn't find enough of the products for this buying guide any more.");
+      product = found[0];
+      const merchant: { known: Record<string, string>; unknown: string[] } = { known: {}, unknown: [] };
+      for (const p of found) {
+        const f = await loadFacts(shop, p.id);
+        for (const [q, a] of Object.entries(f.known)) merchant.known[`${p.facts.title}: ${q}`] = a;
+        for (const q of f.unknown) merchant.unknown.push(`${p.facts.title}: ${q}`);
+      }
+      articleId = await writeArticleNow(shop, post.productId, found[0].facts, angle, merchant, settings, found.map((p) => p.facts));
+    } else {
+      product = await getProduct(admin, `gid://shopify/Product/${post.productId}`);
+      if (!product) throw new Error("We couldn't find the product for this topic any more.");
+      articleId = await writeArticleNow(shop, post.productId, product.facts, angle, await loadFacts(shop, post.productId), settings);
+    }
     if (!product) throw new Error("We couldn't find the product for this topic any more.");
-    const articleId = await writeArticleNow(shop, post.productId, product.facts, angle, await loadFacts(shop, post.productId), settings);
     await db.scheduledPost.update({ where: { id }, data: { articleId } });
     const art = await getArticle(shop, articleId);
     if (!art?.result || art.state !== "done") {
