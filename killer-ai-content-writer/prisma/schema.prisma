@@ -110,3 +110,23 @@ model Author {
 
   @@index([shop])
 }
+
+model ScheduledPost {
+  id           String   @id @default(cuid())
+  shop         String
+  productId    String // numeric product id
+  productTitle String   @default("")
+  angle        String // the chosen topic (JSON)
+  publishAt    DateTime
+  authorId     String   @default("")
+  imageUrl     String   @default("")
+  imageAlt     String   @default("")
+  status       String   @default("scheduled") // scheduled | writing | sent | failed
+  articleId    String?
+  note         String? // a failure reason, or a note such as "saved as a draft for review"
+  notified     Boolean  @default(false) // included in an upcoming-topics email
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([shop, publishAt])
+}

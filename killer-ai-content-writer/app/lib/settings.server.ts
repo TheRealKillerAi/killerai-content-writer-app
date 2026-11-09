@@ -14,6 +14,16 @@ export async function loadSettings(shop: string): Promise<AppSettings> {
   }
 }
 
+export function validZone(z: string): boolean {
+  if (!z) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: z });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const text = (f: FormData, k: string, max: number) => String(f.get(k) ?? "").trim().slice(0, max);
 const flag = (f: FormData, k: string) => f.get(k) !== null;
 
@@ -42,6 +52,15 @@ export function settingsFromForm(f: FormData): AppSettings {
     articleTemplate: text(f, "articleTemplate", 80),
     language: "en-AU",
     maxWords: [600, 1000, 1500].includes(maxWords) ? maxWords : null,
+    scheduleEnabled: flag(f, "scheduleEnabled"),
+    scheduleDays:
+      f.getAll("scheduleDay").map(String).filter((d) => /^[0-6]$/.test(d)).sort().join(",") || DEFAULT_SETTINGS.scheduleDays,
+    scheduleTime: /^([01]\d|2[0-3]):[0-5]\d$/.test(text(f, "scheduleTime", 5)) ? text(f, "scheduleTime", 5) : DEFAULT_SETTINGS.scheduleTime,
+    timeZone: validZone(text(f, "timeZone", 60)) ? text(f, "timeZone", 60) : "",
+    scheduleImage: f.get("scheduleImage") === "none" ? "none" : "product",
+    notifyEmail: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text(f, "notifyEmail", 120)) ? text(f, "notifyEmail", 120) : "",
+    notifyFailure: f.get("notifyFailure") === "skip" ? "skip" : "tell",
+    notifyUpcoming: f.get("notifyUpcoming") === "off" ? "off" : "weekly",
     toc: flag(f, "toc"),
     articleSchema: flag(f, "articleSchema"),
     faqSchema: flag(f, "faqSchema"),

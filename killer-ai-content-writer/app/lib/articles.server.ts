@@ -7,6 +7,30 @@ import type { Covered } from "./keywords";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
 import type { Angle, Article, ArticleResult, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
 
+async function execute(
+  rowId: string,
+  product: ProductFacts,
+  angle: Angle,
+  merchant: MerchantFacts,
+  settings: AppSettings,
+  guide?: ProductFacts[],
+) {
+  const startedAt = Date.now();
+  try {
+    const result = await writeArticle(product, angle, merchant, async (stage) => {
+      await db.article.update({ where: { id: rowId }, data: { stage } });
+    }, settings, guide);
+    await db.article.update({
+      where: { id: rowId },
+      data: { state: "done", stage: "Done", result: JSON.stringify({ ...result, seconds: Math.round((Date.now() - startedAt) / 1000) }) },
+    });
+  } catch (e) {
+    const message = e instanceof LlmError ? e.message : "Something went wrong while writing. Please try again.";
+    if (!(e instanceof LlmError)) console.error("Article job failed", e);
+    await db.article.update({ where: { id: rowId }, data: { state: "failed", error: message } });
+  }
+}
+
 /** Starts writing in the background and returns the new article id straight away. */
 export async function startArticle(
   shop: string,
@@ -19,22 +43,21 @@ export async function startArticle(
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
   // waitUntil keeps the hosted function alive after the response; locally it simply runs.
-  waitUntil((async () => {
-    const startedAt = Date.now();
-    try {
-      const result = await writeArticle(product, angle, merchant, async (stage) => {
-        await db.article.update({ where: { id: row.id }, data: { stage } });
-      }, settings, guide);
-      await db.article.update({
-        where: { id: row.id },
-        data: { state: "done", stage: "Done", result: JSON.stringify({ ...result, seconds: Math.round((Date.now() - startedAt) / 1000) }) },
-      });
-    } catch (e) {
-      const message = e instanceof LlmError ? e.message : "Something went wrong while writing. Please try again.";
-      if (!(e instanceof LlmError)) console.error("Article job failed", e);
-      await db.article.update({ where: { id: row.id }, data: { state: "failed", error: message } });
-    }
-  })());
+  waitUntil(execute(row.id, product, angle, merchant, settings, guide));
+  return row.id;
+}
+
+/** Writes an article and waits for it to finish (used by the scheduler, which is already running in the background). */
+export async function writeArticleNow(
+  shop: string,
+  productId: string,
+  product: ProductFacts,
+  angle: Angle,
+  merchant: MerchantFacts,
+  settings: AppSettings,
+): Promise<string> {
+  const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
+  await execute(row.id, product, angle, merchant, settings);
   return row.id;
 }
 

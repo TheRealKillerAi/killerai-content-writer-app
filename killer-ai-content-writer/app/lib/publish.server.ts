@@ -32,6 +32,8 @@ export async function sendToShopify(
     shopName: string;
     publish: boolean;
     existing?: SentInfo | null;
+    /** ISO time in the future: Shopify publishes the article then (only used when publishing). */
+    publishAt?: string;
   },
 ): Promise<{ sent: SentInfo; warning?: string }> {
   const { article: a, angle, settings, publish, existing } = opts;
@@ -89,7 +91,7 @@ export async function sendToShopify(
         articleCreate(article: $article, blog: $blog) { article { ${ARTICLE_FIELDS} } userErrors { field message } }
       }`,
       {
-        article: { ...base, ...(blogId ? { blogId } : {}), isPublished: publish, ...(withSeo ? { metafields: seo } : {}) },
+        article: { ...base, ...(blogId ? { blogId } : {}), isPublished: publish, ...(publish && opts.publishAt ? { publishDate: opts.publishAt } : {}), ...(withSeo ? { metafields: seo } : {}) },
         ...(blogId ? {} : { blog: { title: "News" } }),
       },
     );

@@ -5,6 +5,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { loadEffectiveSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
 import { listAuthors } from "../lib/authors.server";
+import { shopInfo } from "../lib/schedule.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
 import { contrastRatio, tldrBoxStyle, type TldrStyle } from "../lib/tldr";
@@ -14,6 +15,8 @@ const TABS = [
   { id: "brand", label: "Brand and voice", blurb: "How your articles sound, and what you sell." },
   { id: "writing", label: "Writing", blurb: "Language, length and the summary box." },
   { id: "publish", label: "Publish settings", blurb: "Where articles go and how." },
+  { id: "schedule", label: "Schedule", blurb: "Automatic articles on the days and time you choose." },
+  { id: "notifications", label: "Notifications", blurb: "Emails about problems and upcoming topics." },
   { id: "advanced", label: "Advanced", blurb: "Schema, templates and custom instructions." },
   { id: "plan", label: "Your plan", blurb: "Plan limits and usage." },
 ] as const;
@@ -23,12 +26,14 @@ type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; v
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const [settings, blogs, authors] = await Promise.all([
+  const [settings, blogs, authors, info] = await Promise.all([
     loadEffectiveSettings(admin, session.shop),
     listBlogs(admin),
     listAuthors(session.shop),
+    shopInfo(admin),
   ]);
-  return { settings, blogs, authors: authors.map((a) => ({ id: a.id, name: a.name, kind: a.kind })) };
+  const zones = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.("timeZone") ?? [info.tz];
+  return { settings, blogs, authors: authors.map((a) => ({ id: a.id, name: a.name, kind: a.kind })), shopTz: info.tz, shopEmail: info.email, zones };
 };
 
 export const action = async ({ request }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -68,7 +73,7 @@ const toast = (msg: string) => {
 };
 
 export default function Settings() {
-  const { settings: s, blogs, authors } = useLoaderData<typeof loader>();
+  const { settings: s, blogs, authors, shopTz, shopEmail, zones } = useLoaderData<typeof loader>();
   const saveF = useFetcher<ActionResult>();
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
@@ -360,6 +365,85 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "schedule"}>
+        <s-section heading="Schedule">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              Choose when articles go out. Topics are lined up a week ahead, and each article is written about a day before it
+              is published, using only the facts you've given us.
+            </s-paragraph>
+            <s-checkbox name="scheduleEnabled" label="Write and publish articles automatically" checked={s.scheduleEnabled} />
+            <s-stack direction="block" gap="small">
+              <s-text><strong>Days (one article a day)</strong></s-text>
+              <s-stack direction="inline" gap="base">
+                {[["1", "Mon"], ["2", "Tue"], ["3", "Wed"], ["4", "Thu"], ["5", "Fri"], ["6", "Sat"], ["0", "Sun"]].map(([v, l]) => (
+                  <s-checkbox key={v} name="scheduleDay" value={v} label={l} checked={s.scheduleDays.split(",").includes(v)} />
+                ))}
+              </s-stack>
+            </s-stack>
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(220px, 1fr))" gap="base">
+              <s-select name="scheduleTime" label="Time of day" value={s.scheduleTime}>
+                {Array.from({ length: 48 }, (_, i) => {
+                  const t = `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`;
+                  const h = Math.floor(i / 2);
+                  const label = `${h % 12 || 12}:${i % 2 ? "30" : "00"} ${h < 12 ? "am" : "pm"}`;
+                  return <s-option key={t} value={t}>{label}</s-option>;
+                })}
+              </s-select>
+              <s-select name="timeZone" label="Time zone" value={s.timeZone || shopTz} details="Defaults to your store's time zone.">
+                {zones.map((z) => (
+                  <s-option key={z} value={z}>{z.replace(/_/g, " ")}</s-option>
+                ))}
+              </s-select>
+            </s-grid>
+            <s-select
+              name="scheduleImage"
+              label="Featured image"
+              value={s.scheduleImage}
+              details="Picked when the topic is scheduled, so you can change it ahead of time on the Schedule page."
+            >
+              <s-option value="product">Use a photo of the product</s-option>
+              <s-option value="none">No image</s-option>
+            </s-select>
+            <s-banner tone="info">
+              Articles follow your Publish settings: {s.publishMode === "live" ? "they go live at the time above" : "they are saved as drafts for you to publish"}. Live articles that need a review are saved as drafts instead.
+            </s-banner>
+            <s-stack direction="inline">
+              <s-button href="/app/schedule">Open your schedule</s-button>
+            </s-stack>
+          </s-stack>
+        </s-section>
+        </div>
+        <div hidden={tab !== "notifications"}>
+        <s-section heading="Notifications">
+          <s-stack direction="block" gap="base">
+            <s-text-field
+              name="notifyEmail"
+              label="Send notifications to"
+              details={`Leave empty to use your store email${shopEmail ? ` (${shopEmail})` : ""}.`}
+              value={s.notifyEmail}
+            />
+            <s-select
+              name="notifyFailure"
+              label="If an article has a problem"
+              value={s.notifyFailure}
+              details="Either way, the schedule carries on with your next topic."
+            >
+              <s-option value="tell">Email me so I can decide what to do</s-option>
+              <s-option value="skip">Skip it and move on to the next topic</s-option>
+            </s-select>
+            <s-select
+              name="notifyUpcoming"
+              label="Upcoming topics"
+              value={s.notifyUpcoming}
+              details="Each article is written about a day before it goes out, so you can change a topic or picture until then."
+            >
+              <s-option value="weekly">Email me the topics coming up so I can review them</s-option>
+              <s-option value="off">Just let it run on its own</s-option>
+            </s-select>
+          </s-stack>
+        </s-section>
         </div>
         <div hidden={tab !== "advanced"}>
         <s-section heading="Advanced">

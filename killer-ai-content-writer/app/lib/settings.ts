@@ -29,6 +29,16 @@ export type AppSettings = TldrStyle & {
   // Writing
   language: "en-AU";
   maxWords: number | null; // null = let the facts decide
+  // Schedule
+  scheduleEnabled: boolean;
+  scheduleDays: string; // comma-separated weekday numbers, 0 = Sunday
+  scheduleTime: string; // "HH:MM" in the chosen time zone
+  timeZone: string; // IANA name, "" = the store's own
+  scheduleImage: "product" | "none";
+  // Notifications
+  notifyEmail: string; // "" = the store's email
+  notifyFailure: "tell" | "skip";
+  notifyUpcoming: "weekly" | "off";
   // Advanced
   toc: boolean;
   articleSchema: boolean;
@@ -62,6 +72,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   articleTemplate: "",
   language: "en-AU",
   maxWords: null,
+  scheduleEnabled: false,
+  scheduleDays: "1,2,3,4,5",
+  scheduleTime: "09:00",
+  timeZone: "",
+  scheduleImage: "product",
+  notifyEmail: "",
+  notifyFailure: "tell",
+  notifyUpcoming: "weekly",
   toc: false,
   articleSchema: false,
   faqSchema: false,
