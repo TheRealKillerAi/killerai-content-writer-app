@@ -99,6 +99,26 @@ const STATUS: Record<string, { label: string; tone: "info" | "success" | "critic
   failed: { label: "Needs a look", tone: "critical" },
 };
 
+const ICONS = {
+  image: "M4 5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm2 0v6.6l2.3-2.3a1 1 0 0 1 1.4 0l1.8 1.8 1.2-1.2a1 1 0 0 1 1.4 0L14 11.4V5H6Zm3 2.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z",
+  product: "M10 2 3 5.5v5C3 14.4 6 17.3 10 18c4-.7 7-3.6 7-7.5v-5L10 2Zm0 2.2 5 2.5v3.8c0 2.7-2 4.9-5 5.6-3-.7-5-2.9-5-5.6V6.7l5-2.5Z",
+  trash: "M8 2h4l1 1h3v2H4V3h3l1-1Zm-3 5h10l-.7 9a1 1 0 0 1-1 1H6.7a1 1 0 0 1-1-1L5 7Z",
+};
+
+function IconBtn({ label, onClick, path }: { label: string; onClick: () => void; path: string }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      style={{ width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid rgba(0,0,0,0.18)", borderRadius: 8, background: "#fff", cursor: "pointer", padding: 0 }}
+    >
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d={path} /></svg>
+    </button>
+  );
+}
+
 function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader>>["posts"][number]; tz: string; live: boolean }) {
   const f = useFetcher<Result>();
   const pick = useFilePicker((img) => f.submit({ intent: "set-image", id: p.id, url: img.url, alt: img.alt || p.productTitle }, { method: "POST" }));
@@ -109,23 +129,27 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
     <s-table-row>
       <s-table-cell>{when}</s-table-cell>
       <s-table-cell>
-        <s-stack direction="inline" gap="small" alignItems="center">
-          {p.imageUrl ? <s-thumbnail src={p.imageUrl} alt={p.imageAlt || p.title} size="small" /> : <s-text color="subdued">No image</s-text>}
+        <div style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
           {editable ? (
-            <s-stack direction="inline" gap="none">
-              <s-button variant="tertiary" onClick={pick.pick}>{p.imageUrl ? "Change" : "Add"}</s-button>
-              <s-button variant="tertiary" onClick={() => f.submit({ intent: "product-image", id: p.id }, { method: "POST" })}>Product photo</s-button>
-              {p.imageUrl ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "set-image", id: p.id, url: "" }, { method: "POST" })}>Remove</s-button> : null}
-            </s-stack>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <IconBtn label={p.imageUrl ? "Change image" : "Add image"} onClick={pick.pick} path={ICONS.image} />
+              <IconBtn label="Use the product photo" onClick={() => f.submit({ intent: "product-image", id: p.id }, { method: "POST" })} path={ICONS.product} />
+              {p.imageUrl ? <IconBtn label="Remove image" onClick={() => f.submit({ intent: "set-image", id: p.id, url: "" }, { method: "POST" })} path={ICONS.trash} /> : null}
+            </div>
           ) : null}
-        </s-stack>
-        {pick.error ? <s-text color="subdued">{pick.error}</s-text> : null}
+          {p.imageUrl ? (
+            <img src={p.imageUrl} alt={p.imageAlt || p.title} width={64} height={64} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(0,0,0,0.1)" }} />
+          ) : (
+            <div style={{ width: 64, height: 64, borderRadius: 8, border: "1px dashed rgba(0,0,0,0.25)", display: "grid", placeItems: "center", fontSize: 11, opacity: 0.6 }}>No image</div>
+          )}
+        </div>
+        {pick.error ? <div style={{ fontSize: 12, opacity: 0.7, maxWidth: 160 }}>{pick.error}</div> : null}
       </s-table-cell>
       <s-table-cell>
-        <s-stack direction="block" gap="none">
+        <div style={{ minWidth: 220, maxWidth: 460, whiteSpace: "normal", overflowWrap: "anywhere" }}>
           {p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.title}</s-link> : <s-text>{p.title}</s-text>}
-          <s-text color="subdued">{p.productTitle} · by {p.author}</s-text>
-        </s-stack>
+          <div style={{ opacity: 0.7, fontSize: 13, marginTop: 2 }}>{p.productTitle} · by {p.author}</div>
+        </div>
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="block" gap="none">
