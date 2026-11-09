@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { redirect, useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { authorFromForm, getAuthor, saveAuthor } from "../lib/authors.server";
+import { authorFromForm, getAuthor, listAuthors, saveAuthor } from "../lib/authors.server";
 import { loadEffectiveSettings, loadSettings, saveSettings } from "../lib/settings.server";
 import { pickedImage } from "../lib/files.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
@@ -39,7 +39,15 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<R
   }
 
   if (intent === "persona") {
+    const pick = (k: string, allowed: string[]) => (allowed.includes(String(form.get(k))) ? String(form.get(k)) : "any");
+    const gender = pick("gender", ["woman", "man", "non-binary"]);
+    const age = pick("age", ["20s", "30s", "40s", "50s", "60s+"]);
+    const style = String(form.get("style") ?? "").trim().slice(0, 120);
     const brief = String(form.get("brief") ?? "").trim().slice(0, 600);
+    const existing = (await listAuthors(session.shop))
+      .filter((a) => a.id !== params.id)
+      .map((a) => `- ${a.name}${a.jobTitle ? `, ${a.jobTitle}` : ""}: ${a.bio.slice(0, 160)} ${a.voice.slice(0, 160)}`)
+      .join("\n");
     const s = await loadEffectiveSettings(admin, session.shop);
     const context = [
       s.businessName && `Store: ${s.businessName}`,
@@ -50,8 +58,8 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<R
       .filter(Boolean)
       .join("\n");
     try {
-      const { json } = await chatJson<Partial<Fields>>(personaPrompt, `STORE\n${context || "(no details given)"}\n\nOWNER'S BRIEF\n${brief || "(none: choose something that suits the store)"}`, {
-        temperature: 0.8,
+      const { json } = await chatJson<Partial<Fields>>(personaPrompt, `STORE\n${context || "(no details given)"}\n\nOWNER'S CHOICES\nGender: ${gender}\nAge range: ${age}\nWriting style: ${style || "any"}\nExtra notes: ${brief || "(none)"}\n\nEXISTING AUTHORS (the new persona must differ from all of these)\n${existing || "(none yet)"}\nRandom seed for variety: ${Math.random().toString(36).slice(2, 8)}`, {
+        temperature: 0.95,
       });
       if (!json.name) return { error: "We couldn't build a persona this time. Please try again." };
       return { persona: { name: json.name, jobTitle: json.jobTitle ?? "", bio: json.bio ?? "", voice: json.voice ?? "" } };
@@ -77,6 +85,9 @@ export default function EditAuthor() {
   const { id, author, isDefault } = useLoaderData<typeof loader>();
   const [f, setF] = useState<Fields>(author);
   const [brief, setBrief] = useState("");
+  const [gender, setGender] = useState("any");
+  const [age, setAge] = useState("any");
+  const [style, setStyle] = useState("any");
   const [version, setVersion] = useState(0); // remounts fields after the persona builder fills them
   const [makeDefault, setMakeDefault] = useState(isDefault);
   const saveF = useFetcher<Result>();
@@ -86,11 +97,13 @@ export default function EditAuthor() {
   const persona = f.kind === "persona";
   const built = buildF.data;
 
-  const apply = () => {
-    if (!built?.persona) return;
-    set({ ...built.persona });
+  const applied = useRef<unknown>(null);
+  useEffect(() => {
+    if (!built?.persona || applied.current === built) return;
+    applied.current = built;
+    setF((p) => ({ ...p, ...built.persona }));
     setVersion((v) => v + 1);
-  };
+  }, [built]);
 
   const save = () => {
     const fd = new FormData();
@@ -129,35 +142,57 @@ export default function EditAuthor() {
       </s-section>
 
       {persona ? (
-        <s-section heading="Build a persona">
+        <s-section heading="Generate an author">
           <s-stack direction="block" gap="base">
             <s-paragraph>
-              Describe the kind of author you'd like, or leave it blank and we'll suggest one that suits your store. You can
-              change anything afterwards.
+              Answer a few quick questions and we'll create a persona for you, different from your other authors. The details
+              fill in below and you can change anything before saving.
             </s-paragraph>
-            <s-text-area
-              label="Your brief (optional)"
-              details="For example: a friendly, practical writer who loves explaining things simply."
-              rows={3}
+            <s-grid gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap="base">
+              <s-select label="Gender" value={gender} onChange={(e) => setGender(val(e as unknown as Event))}>
+                <s-option value="any">Surprise me</s-option>
+                <s-option value="woman">Woman</s-option>
+                <s-option value="man">Man</s-option>
+                <s-option value="non-binary">Non-binary</s-option>
+              </s-select>
+              <s-select label="Age range" value={age} onChange={(e) => setAge(val(e as unknown as Event))}>
+                <s-option value="any">Surprise me</s-option>
+                <s-option value="20s">20s</s-option>
+                <s-option value="30s">30s</s-option>
+                <s-option value="40s">40s</s-option>
+                <s-option value="50s">50s</s-option>
+                <s-option value="60s+">60s and over</s-option>
+              </s-select>
+              <s-select label="Writing style" value={style} onChange={(e) => setStyle(val(e as unknown as Event))}>
+                <s-option value="any">Surprise me</s-option>
+                <s-option value="friendly and conversational">Friendly and conversational</s-option>
+                <s-option value="warm and story-led">Warm and story-led</s-option>
+                <s-option value="calm and practical">Calm and practical</s-option>
+                <s-option value="expert and straight-talking">Expert and straight-talking</s-option>
+                <s-option value="light and witty">Light and witty</s-option>
+                <s-option value="plain and no-nonsense">Plain and no-nonsense</s-option>
+              </s-select>
+            </s-grid>
+            <s-text-field
+              label="Anything else? (optional)"
+              details="For example: loves explaining the science simply."
               value={brief}
               onInput={(e) => setBrief(val(e as unknown as Event))}
             />
             <s-stack direction="inline" gap="small" alignItems="center">
               <s-button
+                variant="primary"
                 {...(buildF.state !== "idle" ? { loading: true } : {})}
-                onClick={() => buildF.submit({ intent: "persona", brief }, { method: "POST" })}
+                onClick={() => buildF.submit({ intent: "persona", gender, age, style, brief }, { method: "POST" })}
               >
-                Build persona
+                {f.name ? "Generate another author" : "Generate author"}
               </s-button>
               <s-text color="subdued">Nothing is saved until you save the author.</s-text>
             </s-stack>
             {built?.error ? <s-banner tone="warning">{built.error}</s-banner> : null}
             {built?.persona ? (
-              <s-banner tone="success" heading={`Meet ${built.persona.name}`}>
-                <s-paragraph>{[built.persona.jobTitle, built.persona.bio].filter(Boolean).join(". ")}</s-paragraph>
-                <s-stack direction="inline">
-                  <s-button onClick={apply}>Use this persona</s-button>
-                </s-stack>
+              <s-banner tone="success">
+                Meet {built.persona.name}. Their details are filled in below. Not quite right? Generate another.
               </s-banner>
             ) : null}
           </s-stack>
