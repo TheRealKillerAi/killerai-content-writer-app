@@ -23,6 +23,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       db.author.deleteMany({ where: { shop } }),
       db.scheduledPost.deleteMany({ where: { shop } }),
       db.scheduleStatus.deleteMany({ where: { shop } }),
+      db.sentenceReview.deleteMany({ where: { shop } }),
       db.session.deleteMany({ where: { shop } }),
     ]);
     console.log(`Deleted all data for ${shop} (shop/redact)`);
