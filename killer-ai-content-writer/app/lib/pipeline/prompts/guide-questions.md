@@ -6,4 +6,6 @@ Set "product" on every question to the exact handle of the product it is about. 
 
 Each question must ask about ONE thing only. Never combine two topics in one question.
 
+BEFORE writing any question, search that product's PRODUCT DATA (description text, tags, options, weights and every custom field under details) and its MERCHANT FACTS for the answer. Only ask something you cannot find there. A separate check will drop any question the data already answers.
+
 Return ONLY JSON: {"fact_budget":"low|ok|good","questions":[{"product":"handle","q":"","why":""}]}

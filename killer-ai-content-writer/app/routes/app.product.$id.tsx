@@ -25,6 +25,7 @@ type ActionResult = {
   angle?: Angle;
   factBudget?: string;
   questions?: Question[];
+  alreadyKnown?: string[];
   saved?: boolean;
 };
 
@@ -93,9 +94,11 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       return { intent, error: null, angles };
     }
     const angle = JSON.parse(String(form.get("angle"))) as Angle;
-    await saveChosen(session.shop, productId, angle);
-    const { factBudget, questions } = await askQuestions(product.facts, angle, facts);
-    return { intent, error: null, angle, factBudget, questions };
+    const { factBudget, questions, alreadyKnown, needsInfo } = await askQuestions(product.facts, angle, facts);
+    // Keep only the details the store's own data really lacks, so the writer is never told that something it already has is unavailable.
+    const checked: Angle = { ...angle, needs_info: needsInfo };
+    await saveChosen(session.shop, productId, checked);
+    return { intent, error: null, angle: checked, factBudget, questions, alreadyKnown };
   } catch (e) {
     if (e instanceof Response) throw e;
     const message = e instanceof LlmError ? e.message : "Something went wrong. Please try again.";
@@ -344,6 +347,11 @@ export default function ProductPage() {
             <s-banner tone="success" heading="Saved">
               Your answers are saved as facts for this product. We've checked again for any other helpful details.
             </s-banner>
+          ) : null}
+          {q.alreadyKnown?.length ? (
+            <s-paragraph color="subdued">
+              We checked your product details and custom fields first, so we didn't ask about: {q.alreadyKnown.join("; ")}.
+            </s-paragraph>
           ) : null}
           <QuestionForm
             key={q.angle.working_title + (q.questions?.length ?? 0)}
