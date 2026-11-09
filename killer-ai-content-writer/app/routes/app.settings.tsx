@@ -9,6 +9,15 @@ import { chatJson, LlmError } from "../lib/pipeline/llm.server";
 import { contrastRatio, tldrBoxStyle, type TldrStyle } from "../lib/tldr";
 import learnVoicePrompt from "../lib/pipeline/prompts/learn-voice.md?raw";
 
+const TABS = [
+  { id: "brand", label: "Brand and voice", blurb: "How your articles sound, and what you sell." },
+  { id: "writing", label: "Writing", blurb: "Language, length and the summary box." },
+  { id: "publish", label: "Publish settings", blurb: "Where articles go and how." },
+  { id: "advanced", label: "Advanced", blurb: "Schema, templates and custom instructions." },
+  { id: "plan", label: "Your plan", blurb: "Plan limits and usage." },
+] as const;
+type TabId = (typeof TABS)[number]["id"];
+
 type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; voice?: string };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -58,6 +67,7 @@ export default function Settings() {
   const saveF = useFetcher<ActionResult>();
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
+  const [tab, setTab] = useState<TabId>("brand");
   const voiceRef = useRef<HTMLElement & { value: string }>(null);
   const [pv, setPv] = useState<TldrStyle>({
     tldrEnabled: s.tldrEnabled,
@@ -97,6 +107,32 @@ export default function Settings() {
       onReset={() => setResetKey((k) => k + 1)}
     >
       <s-page heading="Settings">
+        <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <nav aria-label="Settings sections" style={{ flex: "0 0 220px", minWidth: 180, display: "flex", flexDirection: "column", gap: 2 }}>
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                aria-current={tab === t.id ? "page" : undefined}
+                style={{
+                  textAlign: "left",
+                  padding: "8px 12px",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  font: "inherit",
+                  fontWeight: tab === t.id ? 650 : 450,
+                  background: tab === t.id ? "rgba(0,0,0,0.07)" : "transparent",
+                  color: "inherit",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          <div style={{ flex: "1 1 420px", minWidth: 0 }}>
+        <div hidden={tab !== "brand"}>
         <s-section heading="Brand voice">
           <s-stack direction="block" gap="base">
             <s-paragraph>
@@ -154,6 +190,8 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "writing"}>
         <s-section heading="Writing">
           <s-stack direction="block" gap="base">
             <s-select name="language" label="Language" value={s.language} details="British and American English are coming soon.">
@@ -265,6 +303,8 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "publish"}>
         <s-section heading="Publishing">
           <s-stack direction="block" gap="base">
             <s-select name="blogId" label="Publish to blog" value={s.blogId.startsWith("gid://") ? s.blogId : "default"} details="Where finished articles are sent in your Shopify store.">
@@ -293,6 +333,8 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "advanced"}>
         <s-section heading="Advanced">
           <s-stack direction="block" gap="base">
             <s-paragraph>
@@ -353,6 +395,8 @@ export default function Settings() {
           </s-stack>
         </s-section>
 
+        </div>
+        <div hidden={tab !== "plan"}>
         <s-section heading="Your plan">
           <s-stack direction="block" gap="small">
             <s-stack direction="inline" gap="small" alignItems="center">
@@ -365,6 +409,9 @@ export default function Settings() {
             </s-stack>
           </s-stack>
         </s-section>
+        </div>
+          </div>
+        </div>
       </s-page>
     </form>
   );
