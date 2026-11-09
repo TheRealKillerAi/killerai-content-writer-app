@@ -236,6 +236,21 @@ function ArticleReview({
           A few items below need a quick look before you use this article.
         </s-banner>
       )}
+      {score.words < 500 ? (
+        <s-banner tone="warning" heading={`This article is a little short (${score.words} words)`}>
+          <s-stack direction="block" gap="small">
+            <s-text>
+              We only had so many facts to work with, and we never pad with guesses. Answer a few more questions about
+              this product and we'll write a fuller version of 500+ words.
+            </s-text>
+            <s-stack direction="inline">
+              <s-button onClick={() => fetcher.submit({ intent: "refine" }, { method: "POST" })}>
+                Answer more questions and write a new version
+              </s-button>
+            </s-stack>
+          </s-stack>
+        </s-banner>
+      ) : null}
       {sendF.data?.error ? <s-banner tone="critical" heading="We couldn't send it to Shopify">{sendF.data.error}</s-banner> : null}
       {sendF.data?.warning ? <s-banner tone="warning">{sendF.data.warning}</s-banner> : null}
 
