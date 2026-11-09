@@ -7,7 +7,7 @@ import { authenticate } from "../shopify.server";
 import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
-import { finishImage, stageImage } from "../lib/files.server";
+import { pickedImage } from "../lib/files.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, listBlogs, primaryDomain, productImages, productTitles, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
@@ -15,6 +15,7 @@ import { firstProductId, parseGuideKey } from "../lib/guide";
 import { buildBodyHtml, linkify, linkedHtml, linkedPlain, safeHandle } from "../lib/articleHtml";
 import { RichCopy } from "../components/RichCopy";
 import { BodyEditor } from "../components/BodyEditor";
+import { useFilePicker } from "../components/useFilePicker";
 import { renderMarkdown } from "../lib/markdown";
 import { ScoreCard } from "../components/ScoreCard";
 import { Thumbs } from "../components/Thumbs";
@@ -106,24 +107,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       return { saved: false, error };
     }
   }
-  if (intent === "stage-upload") {
+  if (intent === "file-url") {
     try {
-      const target = await stageImage(admin, String(form.get("filename") ?? ""), String(form.get("type") ?? ""), Number(form.get("size") ?? 0));
-      return { stage: target };
-    } catch (e) {
-      return { error: e instanceof Error ? e.message : "We couldn't start the upload. Please try again." };
-    }
-  }
-  if (intent === "finish-upload") {
-    try {
-      const imageUrl = await finishImage(admin, String(form.get("resourceUrl") ?? ""), String(form.get("alt") ?? ""));
-      return { imageUrl };
+      const image = await pickedImage(admin, JSON.parse(String(form.get("ids") ?? "[]")));
+      return { image };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       return {
         error: /access denied|required access|scope/i.test(msg)
-          ? "The app needs permission to save pictures. Reopen the app and approve the updated permissions."
-          : msg || "We couldn't save the picture. Please try again.",
+          ? "The app needs permission to read your files. Reopen the app and approve the updated permissions."
+          : msg || "We couldn't use that picture. Please try again.",
       };
     }
   }
@@ -182,14 +175,6 @@ function ArticleReview({
 }) {
   const fetcher = useFetcher<{ saved: boolean }>();
   const sendF = useFetcher<{ saved: boolean; error?: string; warning?: string; sentOk?: boolean }>();
-  const upF = useFetcher<{
-    stage?: { url: string; resourceUrl: string; parameters: { name: string; value: string }[] };
-    imageUrl?: string;
-    error?: string;
-  }>();
-  const [upFile, setUpFile] = useState<File | null>(null);
-  const [upMsg, setUpMsg] = useState("");
-  const [upBusy, setUpBusy] = useState(false);
   const sending = sendF.state !== "idle";
   const sent: SentInfo | undefined = r.sent;
   const send = (mode: "draft" | "live") => {
@@ -231,51 +216,6 @@ function ArticleReview({
       /* ignore */
     }
   };
-  const pickFile = (f: File | undefined) => {
-    setUpMsg("");
-    if (!f) return;
-    if (!/^image\/(jpeg|png|webp|gif)$/.test(f.type)) return setUpMsg("Please choose a JPG, PNG, WebP or GIF picture.");
-    if (f.size > 10 * 1024 * 1024) return setUpMsg("That picture is too large. Please choose one under 10 MB.");
-    setUpFile(f);
-    setUpBusy(true);
-    upF.submit({ intent: "stage-upload", filename: f.name, type: f.type, size: String(f.size) }, { method: "POST" });
-  };
-  useEffect(() => {
-    const d = upF.data;
-    if (!d || !upBusy) return;
-    if (d.error) {
-      setUpMsg(d.error);
-      setUpBusy(false);
-      setUpFile(null);
-      return;
-    }
-    if (d.stage && upFile) {
-      const file = upFile;
-      const t = d.stage;
-      const body = new FormData();
-      t.parameters.forEach((p) => body.append(p.name, p.value));
-      body.append("file", file);
-      setUpFile(null);
-      fetch(t.url, { method: "POST", body })
-        .then((res) => {
-          if (!res.ok) throw new Error("upload failed");
-          upF.submit(
-            { intent: "finish-upload", resourceUrl: t.resourceUrl, alt: draft.featured_image?.alt || draft.h1 || productTitle },
-            { method: "POST" },
-          );
-        })
-        .catch(() => {
-          setUpMsg("The upload didn't go through. Please try again.");
-          setUpBusy(false);
-        });
-      return;
-    }
-    if (d.imageUrl) {
-      setDraft((cur) => ({ ...cur, featured_image: { url: d.imageUrl!, alt: cur.featured_image?.alt || cur.h1 || productTitle } }));
-      setUpBusy(false);
-      setUpMsg("");
-    }
-  }, [upF.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const img = draft.featured_image;
   const score = scoreArticle(draft, {
     html: buildBodyHtml(draft, handle, toc, tldrStyle),
@@ -284,6 +224,8 @@ function ArticleReview({
     author: org.author,
   });
   const set = <K extends keyof Article>(k: K, v: Article[K]) => setDraft((d) => ({ ...d, [k]: v }));
+  const [imgMenu, setImgMenu] = useState(false);
+  const picker = useFilePicker((p) => set("featured_image", { url: p.url, alt: p.alt || draft.h1 || productTitle }));
 
   return (
     <s-page heading={draft.h1 || "Your article"}>
@@ -598,72 +540,76 @@ function ArticleReview({
 
       <s-section slot="aside" heading="Featured image">
         <s-stack direction="block" gap="base">
-          {!img?.url ? (
-            <s-banner tone="warning" heading="This article has no featured image yet">
-              Articles with a picture look better on your blog and when shared. Choose one below, or add one in Shopify
-              after sending.
-            </s-banner>
-          ) : null}
-          {images.length ? (
-            <s-stack direction="block" gap="small">
-              <s-text><strong>Choose from this product's photos</strong></s-text>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {images.map((im) => (
-                  <button
-                    key={im.url}
-                    type="button"
-                    onClick={() => set("featured_image", { url: im.url, alt: img?.url === im.url ? img.alt : im.alt || productTitle })}
-                    style={{
-                      padding: 2,
-                      border: img?.url === im.url ? "3px solid #1a1a1a" : "1px solid #c9c9c9",
-                      borderRadius: 8,
-                      background: "#fff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <img src={im.url} alt={im.alt || productTitle} style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6, display: "block" }} />
-                  </button>
-                ))}
-              </div>
-            </s-stack>
-          ) : null}
-          <s-stack direction="block" gap="small">
-            <s-text><strong>Upload your own picture</strong></s-text>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              disabled={upBusy}
-              onChange={(e) => {
-                pickFile(e.currentTarget.files?.[0]);
-                e.currentTarget.value = "";
-              }}
-            />
-            {upBusy ? <s-text color="subdued">Uploading your picture...</s-text> : <s-text color="subdued">JPG, PNG, WebP or GIF, up to 10 MB. It's saved to your Shopify Files.</s-text>}
-            {upMsg ? <s-banner tone="critical">{upMsg}</s-banner> : null}
-          </s-stack>
-          <s-text-field
-            label="Or paste an image address"
-            details="A web address that starts with https://."
-            value={img?.url ?? ""}
-            onInput={(e) => {
-              const url = val(e as unknown as Event);
-              set("featured_image", url ? { url, alt: img?.alt ?? "" } : undefined);
-            }}
-          />
           {img?.url ? (
+            <div style={{ position: "relative" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <s-text><strong>Image</strong></s-text>
+                <div style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    onClick={() => setImgMenu((o) => !o)}
+                    style={{ padding: "6px 12px", border: 0, borderRadius: 999, background: "#e3e3e3", cursor: "pointer", fontSize: 14, fontWeight: 550 }}
+                  >
+                    Edit ▾
+                  </button>
+                  {imgMenu ? (
+                    <div
+                      style={{ position: "absolute", right: 0, top: 38, zIndex: 20, minWidth: 190, padding: 6, background: "#fff", borderRadius: 12, boxShadow: "0 4px 18px rgba(0,0,0,.18)" }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImgMenu(false);
+                          void picker.pick();
+                        }}
+                        style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, background: "transparent", borderRadius: 8, cursor: "pointer", fontSize: 15 }}
+                      >
+                        Change image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImgMenu(false);
+                          set("featured_image", undefined);
+                        }}
+                        style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 12px", border: 0, background: "transparent", borderRadius: 8, cursor: "pointer", fontSize: 15, color: "#c70a24" }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+              <img src={img.url} alt={img.alt} style={{ width: "100%", maxHeight: 280, borderRadius: 8, objectFit: "cover", display: "block", border: "1px solid #e3e3e3" }} />
+            </div>
+          ) : (
             <s-stack direction="block" gap="small">
-              <img src={img.url} alt="" style={{ maxWidth: 320, maxHeight: 200, borderRadius: 8, objectFit: "cover" }} />
-              <s-text-field
-                label="Image description (alt text)"
-                details="Describes the picture for people using screen readers, and helps search engines."
-                value={img.alt}
-                onInput={(e) => set("featured_image", { url: img.url, alt: val(e as unknown as Event) })}
-              />
+              <s-banner tone="warning" heading="This article has no featured image yet">
+                Articles with a picture look better on your blog and when shared.
+              </s-banner>
               <s-stack direction="inline">
-                <s-button onClick={() => set("featured_image", undefined)}>Remove image</s-button>
+                <s-button onClick={() => void picker.pick()} {...(picker.busy ? { loading: true } : {})}>Add image</s-button>
               </s-stack>
+              {images.length ? (
+                <s-stack direction="block" gap="small">
+                  <s-text color="subdued">Or use one of this product's photos</s-text>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {images.map((im) => (
+                      <button
+                        key={im.url}
+                        type="button"
+                        onClick={() => set("featured_image", { url: im.url, alt: im.alt || productTitle })}
+                        style={{ padding: 2, border: "1px solid #c9c9c9", borderRadius: 8, background: "#fff", cursor: "pointer" }}
+                      >
+                        <img src={im.url} alt={im.alt || productTitle} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 6, display: "block" }} />
+                      </button>
+                    ))}
+                  </div>
+                </s-stack>
+              ) : null}
             </s-stack>
-          ) : null}
+          )}
+          {picker.error ? <s-banner tone="critical">{picker.error}</s-banner> : null}
           {draft.image_prompts?.[0] ? (
             <s-text color="subdued"><strong>Need a new picture?</strong> Idea: {draft.image_prompts[0]}</s-text>
           ) : null}

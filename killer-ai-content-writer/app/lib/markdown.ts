@@ -36,6 +36,12 @@ export function renderMarkdown(md: string, productUrl: string, withIds = false):
     list = null;
   };
   for (const line of md.split("\n")) {
+    const im = line.match(/^!\[([^\]]*)\]\((https:\/\/[^)\s]+)\)\s*$/);
+    if (im) {
+      close();
+      out.push(`<p><img src="${esc(im[2])}" alt="${esc(im[1])}" style="max-width:100%;height:auto"></p>`);
+      continue;
+    }
     const h = line.match(/^(#{1,6})\s+(.*)$/);
     const ul = line.match(/^\s*[-*+]\s+(.*)$/);
     const ol = line.match(/^\s*\d+\.\s+(.*)$/);

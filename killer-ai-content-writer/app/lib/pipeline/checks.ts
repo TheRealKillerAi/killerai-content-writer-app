@@ -28,7 +28,7 @@ export function sections(md: string) {
 
 export function runChecks(a: Article) {
   const all = articleText(a);
-  const words = [a.tldr, a.body_markdown, ...a.faq.map((f) => f.q + " " + f.a)].join("\n").split(/\s+/).filter(Boolean).length;
+  const words = [a.tldr, a.body_markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, ""), ...a.faq.map((f) => f.q + " " + f.a)].join("\n").split(/\s+/).filter(Boolean).length;
   const productLinks = (a.body_markdown.match(/\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}/g) || []).length;
   const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL)[^)]+\)/g) || []).length;
   const h2 = (a.body_markdown.match(/^## /gm) || []).length;
@@ -77,7 +77,7 @@ export function splitSentences(a: Article): Sentence[] {
   sents(a.tldr).forEach((t) => add(t, "tldr"));
   if (a.excerpt) sents(a.excerpt).forEach((t) => add(t, "excerpt"));
   for (const line of a.body_markdown.split("\n")) {
-    if (/^#{1,6}\s/.test(line)) continue;
+    if (/^#{1,6}\s/.test(line) || /^!\[[^\]]*\]\(/.test(line.trim())) continue;
     sents(line.replace(/^\s*(?:[-*+]\s+|\d+\.\s+|>\s*)/, "")).forEach((t) => add(t, "body"));
   }
   a.faq.forEach((f) => sents(f.a).forEach((t) => add(t, "faq")));
