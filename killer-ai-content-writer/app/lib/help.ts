@@ -124,7 +124,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       { h: "My article says Needs review", p: "That means a few things are worth checking, for example a sentence we weren't sure about. Open the article and look under Things to check." },
       { h: "The article didn't write", p: "Press back and try again. If it keeps happening, wait a minute and retry; our writing service may be busy." },
       { h: "A fact is wrong or missing", p: "Edit the sentence directly, or add the fact to the product through Ask again so future articles have it." },
-      { h: "There's no image", p: "Articles use your product photos. Choose one under Featured image and add a short description for it." },
+      { h: "There's no image", p: "Choose one of your product photos under Featured image, or upload your own picture, and add a short description for it." },
       { h: "I changed the link text in my email copy and it vanished", p: "Press Discard changes to restore the original, or select the words again and re-link them." },
     ],
   },

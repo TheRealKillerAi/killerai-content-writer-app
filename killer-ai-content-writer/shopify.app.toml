@@ -7,7 +7,7 @@ name = "KillerAi Content Writer"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,read_content,write_content"
+scopes = "read_products,read_content,write_content,write_files"
 
 [webhooks]
 api_version = "2027-01"

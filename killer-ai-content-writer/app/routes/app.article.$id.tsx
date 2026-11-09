@@ -7,6 +7,7 @@ import { authenticate } from "../shopify.server";
 import { dedupeArticle, getArticle, saveEdits, setSent } from "../lib/articles.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
+import { finishImage, stageImage } from "../lib/files.server";
 import type { Article, ArticleResult, SentInfo } from "../lib/pipeline/types";
 import { getProduct, listBlogs, primaryDomain, productImages, productTitles, type BlogRow, type ProductImage } from "../lib/products.server";
 import type { AppSettings } from "../lib/settings";
@@ -105,6 +106,27 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       return { saved: false, error };
     }
   }
+  if (intent === "stage-upload") {
+    try {
+      const target = await stageImage(admin, String(form.get("filename") ?? ""), String(form.get("type") ?? ""), Number(form.get("size") ?? 0));
+      return { stage: target };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "We couldn't start the upload. Please try again." };
+    }
+  }
+  if (intent === "finish-upload") {
+    try {
+      const imageUrl = await finishImage(admin, String(form.get("resourceUrl") ?? ""), String(form.get("alt") ?? ""));
+      return { imageUrl };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      return {
+        error: /access denied|required access|scope/i.test(msg)
+          ? "The app needs permission to save pictures. Reopen the app and approve the updated permissions."
+          : msg || "We couldn't save the picture. Please try again.",
+      };
+    }
+  }
   if (intent === "refine") {
     const art = await getArticle(session.shop, params.id!);
     if (!art) return { saved: false };
@@ -160,6 +182,14 @@ function ArticleReview({
 }) {
   const fetcher = useFetcher<{ saved: boolean }>();
   const sendF = useFetcher<{ saved: boolean; error?: string; warning?: string; sentOk?: boolean }>();
+  const upF = useFetcher<{
+    stage?: { url: string; resourceUrl: string; parameters: { name: string; value: string }[] };
+    imageUrl?: string;
+    error?: string;
+  }>();
+  const [upFile, setUpFile] = useState<File | null>(null);
+  const [upMsg, setUpMsg] = useState("");
+  const [upBusy, setUpBusy] = useState(false);
   const sending = sendF.state !== "idle";
   const sent: SentInfo | undefined = r.sent;
   const send = (mode: "draft" | "live") => {
@@ -201,6 +231,51 @@ function ArticleReview({
       /* ignore */
     }
   };
+  const pickFile = (f: File | undefined) => {
+    setUpMsg("");
+    if (!f) return;
+    if (!/^image\/(jpeg|png|webp|gif)$/.test(f.type)) return setUpMsg("Please choose a JPG, PNG, WebP or GIF picture.");
+    if (f.size > 10 * 1024 * 1024) return setUpMsg("That picture is too large. Please choose one under 10 MB.");
+    setUpFile(f);
+    setUpBusy(true);
+    upF.submit({ intent: "stage-upload", filename: f.name, type: f.type, size: String(f.size) }, { method: "POST" });
+  };
+  useEffect(() => {
+    const d = upF.data;
+    if (!d || !upBusy) return;
+    if (d.error) {
+      setUpMsg(d.error);
+      setUpBusy(false);
+      setUpFile(null);
+      return;
+    }
+    if (d.stage && upFile) {
+      const file = upFile;
+      const t = d.stage;
+      const body = new FormData();
+      t.parameters.forEach((p) => body.append(p.name, p.value));
+      body.append("file", file);
+      setUpFile(null);
+      fetch(t.url, { method: "POST", body })
+        .then((res) => {
+          if (!res.ok) throw new Error("upload failed");
+          upF.submit(
+            { intent: "finish-upload", resourceUrl: t.resourceUrl, alt: draft.featured_image?.alt || draft.h1 || productTitle },
+            { method: "POST" },
+          );
+        })
+        .catch(() => {
+          setUpMsg("The upload didn't go through. Please try again.");
+          setUpBusy(false);
+        });
+      return;
+    }
+    if (d.imageUrl) {
+      setDraft((cur) => ({ ...cur, featured_image: { url: d.imageUrl!, alt: cur.featured_image?.alt || cur.h1 || productTitle } }));
+      setUpBusy(false);
+      setUpMsg("");
+    }
+  }, [upF.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const img = draft.featured_image;
   const score = scoreArticle(draft, {
     html: buildBodyHtml(draft, handle, toc, tldrStyle),
@@ -552,9 +627,23 @@ function ArticleReview({
               </div>
             </s-stack>
           ) : null}
+          <s-stack direction="block" gap="small">
+            <s-text><strong>Upload your own picture</strong></s-text>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={upBusy}
+              onChange={(e) => {
+                pickFile(e.currentTarget.files?.[0]);
+                e.currentTarget.value = "";
+              }}
+            />
+            {upBusy ? <s-text color="subdued">Uploading your picture...</s-text> : <s-text color="subdued">JPG, PNG, WebP or GIF, up to 10 MB. It's saved to your Shopify Files.</s-text>}
+            {upMsg ? <s-banner tone="critical">{upMsg}</s-banner> : null}
+          </s-stack>
           <s-text-field
             label="Or paste an image address"
-            details="A web address that starts with https://. To upload your own picture, add it in Shopify after sending."
+            details="A web address that starts with https://."
             value={img?.url ?? ""}
             onInput={(e) => {
               const url = val(e as unknown as Event);
