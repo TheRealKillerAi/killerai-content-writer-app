@@ -1,5 +1,5 @@
 import { gql, type Admin } from "./products.server";
-import { buildBodyHtml, esc, safeHandle } from "./articleHtml";
+import { authorBoxHtml, buildBodyHtml, esc, safeHandle } from "./articleHtml";
 import type { AppSettings } from "./settings";
 import type { Angle, Article, SentInfo } from "./pipeline/types";
 
@@ -44,13 +44,15 @@ export async function sendToShopify(
       : [];
   const template = (org ? org.templateSuffix : settings.articleTemplate).trim();
   const chosenBlog = [org?.blogId, settings.blogId].find((b) => b?.startsWith("gid://shopify/Blog/")) ?? "";
+  const authorName = org?.author.trim() || settings.defaultAuthor.trim() || opts.shopName || "Editor";
+  const aboutBox = settings.authorBox && authorName === settings.defaultAuthor.trim() ? authorBoxHtml(settings) : "";
   const base = {
     title: a.h1,
     handle,
-    body: buildBodyHtml(a, opts.productHandle, settings.toc, settings),
+    body: buildBodyHtml(a, opts.productHandle, settings.toc, settings) + aboutBox,
     summary: `<p>${esc(a.excerpt?.trim() || a.tldr)}</p>`,
     ...(a.featured_image?.url ? { image: { url: a.featured_image.url, altText: a.featured_image.alt || a.h1 } } : {}),
-    author: { name: org?.author.trim() || settings.defaultAuthor.trim() || opts.shopName || "Editor" },
+    author: { name: authorName },
     tags: tagList,
     ...(template ? { templateSuffix: template } : {}),
   };

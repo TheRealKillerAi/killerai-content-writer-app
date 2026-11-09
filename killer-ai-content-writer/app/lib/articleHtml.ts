@@ -76,3 +76,14 @@ export function buildBodyHtml(a: Article, productHandle: string, toc: boolean, s
   return parts.join("\n");
 }
 
+
+/** The optional "About the author" box added at the end of an article. */
+export function authorBoxHtml(s: { defaultAuthor: string; authorTitle: string; authorBio: string; authorUrl: string; authorPhoto: string }): string {
+  if (!s.defaultAuthor.trim() || !s.authorBio.trim()) return "";
+  const name = s.authorUrl ? `<a href="${esc(s.authorUrl)}">${esc(s.defaultAuthor)}</a>` : esc(s.defaultAuthor);
+  const photo = s.authorPhoto
+    ? `<img src="${esc(s.authorPhoto)}" alt="${esc(s.defaultAuthor)}" width="64" height="64" style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex:none">`
+    : "";
+  const title = s.authorTitle ? `<br><em>${esc(s.authorTitle)}</em>` : "";
+  return `<div style="display:flex;gap:16px;align-items:flex-start;margin-top:32px;padding-top:16px;border-top:1px solid #e1e3e5">${photo}<p style="margin:0"><strong>About the author</strong><br><strong>${name}</strong>${title}<br>${esc(s.authorBio)}</p></div>`;
+}

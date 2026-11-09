@@ -4,6 +4,7 @@ import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { loadEffectiveSettings, saveSettings, settingsFromForm } from "../lib/settings.server";
+import { listAuthors } from "../lib/authors.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
 import { contrastRatio, tldrBoxStyle, type TldrStyle } from "../lib/tldr";
@@ -22,8 +23,12 @@ type ActionResult = { intent: "save" | "learn"; ok: boolean; message?: string; v
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
-  const [settings, blogs] = await Promise.all([loadEffectiveSettings(admin, session.shop), listBlogs(admin)]);
-  return { settings, blogs };
+  const [settings, blogs, authors] = await Promise.all([
+    loadEffectiveSettings(admin, session.shop),
+    listBlogs(admin),
+    listAuthors(session.shop),
+  ]);
+  return { settings, blogs, authors: authors.map((a) => ({ id: a.id, name: a.name, kind: a.kind })) };
 };
 
 export const action = async ({ request }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -63,7 +68,7 @@ const toast = (msg: string) => {
 };
 
 export default function Settings() {
-  const { settings: s, blogs } = useLoaderData<typeof loader>();
+  const { settings: s, blogs, authors } = useLoaderData<typeof loader>();
   const saveF = useFetcher<ActionResult>();
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
@@ -313,7 +318,29 @@ export default function Settings() {
                 <s-option key={b.id} value={b.id}>{b.title}</s-option>
               ))}
             </s-select>
-            <s-text-field name="defaultAuthor" label="Default author" value={s.defaultAuthor} />
+            <s-select
+              name="defaultAuthorId"
+              label="Default author"
+              value={s.defaultAuthorId}
+              details="Used for new articles. If none is chosen, your business name is used."
+            >
+              <s-option value="">No author (use my business name)</s-option>
+              {authors.map((a) => (
+                <s-option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.kind === "persona" ? " (persona)" : ""}
+                </s-option>
+              ))}
+            </s-select>
+            <s-stack direction="inline">
+              <s-button href="/app/authors">{authors.length ? "Manage authors" : "Add an author"}</s-button>
+            </s-stack>
+            <s-checkbox
+              name="authorBox"
+              label='Add an "About the author" box at the end of articles'
+              details="Shows the default author's name, title and bio. Only works once you've added an author with a bio."
+              checked={s.authorBox}
+            />
             <s-select
               name="publishMode"
               label="When an article is sent to Shopify"

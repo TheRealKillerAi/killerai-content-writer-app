@@ -1,4 +1,5 @@
 import db from "../db.server";
+import { getAuthor } from "./authors.server";
 import { getShopName } from "./products.server";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings";
 import { clampPx, isHex, TLDR_DEFAULTS } from "./tldr";
@@ -27,7 +28,14 @@ export function settingsFromForm(f: FormData): AppSettings {
     whatYouSell: text(f, "whatYouSell", 400),
     audience: text(f, "audience", 400),
     blogId: text(f, "blogId", 80).startsWith("gid://shopify/Blog/") ? text(f, "blogId", 80) : "",
-    defaultAuthor: text(f, "defaultAuthor", 80),
+    defaultAuthor: "",
+    defaultAuthorId: text(f, "defaultAuthorId", 40),
+    authorBox: flag(f, "authorBox"),
+    authorBio: "",
+    authorTitle: "",
+    authorUrl: "",
+    authorPhoto: "",
+    authorVoice: "",
     publishMode: f.get("publishMode") === "live" ? "live" : "draft",
     keywordsAsTags: flag(f, "keywordsAsTags"),
     linkToOtherArticles: flag(f, "linkToOtherArticles"),
@@ -62,5 +70,17 @@ type AdminLike = Parameters<typeof getShopName>[0];
 export async function loadEffectiveSettings(admin: AdminLike, shop: string): Promise<AppSettings> {
   const settings = await loadSettings(shop);
   if (!settings.businessName.trim()) settings.businessName = await getShopName(admin);
+  settings.defaultAuthor = "";
+  if (settings.defaultAuthorId) {
+    const a = await getAuthor(shop, settings.defaultAuthorId);
+    if (a) {
+      settings.defaultAuthor = a.name;
+      settings.authorBio = a.bio;
+      settings.authorTitle = a.jobTitle;
+      settings.authorUrl = a.profileUrl;
+      settings.authorPhoto = a.photoUrl;
+      settings.authorVoice = a.voice;
+    }
+  }
   return settings;
 }

@@ -14,6 +14,14 @@ export type AppSettings = TldrStyle & {
   // Publishing
   blogId: string; // "" = store's first blog
   defaultAuthor: string;
+  defaultAuthorId: string; // an author from the Authors page ("" = none chosen)
+  authorBox: boolean; // add an "About the author" box at the end of articles
+  // Filled in from the chosen author when settings are loaded; never saved from the form.
+  authorBio: string;
+  authorTitle: string;
+  authorUrl: string;
+  authorPhoto: string;
+  authorVoice: string;
   publishMode: "draft" | "live";
   keywordsAsTags: boolean;
   linkToOtherArticles: boolean;
@@ -41,6 +49,13 @@ export const DEFAULT_SETTINGS: AppSettings = {
   audience: "",
   blogId: "",
   defaultAuthor: "",
+  defaultAuthorId: "",
+  authorBox: false,
+  authorBio: "",
+  authorTitle: "",
+  authorUrl: "",
+  authorPhoto: "",
+  authorVoice: "",
   publishMode: "draft",
   keywordsAsTags: true,
   linkToOtherArticles: false,
@@ -76,6 +91,10 @@ export function voiceGuide(s: AppSettings): string {
   if (s.brandDescription.trim()) parts.push(`THE STORE'S OWN VOICE (follow this first)\n${s.brandDescription.trim()}`);
   if (s.wordsToUse.trim()) parts.push(`Words and phrases this store likes to use: ${s.wordsToUse.trim()}`);
   if (s.wordsToAvoid.trim()) parts.push(`Words and phrases to avoid: ${s.wordsToAvoid.trim()}`);
+  if (s.authorVoice.trim())
+    parts.push(
+      `AUTHOR VOICE (the article is written as ${s.defaultAuthor || "this author"}; layer these style traits on top of the store's voice, never as new facts, credentials or personal experience)\n${s.authorVoice.trim()}`,
+    );
   parts.push(`BASELINE VOICE (use only where the store's own voice is silent)\n${BASELINE_VOICE}`);
   return parts.join("\n\n");
 }

@@ -93,3 +93,20 @@ model Feedback {
 
   @@index([shop])
 }
+
+model Author {
+  id         String   @id @default(cuid())
+  shop       String
+  kind       String   @default("real") // "real" (an actual person) or "persona" (an invented author)
+  name       String
+  jobTitle   String   @default("")
+  bio        String   @default("")
+  profileUrl String   @default("")
+  photoUrl   String   @default("")
+  photoAlt   String   @default("")
+  voice      String   @default("") // optional writing-style notes for this author
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([shop])
+}
