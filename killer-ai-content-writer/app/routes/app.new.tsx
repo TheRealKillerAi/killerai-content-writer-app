@@ -1,12 +1,14 @@
 import type { HeadersFunction } from "react-router";
-import { useRouteError } from "react-router";
+import { useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { UsageMeter } from "../components/UsageMeter";
+import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import type { LoaderFunctionArgs } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
-  return null;
+  const { session } = await authenticate.admin(request);
+  return { usage: await monthlyUsage(session.shop) };
 };
 
 const TYPES = [
@@ -38,9 +40,13 @@ const TYPES = [
 ];
 
 export default function NewArticle() {
+  const { usage } = useLoaderData<typeof loader>();
   return (
     <s-page heading="What would you like to write?">
       <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
+      <s-section>
+        <UsageMeter usage={usage} />
+      </s-section>
       <s-section>
         <s-paragraph>Choose the type of article. This shapes the ideas we suggest and the facts we use.</s-paragraph>
       </s-section>

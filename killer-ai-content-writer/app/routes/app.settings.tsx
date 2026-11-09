@@ -477,7 +477,7 @@ export default function Settings() {
             <s-checkbox
               name="faqSchema"
               label="Add FAQ schema"
-              details="Mostly useful to AI answer engines. Google now shows FAQ rich results for few sites."
+              details="Helps AI answer engines pick out your questions and answers. Google no longer shows FAQ results in search for most sites."
               checked={s.faqSchema}
             />
             <s-checkbox

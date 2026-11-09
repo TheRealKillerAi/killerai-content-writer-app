@@ -3,6 +3,7 @@ import { useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { listArticles } from "../lib/articles.server";
+import { SeoBadge, StatusBadges } from "../components/ArticleBadges";
 import { listAuthors } from "../lib/authors.server";
 import { monthlyUsage } from "../lib/usage.server";
 import { UsageMeter } from "../components/UsageMeter";
@@ -108,26 +109,30 @@ export default function Home() {
       </s-section>
 
       {recent.length ? (
-        <s-section heading="Recent articles">
-          <s-stack direction="block" gap="small">
-            {recent.map((a) => (
-              <s-stack key={a.id} direction="inline" gap="small" alignItems="center">
-                <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
-                {a.state === "writing" ? (
-                  <s-badge tone="info">Writing…</s-badge>
-                ) : a.state === "failed" ? (
-                  <s-badge tone="critical">Failed</s-badge>
-                ) : a.status === "READY FOR MERCHANT APPROVAL" ? (
-                  <s-badge tone="success">Ready</s-badge>
-                ) : (
-                  <s-badge tone="warning">Needs review</s-badge>
-                )}
-              </s-stack>
-            ))}
-            <s-stack direction="inline">
-              <s-button href="/app/articles">See all articles</s-button>
-            </s-stack>
-          </s-stack>
+        <s-section heading="Recent articles" padding="none">
+          <s-table>
+            <s-table-header-row>
+              <s-table-header listSlot="primary">Article</s-table-header>
+              <s-table-header>SEO</s-table-header>
+              <s-table-header>Status</s-table-header>
+            </s-table-header-row>
+            <s-table-body>
+              {recent.map((a) => (
+                <s-table-row key={a.id}>
+                  <s-table-cell>
+                    <div style={{ minWidth: 200, maxWidth: 520, whiteSpace: "normal", overflowWrap: "anywhere" }}>
+                      <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
+                    </div>
+                  </s-table-cell>
+                  <s-table-cell><SeoBadge seo={a.seo} /></s-table-cell>
+                  <s-table-cell><StatusBadges a={a} /></s-table-cell>
+                </s-table-row>
+              ))}
+            </s-table-body>
+          </s-table>
+          <s-box padding="base">
+            <s-button href="/app/articles">See all articles</s-button>
+          </s-box>
         </s-section>
       ) : null}
     </s-page>

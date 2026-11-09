@@ -282,6 +282,12 @@ export async function processDue(shop: string, admin: Admin, settings: AppSettin
   for (const p of due) await processPost(shop, admin, settings, p.id);
 }
 
+/** Lines up topics and emails them (what "Find topics now" does). Writing happens later, about a day before each is due. */
+export async function fillAndNotify(shop: string, admin: Admin, settings: AppSettings, tz: string) {
+  await topUpSchedule(shop, admin, settings, tz);
+  await sendDigest(shop, admin, settings, tz);
+}
+
 /** One full pass for a shop: fill the schedule, email the new topics, write what's due. */
 export async function runShop(shop: string, admin: Admin, settings?: AppSettings) {
   const s = settings ?? (await loadEffectiveSettings(admin, shop));

@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { UsageMeter } from "../components/UsageMeter";
+import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { effectiveZone, processDue, runInBackground, shopInfo, topUpSchedule } from "../lib/schedule.server";
+import { effectiveZone, fillAndNotify, processDue, runInBackground, shopInfo } from "../lib/schedule.server";
 import { listAuthors } from "../lib/authors.server";
 import { pickedImage } from "../lib/files.server";
 import { productImages } from "../lib/products.server";
@@ -24,6 +26,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   ]);
   const names = new Map(authors.map((a: { id: string; name: string }) => [a.id, a.name]));
   return {
+    usage: await monthlyUsage(session.shop),
     enabled: settings.scheduleEnabled,
     publishMode: settings.publishMode,
     tz,
@@ -75,7 +78,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
     const settings = await loadEffectiveSettings(admin, shop);
     if (!settings.scheduleEnabled) return { error: "Switch on automatic articles in Settings first." };
     const tz = effectiveZone(settings, (await shopInfo(admin)).tz);
-    runInBackground(topUpSchedule(shop, admin, settings, tz));
+    runInBackground(fillAndNotify(shop, admin, settings, tz));
     return { message: "Finding topics. This takes a minute or so." };
   }
   if (intent === "write-now" && own && own.status === "scheduled") {
@@ -181,7 +184,7 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
 }
 
 export default function Schedule() {
-  const { enabled, publishMode, tz, posts, days, time } = useLoaderData<typeof loader>();
+  const { enabled, publishMode, tz, posts, days, time, usage } = useLoaderData<typeof loader>();
   const fill = useFetcher<Result>();
   const rv = useRevalidator();
   const [waitUntilMs, setWaitUntilMs] = useState(0);
@@ -222,6 +225,9 @@ export default function Schedule() {
           {summary} at {time} ({tz.replace(/_/g, " ")}). {publishMode === "live" ? "Articles go live automatically." : "Articles are saved as drafts."} Topics are lined up a week ahead and each article is written about a day before it goes out.
         </s-banner>
       )}
+      <s-section>
+        <UsageMeter usage={usage} />
+      </s-section>
       {fill.data?.error ? <s-banner tone="critical">{fill.data.error}</s-banner> : null}
       {fill.data?.message ? <s-banner tone="success">{fill.data.message}</s-banner> : null}
       <s-section padding="none">

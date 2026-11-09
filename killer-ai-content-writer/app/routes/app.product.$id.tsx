@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { redirect, useFetcher, useLoaderData, useRouteError, useSearchParams } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { UsageMeter } from "../components/UsageMeter";
+import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import { existingArticleTitles, getProduct } from "../lib/products.server";
 import { deleteFact, clearChosen, loadAngles, loadChosen, loadFacts, saveAngles, saveChosen, saveFacts } from "../lib/facts.server";
@@ -35,7 +37,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const chosen = await loadChosen(session.shop, params.id!);
   const articles = await listArticles(session.shop, params.id!);
   const covered = await coveredTopics(session.shop);
-  return { product, facts, savedAngles, chosen, articles, covered };
+  return { product, facts, savedAngles, chosen, articles, covered, usage: await monthlyUsage(session.shop) };
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
@@ -106,7 +108,7 @@ function answerLabel(n: number) {
 }
 
 export default function ProductPage() {
-  const { product, facts, savedAngles, chosen, articles, covered } = useLoaderData<typeof loader>();
+  const { product, facts, savedAngles, chosen, articles, covered, usage } = useLoaderData<typeof loader>();
   const anglesF = useFetcher<ActionResult>();
   const questionsF = useFetcher<ActionResult>();
   const saveF = useFetcher<ActionResult>();
@@ -178,6 +180,10 @@ export default function ProductPage() {
       >
         {angles.length ? "Generate more topics" : "Generate article topics"}
       </s-button>
+
+      <s-section>
+        <UsageMeter usage={usage} />
+      </s-section>
 
       <s-banner tone="info" heading={step === 1 ? "Step 1 of 3: choose a topic" : "Step 2 of 3: check your facts"}>
         {step === 1

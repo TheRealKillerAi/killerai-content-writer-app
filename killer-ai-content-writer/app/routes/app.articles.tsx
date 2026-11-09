@@ -4,13 +4,16 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { deleteArticle, listArticles } from "../lib/articles.server";
 import { productTitles } from "../lib/products.server";
+import { SeoBadge, StatusBadges } from "../components/ArticleBadges";
+import { UsageMeter } from "../components/UsageMeter";
+import { monthlyUsage } from "../lib/usage.server";
 import { firstProductId, parseGuideKey } from "../lib/guide";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const articles = await listArticles(session.shop);
   const titles = await productTitles(admin, articles.map((a) => firstProductId(a.productId)));
-  return { articles, titles };
+  return { articles, titles, usage: await monthlyUsage(session.shop) };
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -24,11 +27,15 @@ const fmt = (iso: string) =>
   new Date(iso).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 export default function Articles() {
-  const { articles, titles } = useLoaderData<typeof loader>();
+  const { articles, titles, usage } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
 
   return (
     <s-page heading="Your articles">
+      <s-button slot="primary-action" variant="primary" href="/app/new">Write an article</s-button>
+      <s-section>
+        <UsageMeter usage={usage} />
+      </s-section>
       <s-section padding="none">
         {articles.length === 0 ? (
           <s-box padding="large">
@@ -39,9 +46,7 @@ export default function Articles() {
           <s-table>
             <s-table-header-row>
               <s-table-header listSlot="primary">Article</s-table-header>
-              <s-table-header>Product</s-table-header>
-              <s-table-header>Search phrase</s-table-header>
-              <s-table-header>SEO score</s-table-header>
+              <s-table-header>SEO</s-table-header>
               <s-table-header>Status</s-table-header>
               <s-table-header>Created</s-table-header>
               <s-table-header />
@@ -50,40 +55,29 @@ export default function Articles() {
               {articles.map((a) => (
                 <s-table-row key={a.id}>
                   <s-table-cell>
-                    <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
+                    <div style={{ minWidth: 240, maxWidth: 560, whiteSpace: "normal", overflowWrap: "anywhere" }}>
+                      <s-link href={`/app/article/${a.id}`}>{a.title}</s-link>
+                      <div style={{ opacity: 0.7, fontSize: 13, marginTop: 2 }}>
+                        {parseGuideKey(a.productId) ? "Buying guide" : titles[a.productId] ?? "—"}
+                        {a.keyword ? ` · ${a.keyword}` : ""}
+                      </div>
+                    </div>
                   </s-table-cell>
-                  <s-table-cell>{parseGuideKey(a.productId) ? "Buying guide" : titles[a.productId] ?? "—"}</s-table-cell>
-                  <s-table-cell>{a.keyword || "—"}</s-table-cell>
-                  <s-table-cell>
-                    {a.seo === null ? "—" : <s-badge tone={a.seo >= 80 ? "success" : a.seo >= 60 ? "warning" : "critical"}>{String(Math.round(a.seo))}</s-badge>}
-                  </s-table-cell>
-                  <s-table-cell>
-                    {a.state === "writing" ? (
-                      <s-badge tone="info">Writing…</s-badge>
-                    ) : a.state === "failed" ? (
-                      <s-badge tone="critical">Failed</s-badge>
-                    ) : a.status === "READY FOR MERCHANT APPROVAL" ? (
-                      <s-badge tone="success">Ready</s-badge>
-                    ) : (
-                      <s-badge tone="warning">Needs review</s-badge>
-                    )}
-                    {a.sentAs ? <s-badge tone={a.sentAs === "live" ? "success" : "neutral"}>{a.sentAs === "live" ? "On blog" : "Blog draft"}</s-badge> : null}
-                  </s-table-cell>
+                  <s-table-cell><SeoBadge seo={a.seo} /></s-table-cell>
+                  <s-table-cell><StatusBadges a={a} /></s-table-cell>
                   <s-table-cell>{fmt(a.createdAt)}</s-table-cell>
                   <s-table-cell>
-                    <s-stack direction="inline" gap="small">
-                      <s-button href={`/app/article/${a.id}`}>Open</s-button>
-                      <s-button
-                        tone="critical"
-                        onClick={() => {
-                          if (window.confirm("Delete this article? This can't be undone.")) {
-                            fetcher.submit({ intent: "delete", id: a.id }, { method: "POST" });
-                          }
-                        }}
-                      >
-                        Delete
-                      </s-button>
-                    </s-stack>
+                    <s-button
+                      variant="tertiary"
+                      tone="critical"
+                      onClick={() => {
+                        if (window.confirm("Delete this article? This can't be undone.")) {
+                          fetcher.submit({ intent: "delete", id: a.id }, { method: "POST" });
+                        }
+                      }}
+                    >
+                      Delete
+                    </s-button>
                   </s-table-cell>
                 </s-table-row>
               ))}

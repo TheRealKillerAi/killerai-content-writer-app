@@ -2,28 +2,33 @@ import { useState } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useNavigate } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { UsageMeter } from "../components/UsageMeter";
+import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import { listProducts } from "../lib/products.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const url = new URL(request.url);
   const q = url.searchParams.get("q") ?? "";
   const after = url.searchParams.get("after");
   const { products, pageInfo } = await listProducts(admin, q, after);
-  return { products, pageInfo, q };
+  return { products, pageInfo, q, usage: await monthlyUsage(session.shop) };
 };
 
 const productPath = (gid: string) => `/app/product/${gid.split("/").pop()}`;
 
 export default function Products() {
-  const { products, pageInfo, q } = useLoaderData<typeof loader>();
+  const { products, pageInfo, q, usage } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [search, setSearch] = useState(q);
   const go = (params: Record<string, string>) => navigate(`/app/products?${new URLSearchParams(params).toString()}`);
 
   return (
     <s-page heading="Choose a product to write about">
+      <s-section>
+        <UsageMeter usage={usage} />
+      </s-section>
       <s-section>
         <s-stack direction="inline" gap="base" alignItems="end">
           <s-search-field
