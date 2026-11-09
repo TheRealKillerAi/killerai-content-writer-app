@@ -124,14 +124,14 @@ export default function EditAuthor() {
 
       <s-section heading="Type of author">
         <s-stack direction="block" gap="base">
-          <s-choice-list
+          <s-select
             label="Who is this author?"
-            labelAccessibilityVisibility="exclusive"
-            onChange={(e) => set({ kind: (val(e as unknown as Event) as string) === "persona" ? "persona" : "real" })}
+            value={f.kind}
+            onChange={(e) => set({ kind: val(e as unknown as Event) === "persona" ? "persona" : "real" })}
           >
-            <s-choice value="real" selected={!persona}>A real person (enter their actual details)</s-choice>
-            <s-choice value="persona" selected={persona}>An AI persona (an invented author avatar)</s-choice>
-          </s-choice-list>
+            <s-option value="real">A real person (enter their actual details)</s-option>
+            <s-option value="persona">An AI persona (an invented author avatar)</s-option>
+          </s-select>
           {persona ? (
             <s-banner tone="info">
               A persona is a made-up author. Your readers will see the name and bio below, so only keep details that are
