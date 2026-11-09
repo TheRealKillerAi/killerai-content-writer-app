@@ -7,7 +7,7 @@ import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { effectiveZone, fillAndNotify, openSlotCount, processDue, runInBackground, sendTopicsEmail, shopInfo } from "../lib/schedule.server";
+import { effectiveZone, fillChain, isWorking, openSlotCount, processDue, runInBackground, sendTopicsEmail, shopInfo } from "../lib/schedule.server";
 import { listAuthors } from "../lib/authors.server";
 import { pickedImage } from "../lib/files.server";
 import { productImages } from "../lib/products.server";
@@ -28,6 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const status = await db.scheduleStatus.findUnique({ where: { shop: session.shop } });
   return {
     note: status?.note ?? "",
+    working: await isWorking(session.shop),
     usage: await monthlyUsage(session.shop),
     enabled: settings.scheduleEnabled,
     planDays: settings.planDays,
@@ -83,8 +84,8 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
     const tz = effectiveZone(settings, (await shopInfo(admin)).tz);
     const open = await openSlotCount(shop, settings, tz);
     if (open > 0) {
-      runInBackground(fillAndNotify(shop, admin, settings, tz, true));
-      return { message: `Finding topics for ${open} open day${open === 1 ? "" : "s"}. This takes a minute or so. We'll email them to you when they're ready.` };
+      runInBackground(fillChain(shop, admin, settings, tz, { force: true }));
+      return { message: `Finding topics for ${open} open day${open === 1 ? "" : "s"}. You can leave this page and come back later. We'll email you the topics when they're ready.` };
     }
     const d = await sendTopicsEmail(shop, admin, settings, tz);
     const upcoming = `Your next ${settings.planDays} days are already lined up, so there's nothing new to find. More are added automatically as the days pass.`;
@@ -196,11 +197,11 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
 }
 
 export default function Schedule() {
-  const { enabled, publishMode, tz, posts, days, time, usage, planDays, note } = useLoaderData<typeof loader>();
+  const { enabled, publishMode, tz, posts, days, time, usage, planDays, note, working } = useLoaderData<typeof loader>();
   const fill = useFetcher<Result>();
   const rv = useRevalidator();
   const [waitUntilMs, setWaitUntilMs] = useState(0);
-  const busy = posts.some((p) => p.status === "writing") || Date.now() < waitUntilMs;
+  const busy = working || posts.some((p) => p.status === "writing") || Date.now() < waitUntilMs;
   useEffect(() => {
     if (!busy) return;
     const t = setInterval(() => rv.revalidate(), 6000);
@@ -240,7 +241,12 @@ export default function Schedule() {
       <s-section>
         <UsageMeter usage={usage} />
       </s-section>
-      {note ? <s-banner tone="warning" heading="Some days couldn't be filled">{note}</s-banner> : null}
+      {working ? (
+        <s-banner tone="info" heading="Still finding topics">
+          This is taking longer than usual. We'll keep working, so you can leave this page and come back later. New topics appear here as they're found.
+        </s-banner>
+      ) : null}
+      {note && !working ? <s-banner tone="warning" heading="Some days couldn't be filled">{note}</s-banner> : null}
       {fill.data?.error ? <s-banner tone="critical">{fill.data.error}</s-banner> : null}
       {fill.data?.message ? <s-banner tone="success">{fill.data.message}</s-banner> : null}
       <s-section padding="none">

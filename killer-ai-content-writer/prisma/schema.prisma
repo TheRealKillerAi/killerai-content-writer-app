@@ -134,5 +134,6 @@ model ScheduledPost {
 model ScheduleStatus {
   shop      String   @id
   note      String   @default("") // why the schedule couldn't be filled, shown to the merchant
+  working   Boolean  @default(false) // topics are still being found in the background
   updatedAt DateTime @updatedAt
 }

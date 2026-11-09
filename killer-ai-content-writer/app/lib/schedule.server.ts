@@ -94,24 +94,36 @@ const numeric = (gid: string) => gid.split("/").pop()!;
 const MIN_GAP_DAYS = 3; // the same product or guide is never scheduled twice within this many days
 
 async function setNote(shop: string, note: string) {
-  if (!note) await db.scheduleStatus.deleteMany({ where: { shop } });
-  else await db.scheduleStatus.upsert({ where: { shop }, create: { shop, note }, update: { note } });
+  await db.scheduleStatus.upsert({ where: { shop }, create: { shop, note }, update: { note } });
 }
 
+async function setWorking(shop: string, working: boolean) {
+  await db.scheduleStatus.upsert({ where: { shop }, create: { shop, working }, update: { working } });
+}
+
+/** True while topics are still being found in the background (a flag older than 15 minutes is ignored). */
+export async function isWorking(shop: string): Promise<boolean> {
+  const r = await db.scheduleStatus.findUnique({ where: { shop } });
+  return !!r?.working && Date.now() - r.updatedAt.getTime() < 15 * 60 * 1000;
+}
+
+const WORK_BUDGET_MS = 230000; // stop and hand over to a fresh run before the hosting time limit
+const MAX_CHAIN = 8;
+
 /** Adds topics for any upcoming publish slot that doesn't have one yet. Topics only: the article is written later. */
-export async function topUpSchedule(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false): Promise<number> {
+export async function topUpSchedule(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false, deadline = 0): Promise<{ created: number; more: boolean }> {
   const now = new Date();
   const existing = await db.scheduledPost.findMany({ where: { shop, publishAt: { gte: now } } });
   // "Plan the next batch when N days are left": wait until the schedule is about to run out, then fill the whole window again.
   if (!force && settings.refillDays > 0 && existing.length) {
     const last = Math.max(...existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
-    if ((last - now.getTime()) / 86400000 > settings.refillDays) return 0;
+    if ((last - now.getTime()) / 86400000 > settings.refillDays) return { created: 0, more: false };
   }
   const have = new Set(existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
   const missing = upcomingSlots(settings, tz, now).filter((s) => !have.has(s.getTime()));
   if (!missing.length) {
     await setNote(shop, "");
-    return 0;
+    return { created: 0, more: false };
   }
 
   // Products, least recently used first.
@@ -200,7 +212,12 @@ export async function topUpSchedule(shop: string, admin: Admin, settings: AppSet
 
   let created = 0;
   let index = 0;
+  let more = false;
   for (const slot of missing) {
+    if (deadline && Date.now() > deadline) {
+      more = true;
+      break;
+    }
     // With both kinds ticked, every third article is a buying guide.
     const guideTurn = settings.mixGuides && (!settings.mixProduct || index % 3 === 2);
     const lists = guideTurn ? [guides, settings.mixProduct ? products : []] : [settings.mixProduct ? products : [], guides];
@@ -247,6 +264,8 @@ export async function topUpSchedule(shop: string, admin: Admin, settings: AppSet
     index++;
   }
 
+  if (more) return { created, more: true };
+
   // Say plainly why any day couldn't be filled.
   if (created < missing.length) {
     const total = (settings.mixProduct ? products.length : 0) + guides.length;
@@ -260,7 +279,7 @@ export async function topUpSchedule(shop: string, admin: Admin, settings: AppSet
   } else {
     await setNote(shop, "");
   }
-  return created;
+  return { created, more: false };
 }
 
 // ---------- links and emails ----------
@@ -395,10 +414,41 @@ export async function processDue(shop: string, admin: Admin, settings: AppSettin
   for (const p of due) await processPost(shop, admin, settings, p.id);
 }
 
-/** Lines up topics and emails them (what "Find topics now" does). Writing happens later, about a day before each is due. */
-export async function fillAndNotify(shop: string, admin: Admin, settings: AppSettings, tz: string, force = false) {
-  await topUpSchedule(shop, admin, settings, tz, force);
-  return sendDigest(shop, admin, settings, tz);
+async function continueLater(shop: string, chain: number, force: boolean, write: boolean) {
+  // eslint-disable-next-line no-undef
+  const base = (process.env.SHOPIFY_APP_URL || "").replace(/\/$/, "");
+  // eslint-disable-next-line no-undef
+  const secret = process.env.CRON_SECRET;
+  if (!base || !secret) throw new Error("Can't continue: SHOPIFY_APP_URL or CRON_SECRET is missing.");
+  const res = await fetch(`${base}/cron/continue`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ shop, chain, force, write }),
+  });
+  if (!res.ok) throw new Error(`Continue request failed (${res.status})`);
+}
+
+/**
+ * Finds topics and emails them. Runs for up to a few minutes, then hands over to a fresh run so a long plan
+ * (for example 30 days) keeps going in the background without the merchant staying on the page.
+ */
+export async function fillChain(shop: string, admin: Admin, settings: AppSettings, tz: string, opts: { force?: boolean; write?: boolean; chain?: number } = {}): Promise<DigestStatus> {
+  const chain = opts.chain ?? 0;
+  const { more } = await topUpSchedule(shop, admin, settings, tz, !!opts.force, Date.now() + WORK_BUDGET_MS);
+  if (more && chain < MAX_CHAIN) {
+    try {
+      await setWorking(shop, true);
+      await continueLater(shop, chain + 1, !!opts.force, !!opts.write);
+      return { status: "nothing-new", count: 0, to: "" };
+    } catch (e) {
+      console.error("Couldn't continue the schedule run", e);
+    }
+  }
+  await setWorking(shop, false);
+  if (more) await setNote(shop, "Some days were left empty because the run took too long. Press Find topics now to carry on.");
+  const d = await sendDigest(shop, admin, settings, tz);
+  if (opts.write) await processDue(shop, admin, settings);
+  return d;
 }
 
 /** How many publish slots in the next week don't have a topic yet. */
@@ -416,9 +466,7 @@ export async function sendTopicsEmail(shop: string, admin: Admin, settings: AppS
 export async function runShop(shop: string, admin: Admin, settings?: AppSettings) {
   const s = settings ?? (await loadEffectiveSettings(admin, shop));
   const tz = effectiveZone(s, (await shopInfo(admin)).tz);
-  await topUpSchedule(shop, admin, s, tz);
-  await sendDigest(shop, admin, s, tz);
-  await processDue(shop, admin, s);
+  await fillChain(shop, admin, s, tz, { write: true });
 }
 
 /** Called by the daily cron: every shop with the schedule switched on. */
