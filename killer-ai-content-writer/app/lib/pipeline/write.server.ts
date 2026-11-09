@@ -13,6 +13,7 @@ import {
   splitSentences,
   verifyLabels,
 } from "./checks";
+import { addInternalLinks, type LinkTargets } from "./links";
 import type { Angle, Article, ArticleResult, AuditProblem, AuditReport, MerchantFacts, ProductFacts } from "./types";
 
 const LINKS = /\[[^\]]+\]\(\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}\)/g;
@@ -34,6 +35,7 @@ export async function writeArticle(
   progress: Progress = () => {},
   settings: AppSettings = DEFAULT_SETTINGS,
   guide?: ProductFacts[],
+  links?: LinkTargets,
 ): Promise<ArticleResult> {
   let tokens = 0;
   const call = async <T>(system: string, user: string, temperature: number): Promise<T> => {
@@ -148,6 +150,14 @@ export async function writeArticle(
 
   await progress("Final checks");
   if (!guide) article.body_markdown = repairLink(article.body_markdown, product.title.split(/\s[–|-]\s/)[0]);
+  // Optional links to the store's own collections and one related article. Only words already in the text are linked.
+  if (links && (settings.linkToCollections || settings.linkToOtherArticles)) {
+    const withLinks = addInternalLinks(article.body_markdown, links, {
+      collections: settings.linkToCollections,
+      articles: settings.linkToOtherArticles,
+    });
+    article.body_markdown = withLinks.md;
+  }
   for (let i = 0; i < 2 && (article.title_tag.length > 60 || article.meta_description.length > 155); i++) {
     const t = await call<{ title_tag?: string; meta_description?: string }>(
       'You shorten SEO fields. Return ONLY JSON {"title_tag":"<=60 chars","meta_description":"<=155 chars"}. Keep the meaning and the key facts; do not add claims.',

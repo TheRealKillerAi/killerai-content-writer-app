@@ -4,6 +4,8 @@ import { LlmError } from "./pipeline/llm.server";
 import { writeArticle } from "./pipeline/write.server";
 import { buildBodyHtml } from "./articleHtml";
 import { scoreArticle } from "./score";
+import { loadLinkTargets } from "./links.server";
+import type { Admin } from "./products.server";
 import type { AppSettings } from "./settings";
 import type { Covered } from "./keywords";
 import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
@@ -16,12 +18,14 @@ async function execute(
   merchant: MerchantFacts,
   settings: AppSettings,
   guide?: ProductFacts[],
+  shopAndAdmin?: { shop: string; admin?: Admin },
 ) {
   const startedAt = Date.now();
   try {
+    const links = shopAndAdmin ? await loadLinkTargets(shopAndAdmin.admin, shopAndAdmin.shop, settings, angle.target_query ?? "", rowId) : undefined;
     const result = await writeArticle(product, angle, merchant, async (stage) => {
       await db.article.update({ where: { id: rowId }, data: { stage } });
-    }, settings, guide);
+    }, settings, guide, links);
     await db.article.update({
       where: { id: rowId },
       data: { state: "done", stage: "Done", result: JSON.stringify({ ...result, seconds: Math.round((Date.now() - startedAt) / 1000) }) },
@@ -42,10 +46,11 @@ export async function startArticle(
   merchant: MerchantFacts,
   settings: AppSettings,
   guide?: ProductFacts[],
+  admin?: Admin,
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
   // waitUntil keeps the hosted function alive after the response; locally it simply runs.
-  waitUntil(execute(row.id, product, angle, merchant, settings, guide));
+  waitUntil(execute(row.id, product, angle, merchant, settings, guide, { shop, admin }));
   return row.id;
 }
 
@@ -58,9 +63,10 @@ export async function writeArticleNow(
   merchant: MerchantFacts,
   settings: AppSettings,
   guide?: ProductFacts[],
+  admin?: Admin,
 ): Promise<string> {
   const row = await db.article.create({ data: { shop, productId, angle: JSON.stringify(angle), keyword: angle.target_query, title: angle.working_title } });
-  await execute(row.id, product, angle, merchant, settings, guide);
+  await execute(row.id, product, angle, merchant, settings, guide, { shop, admin });
   return row.id;
 }
 

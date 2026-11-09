@@ -5,6 +5,7 @@ function inline(s: string, productUrl: string) {
   return esc(s)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[\s(])\*(?!\s)(.+?)\*(?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")
+    .replace(/\[([^\]]+)\]\((\/(?:collections|blogs)\/[a-z0-9_\/-]+)\)/g, (_m, t: string, u: string) => `<a href="${u}">${t}</a>`)
     .replace(/\[([^\]]+)\]\(\{\{PRODUCT_URL(?::([a-z0-9_-]+))?\}\}\)/g, (_m, t: string, h?: string) => `<a href="${esc(h ? `/products/${h}` : productUrl)}">${t}</a>`);
 }
 

@@ -362,11 +362,11 @@ async function processPost(shop: string, admin: Admin, baseSettings: AppSettings
         for (const [q, a] of Object.entries(f.known)) merchant.known[`${p.facts.title}: ${q}`] = a;
         for (const q of f.unknown) merchant.unknown.push(`${p.facts.title}: ${q}`);
       }
-      articleId = await writeArticleNow(shop, post.productId, found[0].facts, angle, merchant, settings, found.map((p) => p.facts));
+      articleId = await writeArticleNow(shop, post.productId, found[0].facts, angle, merchant, settings, found.map((p) => p.facts), admin);
     } else {
       product = await getProduct(admin, `gid://shopify/Product/${post.productId}`);
       if (!product) throw new Error("We couldn't find the product for this topic any more.");
-      articleId = await writeArticleNow(shop, post.productId, product.facts, angle, await loadFacts(shop, post.productId), settings);
+      articleId = await writeArticleNow(shop, post.productId, product.facts, angle, await loadFacts(shop, post.productId), settings, undefined, admin);
     }
     if (!product) throw new Error("We couldn't find the product for this topic any more.");
     await db.scheduledPost.update({ where: { id }, data: { articleId } });

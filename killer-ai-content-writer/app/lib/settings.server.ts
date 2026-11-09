@@ -49,6 +49,7 @@ export function settingsFromForm(f: FormData): AppSettings {
     authorVoice: "",
     publishMode: f.get("publishMode") === "live" ? "live" : "draft",
     keywordsAsTags: flag(f, "keywordsAsTags"),
+    linkToCollections: flag(f, "linkToCollections"),
     linkToOtherArticles: flag(f, "linkToOtherArticles"),
     articleTemplate: text(f, "articleTemplate", 80),
     disclaimerEnabled: flag(f, "disclaimerEnabled"),

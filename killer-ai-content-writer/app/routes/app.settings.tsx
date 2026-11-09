@@ -368,9 +368,15 @@ export default function Settings() {
             <s-text-field name="disclaimerText" label="Disclaimer wording" value={s.disclaimerText} />
             <s-checkbox name="keywordsAsTags" label="Add the target keywords as article tags" checked={s.keywordsAsTags} />
             <s-checkbox
+              name="linkToCollections"
+              label="Link to your collections"
+              details="Where an article mentions a collection by name (for example, “reusable kitchen products”), that phrase links to the collection. Up to two links per article."
+              checked={s.linkToCollections}
+            />
+            <s-checkbox
               name="linkToOtherArticles"
-              label="Link to your other articles from new ones"
-              details="Good for SEO. Coming soon: this takes effect once the feature is released."
+              label="Link to one related article"
+              details="Only when the words are already in the article and match another published article on your blog. If nothing fits, no link is added."
               checked={s.linkToOtherArticles}
             />
           </s-stack>

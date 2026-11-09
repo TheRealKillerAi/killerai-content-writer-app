@@ -3,6 +3,14 @@ import type { Article, AuditReport } from "./types";
 
 const LEAKS =
   /product (data|information|details|description|listing)|as (described|listed|stated|specified|noted|shown) (in|on|by) (the|our) |according to the (data|information)|store currency|example\.com|\bUNVERIFIED\b|\[(INTERNAL|EXTERNAL)|not going to invent|deliberately not|dollar figure|reputable (health )?organi[sz]ation|for background only|merchant facts/i;
+// Text that only another app's editor or a template would leave behind: editor links, "Author" placeholders, image notes.
+const PLACEHOLDERS: [RegExp, string][] = [
+  [/tryautoseo|article-editor|\bapp\.[a-z0-9-]+\.(?:com|io|ai)\/[^\s)]*editor/i, "a link into another app's editor"],
+  [/^#{1,6}\s*(?:the\s+)?author\s*$/im, 'an "Author" heading'],
+  [/written by an author\b|\[(?:your|author|brand|store|company)(?: name)?\]|\binsert (?:image|photo|link)\b|lorem ipsum/i, "placeholder wording"],
+  [/^\s*[*_]{1,2}(?:icons?|image|photo|illustration|infographic|diagram|graphic|checklist|lifecycle|steps? on|board of)\b[^\n]*[*_]{1,2}\s*$/im, "an image note written as text"],
+  [/\{\{(?!PRODUCT_URL|ARTICLE_URL)[^}]*\}\}/, "an unfilled {{placeholder}}"],
+];
 const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
 function shingles(words: string[], n = 7) {
   const s = new Set<string>();
@@ -30,7 +38,8 @@ export function runChecks(a: Article) {
   const all = articleText(a);
   const words = [a.tldr, a.body_markdown.replace(/!\[[^\]]*\]\([^)]*\)/g, ""), ...a.faq.map((f) => f.q + " " + f.a)].join("\n").split(/\s+/).filter(Boolean).length;
   const productLinks = (a.body_markdown.match(/\{\{PRODUCT_URL(?::[a-z0-9_-]+)?\}\}/g) || []).length;
-  const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL)[^)]+\)/g) || []).length;
+  // Links to the store's own collections and articles are added by the app (see links.ts) and are allowed.
+  const otherLinks = (a.body_markdown.match(/\]\((?!\{\{PRODUCT_URL|\/(?:collections|blogs)\/[a-z0-9_\/-]+\))[^)]+\)/g) || []).length;
   const h2 = (a.body_markdown.match(/^## /gm) || []).length;
   const issues: string[] = [];
   if (a.title_tag.length > 60) issues.push(`Title tag is ${a.title_tag.length} characters (max 60)`);
@@ -50,6 +59,8 @@ export function runChecks(a: Article) {
   if (/^\s*[-*]\s*(\*\*\s*\*\*)?\s*$/m.test(a.body_markdown)) issues.push("An empty bullet");
   if (a.faq.length < 3) issues.push(`Only ${a.faq.length} FAQ items`);
   if (LEAKS.test(all)) issues.push(`Leaked wording: "${all.match(LEAKS)![0]}"`);
+  const stray = PLACEHOLDERS.find(([re]) => re.test(all));
+  if (stray) issues.push(`Contains ${stray[1]}`);
   if (/\$\s?\d/.test(all)) issues.push("Mentions a price");
   return { words, h2, productLinks, issues };
 }

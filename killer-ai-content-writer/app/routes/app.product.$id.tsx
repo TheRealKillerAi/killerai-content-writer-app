@@ -64,7 +64,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
     const facts = await loadFacts(session.shop, productId);
     if (intent === "write") {
       const angle = JSON.parse(String(form.get("angle"))) as Angle;
-      const id = await startArticle(session.shop, productId, product.facts, angle, facts, await loadEffectiveSettings(admin, session.shop));
+      const id = await startArticle(session.shop, productId, product.facts, angle, facts, await loadEffectiveSettings(admin, session.shop), undefined, admin);
       throw redirect(`/app/article/${id}`);
     }
     if (intent === "angles") {

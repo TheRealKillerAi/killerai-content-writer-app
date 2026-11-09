@@ -87,7 +87,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
         for (const [q, a] of Object.entries(f.known)) merchant.known[`${p.facts.title}: ${q}`] = a;
         for (const q of f.unknown) merchant.unknown.push(`${p.facts.title}: ${q}`);
       }
-      const id = await startArticle(shop, key, products[0].facts, angle, merchant, settings, products.map((p) => p.facts));
+      const id = await startArticle(shop, key, products[0].facts, angle, merchant, settings, products.map((p) => p.facts), admin);
       throw redirect(`/app/article/${id}`);
     }
     if (intent === "angles") {

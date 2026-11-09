@@ -24,7 +24,8 @@ export type AppSettings = TldrStyle & {
   authorVoice: string;
   publishMode: "draft" | "live";
   keywordsAsTags: boolean;
-  linkToOtherArticles: boolean;
+  linkToCollections: boolean; // link words in new articles to the store's own collections
+  linkToOtherArticles: boolean; // link one related article, only where the text really matches
   articleTemplate: string;
   disclaimerEnabled: boolean;
   disclaimerText: string;
@@ -74,6 +75,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   authorVoice: "",
   publishMode: "draft",
   keywordsAsTags: true,
+  linkToCollections: false,
   linkToOtherArticles: false,
   articleTemplate: "",
   disclaimerEnabled: false,
