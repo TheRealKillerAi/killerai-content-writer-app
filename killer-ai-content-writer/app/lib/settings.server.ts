@@ -40,6 +40,7 @@ export function settingsFromForm(f: FormData): AppSettings {
     breadcrumbSchema: flag(f, "breadcrumbSchema"),
     customIdeasPrompt: text(f, "customIdeasPrompt", 1500),
     customContentPrompt: text(f, "customContentPrompt", 1500),
+    customEmailPrompt: text(f, "customEmailPrompt", 1500),
     tldrEnabled: flag(f, "tldrEnabled"),
     tldrLabel: text(f, "tldrLabel", 30) || TLDR_DEFAULTS.tldrLabel,
     tldrBg: isHex(text(f, "tldrBg", 7)) ? text(f, "tldrBg", 7) : TLDR_DEFAULTS.tldrBg,

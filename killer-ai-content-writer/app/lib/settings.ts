@@ -28,6 +28,7 @@ export type AppSettings = TldrStyle & {
   breadcrumbSchema: boolean;
   customIdeasPrompt: string;
   customContentPrompt: string;
+  customEmailPrompt: string;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -52,6 +53,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   breadcrumbSchema: false,
   customIdeasPrompt: "",
   customContentPrompt: "",
+  customEmailPrompt: "",
   ...TLDR_DEFAULTS,
 };
 
@@ -91,6 +93,10 @@ export function settingsContext(s: AppSettings, kind: "ideas" | "content"): stri
     if (s.neverMention.trim()) lines.push(`NEVER MENTION (competitors, claims or topics to leave out)\n${s.neverMention.trim()}`);
     if (s.maxWords) lines.push(`LENGTH LIMIT\nDo not exceed ${s.maxWords} words in total. A shorter article is fine if the facts are thin.`);
   }
+  if (kind === "content" && s.customEmailPrompt.trim())
+    lines.push(
+      `EMAIL INSTRUCTIONS FROM THE STORE (apply to email_subject and email_body only: tone, length, layout and any characters or words to use or avoid. They take priority over the default email format, but the fact rules still apply and the email must keep its single link to the article)\n${s.customEmailPrompt.trim()}`,
+    );
   const custom = kind === "ideas" ? s.customIdeasPrompt : s.customContentPrompt;
   if (custom.trim())
     lines.push(

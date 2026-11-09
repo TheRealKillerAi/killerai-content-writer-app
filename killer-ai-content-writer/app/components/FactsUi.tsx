@@ -70,13 +70,45 @@ export function FactsList({
         ))}
         {facts.unknown.map((q) => (
           <s-box key={q} padding="base" borderWidth="base" borderRadius="base">
-            <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
-              <s-stack direction="inline" gap="small" alignItems="center">
-                <s-badge tone="warning">Don't know</s-badge>
-                <s-text>{q} — we won't cover this</s-text>
+            {editing === q ? (
+              <s-stack direction="block" gap="small">
+                <s-text><strong>{q}</strong></s-text>
+                <s-text-field
+                  label="Answer"
+                  labelAccessibilityVisibility="exclusive"
+                  value={draft}
+                  onInput={(e) => setDraft((e.currentTarget as unknown as { value: string }).value)}
+                />
+                <s-stack direction="inline" gap="small">
+                  <s-button
+                    variant="primary"
+                    {...(saving ? { loading: true } : {})}
+                    onClick={() => {
+                      if (draft.trim()) onEdit(q, draft);
+                      setEditing(null);
+                    }}
+                  >
+                    Save
+                  </s-button>
+                  <s-button onClick={() => setEditing(null)}>Cancel</s-button>
+                </s-stack>
               </s-stack>
-              <s-button onClick={() => onRemove(q)}>Ask again</s-button>
-            </s-grid>
+            ) : (
+              <s-grid gridTemplateColumns="1fr auto" gap="base" alignItems="center">
+                <s-stack direction="inline" gap="small" alignItems="center">
+                  <s-badge tone="warning">Don't know</s-badge>
+                  <s-text>{q} — we won't cover this</s-text>
+                </s-stack>
+                <s-button
+                  onClick={() => {
+                    setDraft("");
+                    setEditing(q);
+                  }}
+                >
+                  Answer this
+                </s-button>
+              </s-grid>
+            )}
           </s-box>
         ))}
       </s-stack>

@@ -343,6 +343,13 @@ export default function Settings() {
               rows={3}
               value={s.customContentPrompt}
             />
+            <s-text-area
+              name="customEmailPrompt"
+              label="Extra instructions for the email"
+              details="How the email should sound and look: tone, length, whether to open with a greeting, emoji or no emoji, and so on. Our fact-checking rules always apply."
+              rows={3}
+              value={s.customEmailPrompt}
+            />
           </s-stack>
         </s-section>
 
