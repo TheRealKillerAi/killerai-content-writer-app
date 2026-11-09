@@ -186,10 +186,12 @@ async function recipient(settings: AppSettings, admin: Admin) {
   return settings.notifyEmail || (await shopInfo(admin)).email;
 }
 
-async function sendDigest(shop: string, admin: Admin, settings: AppSettings, tz: string) {
-  if (settings.notifyUpcoming !== "weekly") return;
+export type DigestStatus = { status: "off" | "nothing-new" | "sent" | "failed"; count: number; to: string };
+
+async function sendDigest(shop: string, admin: Admin, settings: AppSettings, tz: string): Promise<DigestStatus> {
+  if (settings.notifyUpcoming !== "weekly") return { status: "off", count: 0, to: "" };
   const fresh = await db.scheduledPost.findMany({ where: { shop, notified: false, status: "scheduled", publishAt: { gte: new Date() } }, orderBy: { publishAt: "asc" } });
-  if (!fresh.length) return;
+  if (!fresh.length) return { status: "nothing-new", count: 0, to: "" };
   const items = fresh
     .map((p: { id: string; publishAt: Date; imageUrl: string; imageAlt: string; angle: string; productTitle: string }) => {
       const a = JSON.parse(p.angle) as Angle;
@@ -197,14 +199,16 @@ async function sendDigest(shop: string, admin: Admin, settings: AppSettings, tz:
       return `<tr><td style="padding:10px 12px 10px 0;vertical-align:top">${img}</td><td style="padding:10px 0;vertical-align:top;border-bottom:1px solid #e1e3e5"><strong>${esc(a.working_title)}</strong><br><span style="color:#6d7175">${esc(p.productTitle)} · ${esc(when(p.publishAt, tz))}</span></td></tr>`;
     })
     .join("");
+  const to = await recipient(settings, admin);
   const ok = await sendEmail({
-    to: await recipient(settings, admin),
+    to,
     subject: `Your upcoming articles: ${fresh.length} scheduled`,
     html: wrap(
       `<h2 style="margin:0 0 8px">Your upcoming articles</h2><p>These topics are scheduled. Each article is written about a day before it goes out, so there's time to change a topic or picture, or remove one you don't want.</p><table style="width:100%;border-collapse:collapse">${items}</table><p><a href="${scheduleLink(shop)}" style="display:inline-block;background:#303030;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Review your schedule</a></p><p style="color:#6d7175;font-size:13px">You can switch these emails off in Settings under Notifications.</p>`,
     ),
   });
   if (ok) await db.scheduledPost.updateMany({ where: { id: { in: fresh.map((f: { id: string }) => f.id) } }, data: { notified: true } });
+  return { status: ok ? "sent" : "failed", count: fresh.length, to };
 }
 
 async function sendProblem(shop: string, admin: Admin, settings: AppSettings, title: string, reason: string) {
@@ -285,7 +289,18 @@ export async function processDue(shop: string, admin: Admin, settings: AppSettin
 /** Lines up topics and emails them (what "Find topics now" does). Writing happens later, about a day before each is due. */
 export async function fillAndNotify(shop: string, admin: Admin, settings: AppSettings, tz: string) {
   await topUpSchedule(shop, admin, settings, tz);
-  await sendDigest(shop, admin, settings, tz);
+  return sendDigest(shop, admin, settings, tz);
+}
+
+/** How many publish slots in the next week don't have a topic yet. */
+export async function openSlotCount(shop: string, settings: AppSettings, tz: string): Promise<number> {
+  const existing = await db.scheduledPost.findMany({ where: { shop, publishAt: { gte: new Date() } }, select: { publishAt: true } });
+  const have = new Set(existing.map((e: { publishAt: Date }) => e.publishAt.getTime()));
+  return upcomingSlots(settings, tz).filter((s) => !have.has(s.getTime())).length;
+}
+
+export async function sendTopicsEmail(shop: string, admin: Admin, settings: AppSettings, tz: string) {
+  return sendDigest(shop, admin, settings, tz);
 }
 
 /** One full pass for a shop: fill the schedule, email the new topics, write what's due. */

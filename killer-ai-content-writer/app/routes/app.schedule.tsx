@@ -7,7 +7,7 @@ import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { effectiveZone, fillAndNotify, processDue, runInBackground, shopInfo } from "../lib/schedule.server";
+import { effectiveZone, fillAndNotify, openSlotCount, processDue, runInBackground, sendTopicsEmail, shopInfo } from "../lib/schedule.server";
 import { listAuthors } from "../lib/authors.server";
 import { pickedImage } from "../lib/files.server";
 import { productImages } from "../lib/products.server";
@@ -78,8 +78,17 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
     const settings = await loadEffectiveSettings(admin, shop);
     if (!settings.scheduleEnabled) return { error: "Switch on automatic articles in Settings first." };
     const tz = effectiveZone(settings, (await shopInfo(admin)).tz);
-    runInBackground(fillAndNotify(shop, admin, settings, tz));
-    return { message: "Finding topics. This takes a minute or so." };
+    const open = await openSlotCount(shop, settings, tz);
+    if (open > 0) {
+      runInBackground(fillAndNotify(shop, admin, settings, tz));
+      return { message: `Finding topics for ${open} open day${open === 1 ? "" : "s"}. This takes a minute or so. We'll email them to you when they're ready.` };
+    }
+    const d = await sendTopicsEmail(shop, admin, settings, tz);
+    const upcoming = "The next 7 days are already lined up, so there's nothing new to find. More days are added each night as the week moves on.";
+    if (d.status === "sent") return { message: `${upcoming} We've emailed ${d.count} topic${d.count === 1 ? "" : "s"} to ${d.to}.` };
+    if (d.status === "failed") return { error: `${upcoming} We couldn't send the email to ${d.to || "your store address"}. Please try again in a minute.` };
+    if (d.status === "off") return { message: `${upcoming} Topic emails are switched off in Settings.` };
+    return { message: `${upcoming} The topics have already been emailed.` };
   }
   if (intent === "write-now" && own && own.status === "scheduled") {
     const settings = await loadEffectiveSettings(admin, shop);
