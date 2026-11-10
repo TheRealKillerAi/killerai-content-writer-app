@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -9,6 +9,7 @@ import { monthlyUsage } from "../lib/usage.server";
 import { UsageMeter } from "../components/UsageMeter";
 import { shopInfo } from "../lib/schedule.server";
 import { listBlogs, recentArticleTexts } from "../lib/products.server";
+import { MODE_LABEL, RULES, cleanRules } from "../lib/refreshRules";
 import { chatJson, LlmError } from "../lib/pipeline/llm.server";
 import { contrastRatio, tldrBoxStyle, type TldrStyle } from "../lib/tldr";
 import learnVoicePrompt from "../lib/pipeline/prompts/learn-voice.md?raw";
@@ -20,6 +21,7 @@ const TABS = [
   { id: "authors", label: "Authors", blurb: "Who your articles are written by." },
   { id: "schedule", label: "Schedule", blurb: "Automatic articles on the days and time you choose." },
   { id: "notifications", label: "Notifications", blurb: "Emails about problems and upcoming topics." },
+  { id: "refresh", label: "AI Refresh", blurb: "How old blog posts are checked and updated." },
   { id: "advanced", label: "Advanced", blurb: "Schema, templates and custom instructions." },
   { id: "plan", label: "Your plan", blurb: "Plan limits and usage." },
 ] as const;
@@ -82,6 +84,10 @@ export default function Settings() {
   const learnF = useFetcher<ActionResult>();
   const [resetKey, setResetKey] = useState(0);
   const [tab, setTab] = useState<TabId>("brand");
+  useEffect(() => {
+    if (window.location.hash === "#refresh") setTab("refresh");
+  }, []);
+  const rules = cleanRules(s.refreshRules);
   const [plan, setPlan] = useState<number>(s.planDays);
   const voiceRef = useRef<HTMLElement & { value: string }>(null);
   const [pv, setPv] = useState<TldrStyle>({
@@ -523,6 +529,26 @@ export default function Settings() {
               <s-option value="weekly">Email me the topics coming up so I can review them</s-option>
               <s-option value="off">Just let it run on its own</s-option>
             </s-select>
+          </s-stack>
+        </s-section>
+        </div>
+        <div hidden={tab !== "refresh"}>
+        <s-section heading="AI Refresh">
+          <s-stack direction="block" gap="base">
+            <s-paragraph>
+              AI Refresh checks your older blog posts and suggests changes you can accept or ignore. These switches control which checks it makes. Nothing is ever changed without
+              your say-so, and a post's web address and published date never change.
+            </s-paragraph>
+            {RULES.map((r) => (
+              <s-select key={r.id} name={`rule_${r.id}`} label={r.name} value={rules[r.id]} details={`${r.looksFor} ${r.action}`}>
+                {r.modes.map((m) => (
+                  <s-option key={m} value={m}>
+                    {MODE_LABEL[m]}
+                  </s-option>
+                ))}
+              </s-select>
+            ))}
+            <s-text color="subdued">You can also stop a single post, or a whole blog, being refreshed from that post's review page.</s-text>
           </s-stack>
         </s-section>
         </div>

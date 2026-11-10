@@ -1,6 +1,7 @@
 // Refresh mode, stage 1: spotting posts that look out of date. Pure code, no AI, nothing is changed in Shopify.
 import { scoreArticle } from "./score";
 import type { Article } from "./pipeline/types";
+import { DEFAULT_RULES, type RuleId, type RuleMode } from "./refreshRules";
 
 export type BlogPost = {
   id: string;
@@ -30,6 +31,11 @@ export type RefreshContext = {
   /** Hosts that count as this store (primary domain, myshopify domain). */
   hosts: Set<string>;
   now: Date;
+  /** The merchant's rule settings; defaults when missing. */
+  rules?: Record<RuleId, RuleMode>;
+  /** True when we could not read every collection or post, so a missing one must not be called dead. */
+  skipCollections?: boolean;
+  skipPosts?: boolean;
 };
 
 export type PostReview = {
@@ -91,6 +97,8 @@ function toArticle(p: BlogPost): Article {
   } as unknown as Article;
 }
 
+const PRICE = /(?:\$|A\$|AU\$)\s?\d|\b\d+(?:\.\d{2})?\s?(?:AUD|USD|dollars)\b/i;
+
 const KEYWORD_CHECKS = new Set(["kwTitle", "kwH1", "kwIntro", "handle"]);
 
 export function scoreExisting(p: BlogPost, hosts: Set<string>) {
@@ -108,6 +116,7 @@ export function analysePost(p: BlogPost, ctx: RefreshContext): PostReview {
   const signals: Signal[] = [];
   const add = (id: string, label: string, weight: number) => signals.push({ id, label, weight });
   const year = ctx.now.getFullYear();
+  const rules = ctx.rules ?? DEFAULT_RULES;
 
   // Products and collections the post links to
   const hrefs = hrefsOf(p.body);
@@ -121,6 +130,11 @@ export function analysePost(p: BlogPost, ctx: RefreshContext): PostReview {
     else if (info.status !== "ACTIVE") unavailable.push(h);
     else if (info.outOfStock) outOfStock.push(h);
   }
+  if (rules.dead_product === "off") {
+    gone.length = 0;
+    unavailable.length = 0;
+  }
+  if (rules.product_stock === "off") outOfStock.length = 0;
   if (gone.length) add("product_gone", `Links to ${gone.length === 1 ? "a product that no longer exists" : `${gone.length} products that no longer exist`}`, 5);
   if (unavailable.length) add("product_unavailable", `Links to ${unavailable.length === 1 ? "a product that isn't for sale" : `${unavailable.length} products that aren't for sale`} (draft or archived)`, 4);
   if (outOfStock.length) add("product_stock", `Links to ${outOfStock.length === 1 ? "a product that is out of stock" : `${outOfStock.length} products that are out of stock`}`, 2);
@@ -132,13 +146,16 @@ export function analysePost(p: BlogPost, ctx: RefreshContext): PostReview {
     const b = /^\/blogs\/([^/]+)\/([^/]+)/.exec(path);
     if (b && !ctx.postPaths.has(`${decodeURIComponent(b[1])}/${decodeURIComponent(b[2])}`)) deadPosts.add(path);
   }
+  if (rules.dead_collection === "off") deadCollections.clear();
+  if (rules.dead_post === "off") deadPosts.clear();
   if (deadCollections.size) add("collection_gone", `Links to ${deadCollections.size === 1 ? "a collection that no longer exists" : `${deadCollections.size} collections that no longer exist`}`, 4);
   if (deadPosts.size) add("post_gone", `Links to ${deadPosts.size === 1 ? "a post that is missing or unpublished" : `${deadPosts.size} posts that are missing or unpublished`}`, 4);
 
   // Years and prices
   const oldYears = [...new Set([...`${p.title} ${p.titleTag} ${p.metaDescription} ${text}`.matchAll(/\b(20[0-2]\d)\b/g)].map((m) => Number(m[1])).filter((y) => y >= 2015 && y < year))].sort();
-  if (oldYears.length) add("old_year", `Mentions ${oldYears.length === 1 ? "a past year" : "past years"}: ${oldYears.join(", ")}`, 3);
-  if (/(?:\$|A\$|AU\$)\s?\d|\b\d+(?:\.\d{2})?\s?(?:AUD|USD|dollars)\b/i.test(text)) add("price", "Mentions a price, which may have changed", 3);
+  // A year or a price is a judgement call, so on its own it hardly moves a post up the list.
+  if (oldYears.length && rules.old_year !== "off") add("old_year", `Mentions ${oldYears.length === 1 ? "a past year" : "past years"}: ${oldYears.join(", ")}`, 1);
+  if (PRICE.test(text) && rules.price !== "off") add("price", "Mentions a price, which may have changed", 1);
 
   // What's missing
   const sc = scoreExisting(p, ctx.hosts);

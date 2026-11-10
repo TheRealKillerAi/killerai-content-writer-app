@@ -154,3 +154,58 @@ model SentenceReview {
   @@index([shop, articleId])
   @@index([shop, decision, key])
 }
+
+/// One update of a blog post made by AI Refresh. The old and new text are kept for 30 days so the update can be undone.
+model RefreshRun {
+  id           String          @id @default(cuid())
+  shop         String
+  articleId    String // Shopify article id (gid)
+  articleTitle String
+  handle       String          @default("")
+  bodyBefore   String? // cleared after 30 days
+  bodyAfter    String? // as Shopify saved it; cleared after 30 days
+  wordsBefore  Int
+  wordsAfter   Int
+  seoBefore    Int
+  seoAfter     Int
+  aiBefore     Int
+  aiAfter      Int
+  appliedBy    String          @default("")
+  appliedAt    DateTime        @default(now())
+  undoneAt     DateTime?
+  changes      RefreshChange[]
+
+  @@index([shop, articleId])
+  @@index([appliedAt])
+}
+
+/// Every change AI Refresh proposed in a run and what the merchant decided: the audit trail.
+model RefreshChange {
+  id        String     @id @default(cuid())
+  runId     String
+  run       RefreshRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  shop      String
+  articleId String
+  rule      String
+  kind      String // "remove_link"
+  before    String
+  after     String
+  detail    String     @default("")
+  decision  String // "accepted" or "ignored"
+  createdAt DateTime   @default(now())
+
+  @@index([shop, articleId])
+  @@index([runId])
+}
+
+/// Posts (or whole blogs) the merchant never wants AI Refresh to touch.
+model RefreshProtected {
+  id        String   @id @default(cuid())
+  shop      String
+  kind      String // "post" or "blog"
+  ref       String // numeric article id, or blog handle
+  label     String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([shop, kind, ref])
+}

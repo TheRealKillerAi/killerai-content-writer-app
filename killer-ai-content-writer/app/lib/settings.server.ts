@@ -2,6 +2,7 @@ import db from "../db.server";
 import { getAuthor } from "./authors.server";
 import { getShopName } from "./products.server";
 import { DEFAULT_SETTINGS, type AppSettings } from "./settings";
+import { RULES, cleanRules } from "./refreshRules";
 import { clampPx, isHex, TLDR_DEFAULTS } from "./tldr";
 
 export async function loadSettings(shop: string): Promise<AppSettings> {
@@ -76,6 +77,7 @@ export function settingsFromForm(f: FormData): AppSettings {
     customIdeasPrompt: text(f, "customIdeasPrompt", 1500),
     customContentPrompt: text(f, "customContentPrompt", 1500),
     customEmailPrompt: text(f, "customEmailPrompt", 1500),
+    refreshRules: cleanRules(Object.fromEntries(RULES.map((r) => [r.id, String(f.get(`rule_${r.id}`) ?? "")]))),
     tldrEnabled: flag(f, "tldrEnabled"),
     tldrLabel: text(f, "tldrLabel", 30) || TLDR_DEFAULTS.tldrLabel,
     tldrBg: isHex(text(f, "tldrBg", 7)) ? text(f, "tldrBg", 7) : TLDR_DEFAULTS.tldrBg,

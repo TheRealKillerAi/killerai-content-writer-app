@@ -1,5 +1,6 @@
 // Settings shared by server and client. No server-only imports here.
 import { TLDR_DEFAULTS, type TldrStyle } from "./tldr";
+import { DEFAULT_RULES, type RuleId, type RuleMode } from "./refreshRules";
 
 export type AppSettings = TldrStyle & {
   // Brand voice
@@ -54,6 +55,8 @@ export type AppSettings = TldrStyle & {
   customIdeasPrompt: string;
   customContentPrompt: string;
   customEmailPrompt: string;
+  // AI Refresh
+  refreshRules: Record<RuleId, RuleMode>;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -101,6 +104,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   customIdeasPrompt: "",
   customContentPrompt: "",
   customEmailPrompt: "",
+  refreshRules: DEFAULT_RULES,
   ...TLDR_DEFAULTS,
 };
 
