@@ -20,16 +20,18 @@ export default function Refresh() {
   const flagged = list.reviews.filter((r) => r.signals.length).length;
 
   return (
-    <s-page heading="Refresh your old posts">
+    <s-page heading="AI Refresh">
       <s-link slot="breadcrumb-actions" href="/app">Home</s-link>
       <s-section>
         <s-stack direction="block" gap="small">
           <s-paragraph>
             We read your blog and look for posts that have drifted out of date: links to products or collections that are gone, years and prices that
-            have changed, and basics a newer post would have. Nothing is changed in your store.
+            have changed, and the features and updates a newer post would have, like a short summary, an FAQ and links to your products. Nothing is
+            changed in your store.
           </s-paragraph>
           <s-paragraph color="subdued">
-            Showing the {list.shown} posts that were updated longest ago{list.totalPosts ? ` (of ${list.totalPosts})` : ""}; {flagged} {flagged === 1 ? "has" : "have"} something to look at.
+            We checked the {list.shown} posts that haven't been updated for the longest time{list.totalPosts ? `, out of ${list.totalPosts} on your blog` : ""}.{" "}
+            {flagged === 0 ? "None of them need attention right now." : flagged === list.shown ? "All of them could use a refresh." : `${flagged} of them could use a refresh.`}{" "}
             Reviewing each change and updating a post from here is coming next. For now, open a post in Shopify to edit it.
           </s-paragraph>
           {list.skippedChecks.length ? (
