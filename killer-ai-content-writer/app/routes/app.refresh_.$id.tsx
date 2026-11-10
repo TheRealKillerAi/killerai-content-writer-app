@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { buildContext, isProtected, loadPost } from "../lib/refresh.server";
+import { buildContext, isProtected, loadPostChoices, loadPost } from "../lib/refresh.server";
 import { applyRefresh, refreshHistory, setProtected, undoRefresh } from "../lib/refreshStore.server";
 import { UNDO_DAYS } from "../lib/refreshRules";
 import { proposeChanges, applyChanges } from "../lib/refreshChanges";
@@ -30,7 +30,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     skippedChecks,
     age: ageLabel(months),
     protectedPost: await isProtected(session.shop, post),
-    history: await refreshHistory(session.shop, post.id),
+    history: await refreshHistory(session.shop, post.id, post.body),
+    postChoices: await loadPostChoices(admin, post.id).catch(() => []),
     store: session.shop.replace(".myshopify.com", ""),
   };
 };
@@ -46,13 +47,19 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
   try {
     if (intent === "apply") {
       const list = (k: string) => String(form.get(k) ?? "").split(",").filter(Boolean);
-      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), by);
+      let replace: Record<string, string> = {};
+      try {
+        replace = JSON.parse(String(form.get("replace") ?? "{}"));
+      } catch {
+        /* no replacements */
+      }
+      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), replace, by);
       if (!r.ok) return { intent, ok: false, message: r.error };
-      return { intent, ok: true, message: `Updated the post with ${r.applied} change${r.applied === 1 ? "" : "s"}.${r.skipped ? ` ${r.skipped} could not be applied because the post had changed.` : ""}` };
+      return { intent, ok: true, message: `Updated the post with ${r.applied} change${r.applied === 1 ? "" : "s"}.${r.skipped ? ` ${r.skipped} could not be applied because the post had changed.` : ""} Shopify can take a few minutes to show the change on your store.` };
     }
     if (intent === "undo") {
-      const r = await undoRefresh(admin, session.shop, String(form.get("runId")));
-      return r.ok ? { intent, ok: true, message: "Undone. The post is back as it was." } : { intent, ok: false, message: r.error };
+      const r = await undoRefresh(admin, session.shop, String(form.get("runId")), form.get("force") === "1");
+      return r.ok ? { intent, ok: true, message: "Undone. The post is back as it was. Shopify can take a few minutes to show the change on your store." } : { intent, ok: false, message: r.error };
     }
     if (intent === "protect") {
       const post = await loadPost(admin, gid);
@@ -108,6 +115,9 @@ export default function RefreshPost() {
   const applyF = useFetcher<ActionResult>();
   const otherF = useFetcher<ActionResult>();
   const [decision, setDecision] = useState<Record<string, "accepted" | "ignored">>({});
+  const [replacement, setReplacement] = useState<Record<string, { path: string; label: string }>>({});
+  const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
+  const [postPick, setPostPick] = useState<string | null>(null);
 
   // Everything below needs the post; the hooks above must run first.
   const post = data.missing ? null : data.post;
@@ -117,13 +127,17 @@ export default function RefreshPost() {
   const view = useMemo(() => {
     if (!post || data.missing) return null;
     const hosts = new Set(data.hosts);
-    const next = applyChanges(post.body, acceptedList);
+    const next = applyChanges(post.body, acceptedList.map((c) => ({ index: c.index, href: c.href, newHref: replacement[c.id]?.path })));
     return { before: scoreExisting(post, hosts), after: scoreExisting({ ...post, body: next.html }, hosts) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post, decision]);
+  }, [post, decision, replacement]);
 
   useEffect(() => {
-    if (applyF.data?.intent === "apply" && applyF.data.ok) setDecision({});
+    if (applyF.data?.intent === "apply" && applyF.data.ok) {
+      setDecision({});
+      setReplacement({});
+    }
+    if (otherF.data?.intent === "undo") setConfirmRestore(null);
     const d = applyF.data ?? otherF.data;
     if (d) (window as unknown as { shopify?: { toast?: { show: (m: string, o?: { isError?: boolean }) => void } } }).shopify?.toast?.show(d.message, { isError: !d.ok });
   }, [applyF.data, otherF.data]);
@@ -144,12 +158,25 @@ export default function RefreshPost() {
   const adminUrl = `https://admin.shopify.com/store/${data.store}/content/articles/${post.id.split("/").pop()}`;
   const ignoredIds = changes.filter((c) => decision[c.id] === "ignored").map((c) => c.id);
   const undecided = changes.filter((c) => !decision[c.id]).length;
+  const pick = async (id: string, type: "product" | "collection") => {
+    const api = (window as unknown as { shopify?: { resourcePicker?: (o: { type: string; multiple: boolean; action: string }) => Promise<{ selection: { handle?: string; title?: string }[] } | undefined> } }).shopify;
+    const res = await api?.resourcePicker?.({ type, multiple: false, action: "select" });
+    const item = res?.selection?.[0];
+    if (!item?.handle) return;
+    setReplacement((p) => ({ ...p, [id]: { path: `/${type === "product" ? "products" : "collections"}/${item.handle}`, label: item.title ?? item.handle! } }));
+    set([id], "accepted");
+  };
+  const chooseReplacement = (id: string, path: string, label: string) => {
+    setReplacement((p) => ({ ...p, [id]: { path, label } }));
+    setPostPick(null);
+    set([id], "accepted");
+  };
 
   return (
     <s-page heading={post.title}>
       <s-link slot="breadcrumb-actions" href="/app/refresh">AI Refresh</s-link>
       <s-button slot="primary-action" variant="primary" {...(acceptedList.length === 0 ? { disabled: true } : {})} {...(applyF.state !== "idle" ? { loading: true } : {})}
-        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(",") }, { method: "POST" })}>
+        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(","), replace: JSON.stringify(Object.fromEntries(acceptedList.filter((c) => replacement[c.id]).map((c) => [c.id, replacement[c.id].path]))) }, { method: "POST" })}>
         {acceptedList.length ? `Update this post in Shopify (${acceptedList.length} change${acceptedList.length === 1 ? "" : "s"})` : "Update this post in Shopify"}
       </s-button>
 
@@ -169,7 +196,7 @@ export default function RefreshPost() {
             <s-link href={adminUrl} target="_blank">Open in Shopify</s-link>
           </s-text>
           <s-paragraph>
-            Review each change below and accept or ignore it. The post is only updated in Shopify with the changes you accept. Its web address and published date stay exactly as they are.
+            Review each change below and accept or ignore it. The post is only updated in Shopify with the changes you accept. Its web address and published date stay exactly as they are. After you update, Shopify can take a few minutes to show the change on your store.
             {data.skippedChecks.length ? ` We skipped the check on ${data.skippedChecks.join(" and ")} because your store has too many to read at once.` : ""}
           </s-paragraph>
           <RulesPanel rules={data.rules} />
@@ -249,9 +276,10 @@ export default function RefreshPost() {
                       <s-text color="subdued">After</s-text>
                       <div>
                         {c.pre}
-                        {c.link}
+                        {replacement[c.id] ? <u style={{ color: "#2a62d6" }}>{c.link}</u> : c.link}
                         {c.post}
                       </div>
+                      {replacement[c.id] ? <s-text color="subdued">Now links to {replacement[c.id].label}</s-text> : null}
                     </div>
                     <s-stack direction="inline" gap="small">
                       <s-button {...(d === "accepted" ? { variant: "primary" } : {})} onClick={() => set([c.id], "accepted")}>
@@ -260,7 +288,25 @@ export default function RefreshPost() {
                       <s-button variant="tertiary" onClick={() => set([c.id], "ignored")}>
                         {d === "ignored" ? "Ignored" : "Ignore"}
                       </s-button>
+                      <s-button variant="tertiary" onClick={() => pick(c.id, "product")}>Replace with a product…</s-button>
+                      <s-button variant="tertiary" onClick={() => pick(c.id, "collection")}>…a collection</s-button>
+                      <s-button variant="tertiary" onClick={() => setPostPick(postPick === c.id ? null : c.id)}>…a blog post</s-button>
+                      {replacement[c.id] ? (
+                        <s-button variant="tertiary" onClick={() => setReplacement((p) => Object.fromEntries(Object.entries(p).filter(([k]) => k !== c.id)))}>Just remove the link</s-button>
+                      ) : null}
                     </s-stack>
+                    {postPick === c.id ? (
+                      <s-select label="Choose a blog post" value="" onChange={(e: Event) => {
+                        const path = (e.currentTarget as unknown as { value: string }).value;
+                        const choice = data.postChoices.find((x) => x.path === path);
+                        if (choice) chooseReplacement(c.id, choice.path, choice.title);
+                      }}>
+                        <s-option value="">Choose…</s-option>
+                        {data.postChoices.map((x) => (
+                          <s-option key={x.path} value={x.path}>{x.title}</s-option>
+                        ))}
+                      </s-select>
+                    ) : null}
                   </s-stack>
                 </div>
               );
@@ -296,14 +342,30 @@ export default function RefreshPost() {
                 </s-text>
                 {h.undone ? (
                   <s-badge>Undone</s-badge>
-                ) : h.canUndo ? (
+                ) : h.canUndo && !h.editedSince ? (
                   <s-button {...(busy ? { disabled: true } : {})} onClick={() => otherF.submit({ intent: "undo", runId: h.id }, { method: "POST" })}>
                     Undo
                   </s-button>
+                ) : h.canUndo ? (
+                  confirmRestore === h.id ? (
+                    <s-stack direction="block" gap="small">
+                      <s-text>
+                        This post has been edited since this update. Restoring the backup puts the post back exactly as it was before the update and <strong>overwrites the edits made since</strong>.
+                      </s-text>
+                      <s-stack direction="inline" gap="small">
+                        <s-button variant="primary" {...(busy ? { disabled: true } : {})} onClick={() => otherF.submit({ intent: "undo", runId: h.id, force: "1" }, { method: "POST" })}>
+                          Yes, restore and overwrite later edits
+                        </s-button>
+                        <s-button variant="tertiary" onClick={() => setConfirmRestore(null)}>Cancel</s-button>
+                      </s-stack>
+                    </s-stack>
+                  ) : (
+                    <s-button onClick={() => setConfirmRestore(h.id)}>Restore backup…</s-button>
+                  )
                 ) : null}
               </s-stack>
             ))}
-            <s-text color="subdued">An update can be undone for {UNDO_DAYS} days, as long as the post hasn't been edited since.</s-text>
+            <s-text color="subdued">The old version is kept for {UNDO_DAYS} days. If the post has been edited since, you can still restore the backup, but it will overwrite those edits and we'll ask you to confirm first.</s-text>
           </s-stack>
         </s-section>
       ) : null}

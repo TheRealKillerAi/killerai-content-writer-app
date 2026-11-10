@@ -127,16 +127,23 @@ export function proposeChanges(p: BlogPost, ctx: RefreshContext): { changes: Cha
   return { changes, notes };
 }
 
-/** Takes the link off the chosen links (by position), keeping their words. A link is only touched if it still points where it did when the change was proposed. */
-export function applyChanges(html: string, accepted: { index: number; href: string }[]): { html: string; applied: number[] } {
-  const want = new Map(accepted.map((a) => [a.index, a.href]));
+/** A link target we are willing to write: a path on this store to a product, collection, blog post or page. */
+export function safeStorePath(path: string): string | null {
+  return /^\/(products|collections|blogs|pages)\/[A-Za-z0-9._~%-]+(\/[A-Za-z0-9._~%-]+)?$/.test(path) ? path : null;
+}
+
+/** Takes the link off the chosen links (by position), keeping their words, or points them somewhere else when a new address is given. A link is only touched if it still points where it did when the change was proposed. */
+export function applyChanges(html: string, accepted: { index: number; href: string; newHref?: string }[]): { html: string; applied: number[] } {
+  const want = new Map(accepted.map((a) => [a.index, a]));
   const applied: number[] = [];
   let i = 0;
   const out = html.replace(ANCHOR, (whole, inner: string) => {
     const idx = i++;
-    if (want.has(idx) && hrefOf(whole) === want.get(idx)) {
+    const w = want.get(idx);
+    if (w && hrefOf(whole) === w.href) {
       applied.push(idx);
-      return inner;
+      const to = w.newHref && safeStorePath(w.newHref);
+      return to ? whole.replace(/(\bhref\s*=\s*)(["'])[^"']*\2/i, `$1"${to}"`) : inner;
     }
     return whole;
   });

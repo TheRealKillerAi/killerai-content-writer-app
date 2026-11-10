@@ -184,3 +184,13 @@ export async function loadRefreshList(admin: Admin, shop: string, limit = 100): 
   reviews.sort((a, b) => b.priority - a.priority || a.post.updatedAt.localeCompare(b.post.updatedAt));
   return { reviews, shown: reviews.length, totalPosts, skippedChecks, protectedCount: all.length - posts.length };
 }
+
+/** Published blog posts a link can be pointed at (newest first), for the "replace with a blog post" choice. */
+export async function loadPostChoices(admin: Admin, excludeId: string): Promise<{ title: string; path: string }[]> {
+  const d = await gql<{ articles: { nodes: { id: string; title: string; handle: string; isPublished: boolean; blog: { handle: string } }[] } }>(
+    admin,
+    `#graphql
+    query PostChoices { articles(first: 100, sortKey: PUBLISHED_AT, reverse: true) { nodes { id title handle isPublished blog { handle } } } }`,
+  );
+  return d.articles.nodes.filter((a) => a.isPublished && a.id !== excludeId).map((a) => ({ title: a.title, path: `/blogs/${a.blog.handle}/${a.handle}` }));
+}
