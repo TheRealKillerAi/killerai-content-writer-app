@@ -264,7 +264,7 @@ function SentenceCheck({
           ) : null}
         </>
       ) : (
-        <s-text color="subdued">This sentence has a link or formatting inside it, so edit it in Shopify. The fact check above can still help you decide what to change.</s-text>
+        <s-text color="subdued">This sentence has a link or formatting inside it, so edit it in Shopify.</s-text>
       )}
     </s-stack>
   );
