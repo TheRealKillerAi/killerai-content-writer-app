@@ -58,6 +58,7 @@ export type AppSettings = TldrStyle & {
   // AI Refresh
   refreshRules: Record<RuleId, RuleMode>;
   refreshInstructions: string;
+  refreshLastUpdated: boolean;
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -107,6 +108,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   customEmailPrompt: "",
   refreshRules: DEFAULT_RULES,
   refreshInstructions: "",
+  refreshLastUpdated: false,
   ...TLDR_DEFAULTS,
 };
 

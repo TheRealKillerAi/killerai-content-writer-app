@@ -77,6 +77,7 @@ export function settingsFromForm(f: FormData): AppSettings {
     customIdeasPrompt: text(f, "customIdeasPrompt", 1500),
     customContentPrompt: text(f, "customContentPrompt", 1500),
     customEmailPrompt: text(f, "customEmailPrompt", 1500),
+    refreshLastUpdated: flag(f, "refreshLastUpdated"),
     refreshInstructions: text(f, "refreshInstructions", 1500),
     refreshRules: cleanRules(Object.fromEntries(RULES.map((r) => [r.id, String(f.get(`rule_${r.id}`) ?? "")]))),
     tldrEnabled: flag(f, "tldrEnabled"),

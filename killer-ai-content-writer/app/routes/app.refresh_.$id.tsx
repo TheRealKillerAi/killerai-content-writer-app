@@ -3,14 +3,16 @@ import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "re
 import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { buildContext, isProtected, loadPostChoices, loadPost } from "../lib/refresh.server";
-import { applyRefresh, refreshHistory, setProtected, undoRefresh, type RewriteIn } from "../lib/refreshStore.server";
+import { buildContext, isProtected, loadPostChoices, loadPost, proposeAdds } from "../lib/refresh.server";
+import { applyRefresh, refreshHistory, setProtected, undoRefresh, type AdditionIn, type RewriteIn } from "../lib/refreshStore.server";
 import { factCheck, searchConfigured, suggestRewrite, type FactCheck } from "../lib/factcheck.server";
 import { loadSettings } from "../lib/settings.server";
 import { classifySource, SOURCE_LABEL } from "../lib/sources";
 import { UNDO_DAYS } from "../lib/refreshRules";
 import { proposeChanges, applyChanges, applyRewrites, type Note } from "../lib/refreshChanges";
-import { ageLabel, scoreExisting } from "../lib/refresh";
+import { ageLabel, hasFaq, hasTldr, scoreExisting } from "../lib/refresh";
+import { applyLinkAdds, applyAdditions, ADD_FAQ_ID, ADD_TLDR_ID, type Addition } from "../lib/refreshAdd";
+import { writeFaq, writeTldr } from "../lib/refreshAdd.server";
 import { RulesPanel } from "../components/RulesPanel";
 import { SeoBadge } from "../components/ArticleBadges";
 
@@ -20,8 +22,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { admin, session } = await authenticate.admin(request);
   const post = await loadPost(admin, gidOf(params.id!));
   if (!post) return { missing: true as const };
-  const { ctx, skippedChecks } = await buildContext(admin, session.shop, [post]);
-  const { changes, notes } = proposeChanges(post, ctx);
+  const { ctx, skippedChecks, settings } = await buildContext(admin, session.shop, [post]);
+  const found = proposeChanges(post, ctx);
+  const notes = found.notes;
+  const changes = [...found.changes, ...(await proposeAdds(admin, session.shop, post, ctx, settings))];
   const months = Math.max(0, Math.round((Date.now() - new Date(post.updatedAt).getTime()) / (30.44 * 86400000)));
   return {
     missing: false as const,
@@ -32,6 +36,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     notes,
     skippedChecks,
     searchOn: searchConfigured(),
+    needs: { tldr: !hasTldr(post.body) && ctx.rules!.add_tldr !== "off", faq: !hasFaq(post.body) && ctx.rules!.add_faq !== "off" },
+    tldrStyle: {
+      tldrEnabled: true, tldrLabel: settings.tldrLabel, tldrBg: settings.tldrBg, tldrText: settings.tldrText,
+      tldrCorners: settings.tldrCorners, tldrFontSize: settings.tldrFontSize, tldrFont: settings.tldrFont,
+    },
     age: ageLabel(months),
     protectedPost: await isProtected(session.shop, post),
     history: await refreshHistory(session.shop, post.id, post.body),
@@ -40,7 +49,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 };
 
-type ActionResult = { intent: string; ok: boolean; message: string; check?: FactCheck; sentence?: string };
+type ActionResult = { intent: string; ok: boolean; message: string; check?: FactCheck; sentence?: string; tldr?: string; faq?: { q: string; a: string }[] };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
   const { admin, session } = await authenticate.admin(request);
@@ -57,6 +66,17 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       } catch {
         /* no replacements */
       }
+      let additions: AdditionIn[] = [];
+      try {
+        const raw = JSON.parse(String(form.get("additions") ?? "[]"));
+        if (Array.isArray(raw))
+          additions = raw
+            .filter((x) => x && (x.decision === "accepted" || x.decision === "ignored") && ((x.kind === "tldr" && typeof x.text === "string") || (x.kind === "faq" && Array.isArray(x.items))))
+            .slice(0, 2)
+            .map((x) => (x.kind === "tldr" ? { id: ADD_TLDR_ID, kind: "tldr", text: x.text, decision: x.decision, detail: String(x.detail ?? "") } : { id: ADD_FAQ_ID, kind: "faq", items: x.items.map((f: { q: unknown; a: unknown }) => ({ q: String(f.q), a: String(f.a) })), decision: x.decision, detail: String(x.detail ?? "") }));
+      } catch {
+        /* no additions */
+      }
       let rewrites: RewriteIn[] = [];
       try {
         const raw = JSON.parse(String(form.get("rewrites") ?? "[]"));
@@ -68,9 +88,20 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       } catch {
         /* no rewrites */
       }
-      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), replace, rewrites, by);
+      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), replace, rewrites, additions, by);
       if (!r.ok) return { intent, ok: false, message: r.error };
       return { intent, ok: true, message: `Updated the post with ${r.applied} change${r.applied === 1 ? "" : "s"}.${r.skipped ? ` ${r.skipped} could not be applied because the post had changed.` : ""} Shopify can take a few minutes to show the change on your store.` };
+    }
+    if (intent === "tldr" || intent === "faq") {
+      const post = await loadPost(admin, gid);
+      if (!post) return { intent, ok: false, message: "We couldn't find this post." };
+      const settings = await loadSettings(session.shop);
+      if (intent === "tldr") {
+        const r = await writeTldr(post.title, post.body, settings);
+        return r.ok ? { intent, ok: true, message: "", tldr: r.text } : { intent, ok: false, message: r.message };
+      }
+      const r = await writeFaq(post.title, post.body, settings);
+      return r.ok ? { intent, ok: true, message: "", faq: r.items } : { intent, ok: false, message: r.message };
     }
     if (intent === "factcheck") {
       const r = await factCheck(String(form.get("sentence") ?? "").slice(0, 1500), String(form.get("updatedAt") ?? ""));
@@ -200,7 +231,13 @@ function SentenceCheck({
             Fact check this
           </s-button>
         </s-stack>
-      ) : null}
+      ) : (
+        <s-stack direction="inline" gap="small" alignItems="center">
+          <s-button disabled>Fact check this</s-button>
+          <s-badge tone="info">Higher plans</s-badge>
+          <s-text color="subdued">Checks the claim against reliable sources. <s-link href="/app/plans">See plans</s-link></s-text>
+        </s-stack>
+      )}
       {checkF.data && !checkF.data.ok ? <s-text tone="critical">{checkF.data.message}</s-text> : null}
       {check ? (
         <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: 10 }}>
@@ -270,12 +307,67 @@ function SentenceCheck({
   );
 }
 
+/** Write a TL;DR or an FAQ for the post, then accept or ignore it. */
+function AddBlock({ kind, added, decision, onAdd, onDecide }: { kind: "tldr" | "faq"; added?: Addition & { detail: string }; decision?: "accepted" | "ignored"; onAdd: (a: Addition & { detail: string }) => void; onDecide: (id: string, d: "accepted" | "ignored") => void }) {
+  const f = useFetcher<ActionResult>();
+  const id = kind === "tldr" ? ADD_TLDR_ID : ADD_FAQ_ID;
+  const tldr = f.data?.tldr;
+  const faq = f.data?.faq;
+  useEffect(() => {
+    if (tldr) onAdd({ id, kind: "tldr", text: tldr, detail: "Written from the post's own text" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tldr]);
+  useEffect(() => {
+    if (faq) onAdd({ id, kind: "faq", items: faq, detail: "Written from the post's own text" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [faq]);
+  return (
+    <s-stack direction="block" gap="small">
+      <div>
+        <strong>{kind === "tldr" ? "No short summary (TL;DR) at the top" : "No FAQ"}</strong>
+      </div>
+      <s-stack direction="inline" gap="small">
+        <s-button {...(f.state !== "idle" ? { loading: true } : {})} onClick={() => f.submit({ intent: kind }, { method: "POST" })}>
+          {added ? "Write it again" : kind === "tldr" ? "Write a short summary" : "Write an FAQ"}
+        </s-button>
+      </s-stack>
+      {f.data && !f.data.ok ? <s-text tone="critical">{f.data.message}</s-text> : null}
+      {added ? (
+        <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: 12 }}>
+          <s-stack direction="block" gap="small">
+            <div style={{ background: "rgba(30,140,60,0.08)", borderRadius: 6, padding: "8px 10px" }}>
+              <s-text color="subdued">{kind === "tldr" ? "Added at the top" : "Added at the end"}</s-text>
+              {added.kind === "tldr" ? (
+                <div>
+                  <strong>TL;DR:</strong> {added.text}
+                </div>
+              ) : (
+                added.items.map((q, i) => (
+                  <div key={i} style={{ marginTop: 6 }}>
+                    <strong>{q.q}</strong>
+                    <div>{q.a}</div>
+                  </div>
+                ))
+              )}
+            </div>
+            <s-stack direction="inline" gap="small">
+              <s-button {...(decision === "accepted" ? { variant: "primary" } : {})} onClick={() => onDecide(id, "accepted")}>{decision === "accepted" ? "Accepted" : "Accept"}</s-button>
+              <s-button variant="tertiary" onClick={() => onDecide(id, "ignored")}>{decision === "ignored" ? "Ignored" : "Ignore"}</s-button>
+            </s-stack>
+          </s-stack>
+        </div>
+      ) : null}
+    </s-stack>
+  );
+}
+
 export default function RefreshPost() {
   const data = useLoaderData<typeof loader>();
   const applyF = useFetcher<ActionResult>();
   const otherF = useFetcher<ActionResult>();
   const [decision, setDecision] = useState<Record<string, "accepted" | "ignored">>({});
   const [replacement, setReplacement] = useState<Record<string, { path: string; label: string }>>({});
+  const [added, setAdded] = useState<Record<string, Addition & { detail: string }>>({});
   const [rewrites, setRewrites] = useState<Record<string, Proposal>>({});
   const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
   const [postPick, setPostPick] = useState<string | null>(null);
@@ -285,22 +377,28 @@ export default function RefreshPost() {
   const changes = data.missing ? [] : data.changes;
   const acceptedList = changes.filter((c) => decision[c.id] === "accepted");
   const acceptedRewrites = Object.values(rewrites).filter((r) => decision[r.id] === "accepted");
-  const totalAccepted = acceptedList.length + acceptedRewrites.length;
+  const acceptedAdds = Object.values(added).filter((x) => decision[x.id] === "accepted");
+  const totalAccepted = acceptedList.length + acceptedRewrites.length + acceptedAdds.length;
 
   const view = useMemo(() => {
     if (!post || data.missing) return null;
     const hosts = new Set(data.hosts);
-    const next = applyChanges(post.body, acceptedList.map((c) => ({ index: c.index, href: c.href, newHref: replacement[c.id]?.path })));
-    const rw = applyRewrites(next.html, acceptedRewrites);
-    return { before: scoreExisting(post, hosts), after: scoreExisting({ ...post, body: rw.html }, hosts) };
+    const removes = acceptedList.filter((c) => c.kind === "remove_link");
+    const adds = acceptedList.filter((c) => c.kind === "add_link");
+    const next = applyChanges(post.body, removes.map((c) => ({ index: c.index, href: c.href, newHref: replacement[c.id]?.path })));
+    const linked = applyLinkAdds(next.html, adds.map((c) => ({ index: c.index, link: c.link, href: c.href })));
+    const rw = applyRewrites(linked.html, acceptedRewrites);
+    const full = applyAdditions(rw.html, acceptedAdds, data.tldrStyle);
+    return { before: scoreExisting(post, hosts), after: scoreExisting({ ...post, body: full }, hosts) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post, decision, replacement, rewrites]);
+  }, [post, decision, replacement, rewrites, added]);
 
   useEffect(() => {
     if (applyF.data?.intent === "apply" && applyF.data.ok) {
       setDecision({});
       setReplacement({});
       setRewrites({});
+      setAdded({});
     }
     if (otherF.data?.intent === "undo") setConfirmRestore(null);
     const d = applyF.data ?? otherF.data;
@@ -341,7 +439,7 @@ export default function RefreshPost() {
     <s-page heading={post.title}>
       <s-link slot="breadcrumb-actions" href="/app/refresh">AI Refresh</s-link>
       <s-button slot="primary-action" variant="primary" {...(totalAccepted === 0 ? { disabled: true } : {})} {...(applyF.state !== "idle" ? { loading: true } : {})}
-        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(","), rewrites: JSON.stringify(Object.values(rewrites).filter((r) => decision[r.id]).map((r) => ({ ...r, decision: decision[r.id] }))), replace: JSON.stringify(Object.fromEntries(acceptedList.filter((c) => replacement[c.id]).map((c) => [c.id, replacement[c.id].path]))) }, { method: "POST" })}>
+        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(","), additions: JSON.stringify(Object.values(added).filter((x) => decision[x.id]).map((x) => ({ ...x, decision: decision[x.id] }))), rewrites: JSON.stringify(Object.values(rewrites).filter((r) => decision[r.id]).map((r) => ({ ...r, decision: decision[r.id] }))), replace: JSON.stringify(Object.fromEntries(acceptedList.filter((c) => replacement[c.id]).map((c) => [c.id, replacement[c.id].path]))) }, { method: "POST" })}>
         {totalAccepted ? `Update this post in Shopify (${totalAccepted} change${totalAccepted === 1 ? "" : "s"})` : "Update this post in Shopify"}
       </s-button>
 
@@ -428,12 +526,16 @@ export default function RefreshPost() {
               return (
                 <div key={c.id} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: 12 }}>
                   <s-stack direction="block" gap="small">
-                    <s-text color="subdued">{c.detail} This link pointed to {wasPointingAt(c.href)}. We would take the link off these words and keep the words.</s-text>
+                    {c.kind === "add_link" ? (
+                      <s-text color="subdued">{c.detail} We would link these words to {wasPointingAt(c.href)}.</s-text>
+                    ) : (
+                      <s-text color="subdued">{c.detail} This link pointed to {wasPointingAt(c.href)}. We would take the link off these words and keep the words.</s-text>
+                    )}
                     <div style={{ background: "rgba(200,40,40,0.07)", borderRadius: 6, padding: "8px 10px" }}>
                       <s-text color="subdued">Before</s-text>
                       <div>
                         {c.pre}
-                        <u style={{ color: "#2a62d6" }}>{c.link}</u>
+                        {c.kind === "add_link" ? c.link : <u style={{ color: "#2a62d6" }}>{c.link}</u>}
                         {c.post}
                       </div>
                     </div>
@@ -441,7 +543,7 @@ export default function RefreshPost() {
                       <s-text color="subdued">After</s-text>
                       <div>
                         {c.pre}
-                        {replacement[c.id] ? <u style={{ color: "#2a62d6" }}>{c.link}</u> : c.link}
+                        {replacement[c.id] || c.kind === "add_link" ? <u style={{ color: "#2a62d6" }}>{c.link}</u> : c.link}
                         {c.post}
                       </div>
                       {replacement[c.id] ? <s-text color="subdued">Now links to {replacement[c.id].label}</s-text> : null}
@@ -453,9 +555,13 @@ export default function RefreshPost() {
                       <s-button variant="tertiary" onClick={() => set([c.id], "ignored")}>
                         {d === "ignored" ? "Ignored" : "Ignore"}
                       </s-button>
-                      <s-button variant="tertiary" onClick={() => pick(c.id, "product")}>Replace with a product…</s-button>
-                      <s-button variant="tertiary" onClick={() => pick(c.id, "collection")}>…a collection</s-button>
-                      <s-button variant="tertiary" onClick={() => setPostPick(postPick === c.id ? null : c.id)}>…a blog post</s-button>
+                      {c.kind === "remove_link" ? (
+                        <>
+                          <s-button variant="tertiary" onClick={() => pick(c.id, "product")}>Replace with a product…</s-button>
+                          <s-button variant="tertiary" onClick={() => pick(c.id, "collection")}>…a collection</s-button>
+                          <s-button variant="tertiary" onClick={() => setPostPick(postPick === c.id ? null : c.id)}>…a blog post</s-button>
+                        </>
+                      ) : null}
                       {replacement[c.id] ? (
                         <s-button variant="tertiary" onClick={() => setReplacement((p) => Object.fromEntries(Object.entries(p).filter(([k]) => k !== c.id)))}>Just remove the link</s-button>
                       ) : null}
@@ -479,6 +585,18 @@ export default function RefreshPost() {
           </s-stack>
         )}
       </s-section>
+
+      {data.needs.tldr || data.needs.faq ? (
+        <s-section heading="Add what's missing">
+          <s-stack direction="block" gap="base">
+            <s-text color="subdued">
+              These are written only from what this post already says. Nothing new is added, and every figure has to appear in the post. Nothing changes until you accept it and update the post.
+            </s-text>
+            {data.needs.tldr ? <AddBlock kind="tldr" added={added[ADD_TLDR_ID]} decision={decision[ADD_TLDR_ID]} onAdd={(a) => setAdded((m) => ({ ...m, [a.id]: a }))} onDecide={(id, d) => set([id], d)} /> : null}
+            {data.needs.faq ? <AddBlock kind="faq" added={added[ADD_FAQ_ID]} decision={decision[ADD_FAQ_ID]} onAdd={(a) => setAdded((m) => ({ ...m, [a.id]: a }))} onDecide={(id, d) => set([id], d)} /> : null}
+          </s-stack>
+        </s-section>
+      ) : null}
 
       {data.notes.length ? (
         <s-section heading="Worth a look">

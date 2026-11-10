@@ -41,3 +41,14 @@ Three steps, one sentence at a time, in the "Worth a look" area:
 - Every result lists its sources: site name, type (government, news, industry body and so on), the date of the page, and a link. The merchant decides whether to trust them.
 - Facts from outside sources are used only if a listed source supports them. If nothing reliable confirms a claim, it says "couldn't verify, check this one yourself" and **no rewrite is offered**.
 - The "Extra instructions for AI Refresh" box arrives in this stage.
+
+## Stage 3 part 1 as shipped (10 Nov 2026, commits 16d3514, efba2f6): note + reword only; web fact check parked
+**Decision (owner, 10 Nov): don't add a feature that costs us per click.** The web fact check works (tested with stubs: social media removed, invented quotes rejected, rewrite offered only when a trusted source backs it) but is **switched off**: it only appears if `TAVILY_API_KEY` is set in Vercel, which it is not. No cost is incurred. Also decided: **no "paste a link" box**, because it asks the merchant to do more work.
+
+What merchants get now, for a sentence in the body that mentions a past year (under "Worth a look"):
+- **Note for the AI (optional)**: what is true now, in the merchant's words.
+- **Suggest a rewording**: one small AI call (a fraction of a cent) that rewrites only that sentence. Uses only the note (and the sentence); any number or year in the new sentence must come from the original sentence or the note, otherwise it is dropped. Shown as Before/After with Accept or Ignore; counted in the scores; saved in history (`rewrite_sentence`); undoable. Sentences containing a link or formatting can't be reworded automatically (edit in Shopify).
+- **Settings > AI Refresh > Extra instructions for AI Refresh** (style only, cannot override fact rules).
+
+Parked, code in place: `app/lib/factcheck.server.ts` and `app/lib/sources.ts` (source rules above). To revive: set `TAVILY_API_KEY`. Cost with the current settings is about 3 cents a check (two advanced searches at $0.008 per credit, 2 credits each) plus AI calls; one basic search would be about 1 cent. Free allowance is 1,000 credits a month. Cheaper search vendors quote around $1 to $5 per 1,000 searches (vendor claims, unverified).
+**Idea for a higher plan:** a "Fact check" button that tells the merchant it uses one check from their plan, and asks them to confirm, so the cost is visible to them and counted in the usage meter. Decide when plans and margins are settled.

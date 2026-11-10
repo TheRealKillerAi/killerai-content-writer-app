@@ -40,7 +40,7 @@ export function classifyLinks(html: string, ctx: RefreshContext): LinkInfo[] {
 
 export type Change = {
   id: string; // "link-<n>": n is the position of the link in the post
-  kind: "remove_link";
+  kind: "remove_link" | "add_link";
   rule: RuleId;
   index: number;
   href: string;

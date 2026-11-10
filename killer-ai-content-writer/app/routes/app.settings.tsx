@@ -548,6 +548,12 @@ export default function Settings() {
                 ))}
               </s-select>
             ))}
+            <s-checkbox
+              name="refreshLastUpdated"
+              label='Add a "Last updated" line at the top of refreshed posts'
+              details="Shows the date you updated the post, only when you accepted at least one change. Off by default."
+              checked={s.refreshLastUpdated}
+            />
             <s-text-area
               name="refreshInstructions"
               label="Extra instructions for AI Refresh"

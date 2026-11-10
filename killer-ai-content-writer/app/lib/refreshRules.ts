@@ -1,6 +1,6 @@
 // The rules AI Refresh follows. Shown to the merchant ("How AI Refresh decides") and switchable in Settings.
 export type RuleMode = "on" | "flag" | "off";
-export type RuleId = "dead_product" | "dead_collection" | "dead_post" | "product_stock" | "old_year" | "price";
+export type RuleId = "dead_product" | "dead_collection" | "dead_post" | "product_stock" | "old_year" | "price" | "add_links" | "add_tldr" | "add_faq";
 
 export type RuleDef = {
   id: RuleId;
@@ -76,6 +76,36 @@ export const RULES: RuleDef[] = [
     bulk: false,
     modes: ["flag", "off"],
     default: "flag",
+  },
+  {
+    id: "add_links",
+    name: "Add links to your collections and other posts",
+    looksFor: "Words in the post that clearly match one of your collections or another published post.",
+    action: "Suggests adding a link on those words, at most three in a post. Each one is yours to accept or ignore.",
+    risk: "Medium",
+    bulk: false,
+    modes: ["on", "off"],
+    default: "on",
+  },
+  {
+    id: "add_tldr",
+    name: "Add a short summary (TL;DR) at the top",
+    looksFor: "A post that doesn't open with a short answer-first summary.",
+    action: "Offers to write one, only from what the post itself already says. Nothing new is added.",
+    risk: "Medium",
+    bulk: false,
+    modes: ["on", "off"],
+    default: "on",
+  },
+  {
+    id: "add_faq",
+    name: "Add an FAQ at the end",
+    looksFor: "A post with no FAQ.",
+    action: "Offers questions readers would ask, each answered only from what the post already says. If the post doesn't say enough, no FAQ is offered.",
+    risk: "Medium",
+    bulk: false,
+    modes: ["on", "off"],
+    default: "on",
   },
 ];
 

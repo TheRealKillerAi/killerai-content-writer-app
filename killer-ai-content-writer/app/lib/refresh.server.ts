@@ -3,6 +3,10 @@ import db from "../db.server";
 import { analysePost, productHandlesIn, type BlogPost, type PostReview, type RefreshContext } from "./refresh";
 import { cleanRules } from "./refreshRules";
 import { loadSettings } from "./settings.server";
+import { loadLinkTargets } from "./links.server";
+import { proposeLinkAdds } from "./refreshAdd";
+import type { Change } from "./refreshChanges";
+import type { AppSettings } from "./settings";
 
 type PostNode = {
   id: string;
@@ -131,7 +135,7 @@ async function loadProducts(admin: Admin, handles: string[]) {
 }
 
 /** Everything needed to judge the links in the given posts. */
-export async function buildContext(admin: Admin, shop: string, posts: BlogPost[]): Promise<{ ctx: RefreshContext; skippedChecks: string[]; totalPosts: number | null }> {
+export async function buildContext(admin: Admin, shop: string, posts: BlogPost[]): Promise<{ ctx: RefreshContext; skippedChecks: string[]; totalPosts: number | null; settings: AppSettings }> {
   const info = await gql<{ shop: { primaryDomain: { host: string }; myshopifyDomain: string } }>(
     admin,
     `#graphql
@@ -157,7 +161,7 @@ export async function buildContext(admin: Admin, shop: string, posts: BlogPost[]
     skipCollections: !collections,
     skipPosts: total < 0,
   };
-  return { ctx, skippedChecks, totalPosts: total < 0 ? null : total };
+  return { ctx, skippedChecks, totalPosts: total < 0 ? null : total, settings };
 }
 
 export async function isProtected(shop: string, post: BlogPost): Promise<boolean> {
@@ -193,4 +197,16 @@ export async function loadPostChoices(admin: Admin, excludeId: string): Promise<
     query PostChoices { articles(first: 100, sortKey: PUBLISHED_AT, reverse: true) { nodes { id title handle isPublished blog { handle } } } }`,
   );
   return d.articles.nodes.filter((a) => a.isPublished && a.id !== excludeId).map((a) => ({ title: a.title, path: `/blogs/${a.blog.handle}/${a.handle}` }));
+}
+
+/** Links the post could gain to your collections and other posts. Free: found by code, no AI. */
+export async function proposeAdds(admin: Admin, shop: string, post: BlogPost, ctx: RefreshContext, settings: AppSettings): Promise<Change[]> {
+  if ((ctx.rules?.add_links ?? "on") === "off") return [];
+  try {
+    const targets = await loadLinkTargets(admin, shop, { ...settings, linkToCollections: true, linkToOtherArticles: true }, post.title);
+    return targets ? proposeLinkAdds(post, targets) : [];
+  } catch (e) {
+    console.error("Could not work out links to add", e);
+    return [];
+  }
 }

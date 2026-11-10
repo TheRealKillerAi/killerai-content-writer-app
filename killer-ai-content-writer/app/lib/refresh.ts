@@ -97,6 +97,12 @@ function toArticle(p: BlogPost): Article {
   } as unknown as Article;
 }
 
+/** True when the post already opens with a TL;DR / short-answer summary. */
+export const hasTldr = (html: string) =>
+  /^\s*(<[^>]+>\s*)*(<p[^>]*>)?\s*(<strong>|<b>)?\s*(tl;?dr|key takeaways?|in short|quick answer|the short answer)/i.test(html.slice(0, 600));
+/** True when the post already has an FAQ. */
+export const hasFaq = (html: string) => /frequently asked|\bFAQ/i.test(strip(html));
+
 const PRICE = /(?:\$|A\$|AU\$)\s?\d|\b\d+(?:\.\d{2})?\s?(?:AUD|USD|dollars)\b/i;
 
 const KEYWORD_CHECKS = new Set(["kwTitle", "kwH1", "kwIntro", "handle"]);
@@ -160,8 +166,8 @@ export function analysePost(p: BlogPost, ctx: RefreshContext): PostReview {
   // What's missing
   const sc = scoreExisting(p, ctx.hosts);
   if (sc.words < 500) add("thin", `Short (${sc.words} words)`, 2);
-  if (!/^\s*(<[^>]+>\s*)*(<p[^>]*>)?\s*(<strong>|<b>)?\s*(tl;?dr|key takeaways?|in short|quick answer|the short answer)/i.test(p.body.slice(0, 600))) add("no_tldr", "No TL;DR at the top", 1);
-  if (!/frequently asked|\bFAQ/i.test(text)) add("no_faq", "No FAQ", 1);
+  if (!hasTldr(p.body)) add("no_tldr", "No TL;DR at the top", 1);
+  if (!hasFaq(p.body)) add("no_faq", "No FAQ", 1);
   if (!paths.some((x) => /^\/(collections|blogs)\//.test(x))) add("no_links", "No links to your collections or other posts", 1);
   if (!paths.some((x) => x.startsWith("/products/"))) add("no_product", "Doesn't link to a product", 1);
 
