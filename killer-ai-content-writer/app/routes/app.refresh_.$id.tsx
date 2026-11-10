@@ -200,9 +200,7 @@ function SentenceCheck({
             Fact check this
           </s-button>
         </s-stack>
-      ) : (
-        <s-text color="subdued">Fact checking isn't switched on yet. You can still add a note and ask for a rewording.</s-text>
-      )}
+      ) : null}
       {checkF.data && !checkF.data.ok ? <s-text tone="critical">{checkF.data.message}</s-text> : null}
       {check ? (
         <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: 10 }}>
@@ -243,7 +241,7 @@ function SentenceCheck({
             >
               Suggest a rewording
             </s-button>
-            {!hint.trim() && !check?.canRewrite ? <s-text color="subdued">Fact check it, or add a note, to enable this.</s-text> : null}
+            {!hint.trim() && !check?.canRewrite ? <s-text color="subdued">Add a note about what it should say now to enable this.</s-text> : null}
           </s-stack>
           {rewriteF.data && !rewriteF.data.ok ? <s-text tone="critical">{rewriteF.data.message}</s-text> : null}
           {proposal ? (
@@ -486,7 +484,7 @@ export default function RefreshPost() {
         <s-section heading="Worth a look">
           <s-stack direction="block" gap="base">
             <s-text color="subdued">
-              These are judgement calls, so nothing here changes unless you ask. For a sentence with a past year you can fact check it against reliable sources, add a note, and ask for a reworded sentence to accept or ignore. Otherwise edit the post in Shopify.
+              These are judgement calls, so nothing here changes unless you ask. For a sentence with a past year you can add a note about what is true now and ask for a reworded sentence, which you then accept or ignore. The AI only uses what your note says. Check it is right before you accept. Otherwise edit the post in Shopify.
             </s-text>
             {data.notes.map((n) => (
               <div key={n.id}>
