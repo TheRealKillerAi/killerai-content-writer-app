@@ -143,7 +143,7 @@ export function analysePost(p: BlogPost, ctx: RefreshContext): PostReview {
   // What's missing
   const sc = scoreExisting(p, ctx.hosts);
   if (sc.words < 500) add("thin", `Short (${sc.words} words)`, 2);
-  if (!/^\s*(<[^>]+>\s*)*(<p[^>]*>)?\s*(<strong>|<b>)?\s*(tl;?dr|key takeaways?|in short|quick answer|the short answer)/i.test(p.body.slice(0, 600))) add("no_tldr", "No short summary at the top", 1);
+  if (!/^\s*(<[^>]+>\s*)*(<p[^>]*>)?\s*(<strong>|<b>)?\s*(tl;?dr|key takeaways?|in short|quick answer|the short answer)/i.test(p.body.slice(0, 600))) add("no_tldr", "No TL;DR at the top", 1);
   if (!/frequently asked|\bFAQ/i.test(text)) add("no_faq", "No FAQ", 1);
   if (!paths.some((x) => /^\/(collections|blogs)\//.test(x))) add("no_links", "No links to your collections or other posts", 1);
   if (!paths.some((x) => x.startsWith("/products/"))) add("no_product", "Doesn't link to a product", 1);
