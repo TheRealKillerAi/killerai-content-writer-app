@@ -92,3 +92,6 @@ export function cleanRules(raw?: Partial<Record<string, string>> | null): Record
 }
 
 export const MODE_LABEL: Record<RuleMode, string> = { on: "Suggest a fix", flag: "Point it out only", off: "Off" };
+
+/** How long an update can be undone. */
+export const UNDO_DAYS = 30;

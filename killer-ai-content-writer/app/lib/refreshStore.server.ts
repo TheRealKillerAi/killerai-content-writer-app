@@ -4,8 +4,8 @@ import { gql, type Admin } from "./products.server";
 import { buildContext, loadPost } from "./refresh.server";
 import { applyChanges, proposeChanges } from "./refreshChanges";
 import { scoreExisting } from "./refresh";
+import { UNDO_DAYS } from "./refreshRules";
 
-export const UNDO_DAYS = 30;
 
 const UPDATE_BODY = `#graphql
   mutation RefreshUpdate($id: ID!, $article: ArticleUpdateInput!) {
