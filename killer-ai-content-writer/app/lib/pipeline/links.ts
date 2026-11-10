@@ -28,6 +28,7 @@ const GENERIC = new Set(
 );
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const words0 = (s: string) => s.split(/[^A-Za-z]+/).filter(Boolean);
 const plainWords = (s: string) => s.toLowerCase().replace(/&/g, " and ").split(/[^a-z0-9]+/).filter(Boolean);
 
 /** A crude word stem so reuse / reusable / reused, or bag / bags, count as the same topic word. */
@@ -125,10 +126,11 @@ function place(lines: Line[], stems: string[]): Found | null {
 type Scored = { stems: string[]; shared: string[]; score: number };
 
 /** How relevant a collection or article is to this text, from the topic words they share. */
-function relevance(candidate: string, counts: Map<string, number>, selfStems: Set<string>): Scored | null {
+function relevance(candidate: string, counts: Map<string, number>, selfStems: Set<string>, avoid?: Set<string>): Scored | null {
   const stems = topicStems(candidate);
   if (!stems.length) return null;
-  const shared = stems.filter((s) => (counts.get(s) ?? 0) >= 1);
+  // Words that only name the product being written about (its material, its type) say nothing about a related article.
+  const shared = stems.filter((s) => (counts.get(s) ?? 0) >= 1 && !avoid?.has(s));
   if (!shared.length) return null;
   const strongest = Math.max(...shared.map((s) => counts.get(s) ?? 0));
   const score = shared.reduce((n, s) => n + Math.min(counts.get(s) ?? 0, 3) + (selfStems.has(s) ? 2 : 0), 0);
@@ -140,7 +142,9 @@ export function addInternalLinks(
   targets: LinkTargets,
   want: { collections: boolean; articles: boolean },
   selfTitle = "",
+  productTitle = "",
 ): { md: string; added: AddedLink[] } {
+  const avoid = new Set(topicStems(productTitle));
   const lines = prepare(md);
   const added: AddedLink[] = [];
   const counts = stemCounts(md);
@@ -155,7 +159,7 @@ export function addInternalLinks(
   if (want.articles) {
     const ranked = targets.articles
       .filter((a) => !(a.keyword && targets.selfKeyword && sameKeyword(a.keyword, targets.selfKeyword)))
-      .map((a) => ({ a, r: relevance(`${a.keyword ?? ""} ${a.title}`, counts, selfStems) }))
+      .map((a) => ({ a, r: relevance(`${a.keyword ?? ""} ${a.title}`, counts, selfStems, avoid) }))
       // A related article must share at least two topic words with this one, one of them used more than once.
       .filter((x): x is { a: LinkArticle; r: Scored } => !!x.r && x.r.shared.length >= 2 && x.r.shared.length / x.r.stems.length >= 0.5 && x.r.score >= 4)
       .sort((x, y) => y.r.score - x.r.score);
@@ -172,7 +176,8 @@ export function addInternalLinks(
     const ranked = targets.collections
       .map((c) => ({ c, r: relevance(c.title, counts, selfStems) }))
       // A collection is relevant when its topic word (e.g. "reusable", "kitchen") is a real theme of the article.
-      .filter((x): x is { c: LinkCollection; r: Scored } => !!x.r && x.r.score >= 3 && x.r.shared.length / x.r.stems.length >= 0.5)
+      // ...and either two of its topic words appear, or its one word is also a topic of the article's own title or search phrase.
+      .filter((x): x is { c: LinkCollection; r: Scored } => !!x.r && x.r.score >= 3 && x.r.shared.length / x.r.stems.length >= 0.5 && (x.r.shared.length >= 2 || x.r.shared.some((w) => selfStems.has(w))))
       .sort((x, y) => y.r.score - x.r.score);
     for (const { c, r } of ranked) {
       if (added.filter((x) => x.kind === "collection").length >= MAX_COLLECTIONS) break;
@@ -188,13 +193,16 @@ export function addInternalLinks(
  * Puts a link on a phrase that is already in the article (exact words, any capitalisation), in the first usable
  * paragraph or list item. Returns null when the phrase is not there, so an invented anchor can never be used.
  */
-export function addLinkOnPhrase(md: string, phrase: string, path: string): { md: string; phrase: string } | null {
+export function addLinkOnPhrase(md: string, phrase: string, path: string, productTitle = ""): { md: string; phrase: string } | null {
+  const avoid = new Set(topicStems(productTitle));
+  // The link must not sit on the name of the product itself (that is the product link's job).
+  if (words0(phrase).some((w) => avoid.has(topicStem(w)))) return null;
   const words = phrase.trim().split(/\s+/).filter(Boolean);
   if (words.length < 1 || words.length > 6 || phrase.replace(/[^A-Za-z]/g, "").length < 4) return null;
   const re = new RegExp(`(?<![A-Za-z0-9])(${words.map(esc).join("\\s+")})(?![A-Za-z0-9])`, "i");
   const lines = prepare(md);
   for (const l of lines) {
-    if (!l.ok) continue;
+    if (!l.ok || /^\s*([-*+]|\d+\.)\s/.test(l.text)) continue; // paragraphs only, not list items
     const m = re.exec(l.text);
     if (!m) continue;
     const before = l.text.slice(0, m.index);
