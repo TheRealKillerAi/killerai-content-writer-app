@@ -78,6 +78,15 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
 
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const diff = (a: number, b: number) => (b === a ? "no change" : `${b > a ? "+" : "−"}${Math.abs(b - a)}`);
+/** Where a dead link used to point, in plain words, e.g. "the product "old bag" (/products/old-bag)". */
+function wasPointingAt(href: string): string {
+  const path = href.replace(/^https?:\/\/[^/]+/i, "").split(/[?#]/)[0];
+  const m = /\/(products|collections|blogs|pages)\/([^/]+)(?:\/([^/]+))?/.exec(path);
+  if (!m) return href;
+  const words = (h: string) => decodeURIComponent(h).replace(/[-_]+/g, " ");
+  const kind = { products: "product", collections: "collection", blogs: "blog post", pages: "page" }[m[1]];
+  return `the ${kind} "${words(m[3] ?? m[2])}" (${path})`;
+}
 const mark = (pass: boolean) => (pass ? "✓" : "✗");
 
 type CheckRow = { id: string; label: string; pass: boolean };
@@ -263,7 +272,7 @@ export default function RefreshPost() {
               return (
                 <div key={c.id} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: 12 }}>
                   <s-stack direction="block" gap="small">
-                    <s-text color="subdued">{c.detail} We would take the link off these words and keep the words.</s-text>
+                    <s-text color="subdued">{c.detail} This link pointed to {wasPointingAt(c.href)}. We would take the link off these words and keep the words.</s-text>
                     <div style={{ background: "rgba(200,40,40,0.07)", borderRadius: 6, padding: "8px 10px" }}>
                       <s-text color="subdued">Before</s-text>
                       <div>
