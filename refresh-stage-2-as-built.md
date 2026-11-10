@@ -19,3 +19,25 @@ Review and update **one post at a time**. No AI is used yet in this stage: every
 **Not in stage 2 (moved to stage 3):** the "Extra instructions for AI Refresh" box. It changes what the AI *writes*, and stage 2 has no AI, so a box that does nothing would mislead. It arrives with the first AI proposals.
 
 **To verify on the live store:** open Review on a real post with a dead link, accept one change, update, check the post in Shopify (link gone, words kept, URL and published date unchanged), then Undo. This is also the first test of `articleUpdate` on a post written by hand.
+
+## Added after first live test (10 Nov 2026, commits a33b52a and abcfb50)
+Owner confirmed on the live store that dead-link removal works and the changes show on the store.
+- **Undo after later edits**: if the post was edited after the update, the history row shows **Restore backup…**. A confirm step says it puts the post back as it was before the update and **overwrites the later edits**. Nothing is lost without the merchant agreeing. (Owner request.)
+- **Replace a dead link**: each change offers **Replace with a product…**, **…a collection** (Shopify's own picker) or **…a blog post** (dropdown of published posts, because the picker has no posts). Chosen target shows in the After box and in history (`replace_link`). Only paths on the store (`/products/`, `/collections/`, `/blogs/`, `/pages/`) are accepted on the server. Not yet offered: pages and policies, as in the theme editor's link picker.
+- **Where the old link pointed**: each change says what the dead link pointed to in plain words (for example the product "old bag" at /products/old-bag), to help choose a replacement.
+- **Expectation note**: the page and the update/undo messages say Shopify can take a few minutes to show a change on the store.
+
+## Stage 3 design additions: outdated dates and facts (agreed 10 Nov 2026)
+The fix for an old year is **updated wording, not changing the number**. Examples from the owner's plastic-free posts: "National Plastics Plan (2021)" has been superseded and could be reworded to the newer plan; "tackle the plastic pollution problem by 2025" refers to a promise that has moved; "EPS out by 2022" is probably right but should be checked against when it was actually banned.
+
+Three steps, one sentence at a time, in the "Worth a look" area:
+1. **Fact check this** (button on a flagged year or date claim). Searches the web, compares what the post says (a date or a prediction) with what actually happened, and reports: still correct, changed, or couldn't verify. Shows its sources. Changes nothing.
+2. **Hint box** (optional) per flagged line, for example "now the 2025 plan, replace the 2021 reference". Steers the rewrite.
+3. **Suggest a rewrite**: AI proposes new wording for that sentence only, from the hint and the checked facts; shown as a normal before/after with Accept and Ignore. Goes through the same audit as everything else.
+
+**Source rules (owner, 10 Nov): only reliable sources, and always show them so the merchant can judge.**
+- Allowed: government and regulator sites, standards bodies, universities and research institutes, established news organisations, industry bodies, and a company's own official pages.
+- Never used as a source: social media (Instagram, X, Facebook, TikTok, Pinterest, Reddit, YouTube and similar), forums, anonymous or content-farm blogs, and user-edited wikis on their own.
+- Every result lists its sources: site name, type (government, news, industry body and so on), the date of the page, and a link. The merchant decides whether to trust them.
+- Facts from outside sources are used only if a listed source supports them. If nothing reliable confirms a claim, it says "couldn't verify, check this one yourself" and **no rewrite is offered**.
+- The "Extra instructions for AI Refresh" box arrives in this stage.

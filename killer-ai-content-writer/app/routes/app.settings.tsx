@@ -548,6 +548,13 @@ export default function Settings() {
                 ))}
               </s-select>
             ))}
+            <s-text-area
+              name="refreshInstructions"
+              label="Extra instructions for AI Refresh"
+              details="Style only, for example: keep my spelling, never use the word revolutionary, keep sentences short. These guide how reworded sentences are written. Our fact rules always apply and cannot be overridden."
+              rows={3}
+              value={s.refreshInstructions}
+            />
             <s-text color="subdued">You can also stop a single post, or a whole blog, being refreshed from that post's review page.</s-text>
           </s-stack>
         </s-section>

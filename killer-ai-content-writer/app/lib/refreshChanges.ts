@@ -51,7 +51,38 @@ export type Change = {
   detail: string;
 };
 
-export type Note = { id: string; rule: RuleId; where: string; context: string; message: string };
+export type Note = {
+  id: string;
+  rule: RuleId;
+  where: string;
+  context: string;
+  message: string;
+  /** For a year in the body text: the sentence it is in, as it appears in the post's HTML, so it can be fact-checked and reworded. */
+  sentence?: { id: string; html: string; text: string; editable: boolean };
+};
+
+const hash = (t: string) => {
+  let h = 5381;
+  for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+};
+
+/** The sentences of the post's paragraphs, list items and headings, each as raw HTML. */
+function sentencesOf(html: string): { html: string; text: string }[] {
+  const out: { html: string; text: string }[] = [];
+  const seen = new Set<string>();
+  for (const m of html.matchAll(/<(p|li|h[1-6]|td|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi)) {
+    for (const part of m[2].split(/(?<=[.!?])\s+(?=[A-Z0-9"“‘(<])/)) {
+      const h = part.trim();
+      const text = strip(h);
+      if (text && !seen.has(h)) {
+        seen.add(h);
+        out.push({ html: h, text });
+      }
+    }
+  }
+  return out;
+}
 
 /** The plain text of the paragraph, list item or heading around a link, split at the link. */
 function around(html: string, start: number, end: number) {
@@ -94,26 +125,35 @@ export function proposeChanges(p: BlogPost, ctx: RefreshContext): { changes: Cha
   const year = ctx.now.getFullYear();
   if (rules.old_year !== "off") {
     const fresh = /\b(best|top|new|newest|latest|updated|guide|trends?|picks?|ideas|review)\b[^.]{0,40}\b(20[0-2]\d)\b|\b(20[0-2]\d)\b[^.]{0,20}\b(guide|review|picks|edition|update)\b/i;
-    const fields: [string, string][] = [["Title", p.title], ["Search title", p.titleTag], ["Search description", p.metaDescription], ["Text", strip(p.body)]];
+    const fields: [string, string][] = [["Title", p.title], ["Search title", p.titleTag], ["Search description", p.metaDescription]];
     const seen = new Set<string>();
+    const msg = (y: number, where: string, claim: boolean) =>
+      claim
+        ? `Mentions ${y}. In ${where === "Text" ? "a sentence like this" : "the " + where.toLowerCase()} it can make the post look dated, so check whether it should be updated.`
+        : `Mentions ${y}. This looks like history rather than a claim about now, so it is probably fine as it is.`;
     for (const [where, text] of fields) {
       for (const m of text.matchAll(/\b(20[0-2]\d)\b/g)) {
         const y = Number(m[1]);
         if (y < 2015 || y >= year) continue;
         const ctxText = snippet(text, m.index!, 4);
-        if (seen.has(ctxText) || notes.filter((n) => n.rule === "old_year").length >= 6) continue;
+        if (seen.has(ctxText)) continue;
         seen.add(ctxText);
-        const claim = where !== "Text" || fresh.test(ctxText);
-        notes.push({
-          id: `note-year-${notes.length}`,
-          rule: "old_year",
-          where,
-          context: ctxText,
-          message: claim
-            ? `Mentions ${y}. In ${where === "Text" ? "a sentence like this" : "the " + where.toLowerCase()} it can make the post look dated, so check whether it should be updated.`
-            : `Mentions ${y}. This looks like history rather than a claim about now, so it is probably fine as it is.`,
-        });
+        notes.push({ id: `note-year-${notes.length}`, rule: "old_year", where, context: ctxText, message: msg(y, where, true) });
       }
+    }
+    let inText = 0;
+    for (const sent of sentencesOf(p.body)) {
+      const ys = [...new Set([...sent.text.matchAll(/\b(20[0-2]\d)\b/g)].map((m) => Number(m[1])).filter((y) => y >= 2015 && y < year))];
+      if (!ys.length || inText >= 8) continue;
+      inText++;
+      notes.push({
+        id: `note-year-${notes.length}`,
+        rule: "old_year",
+        where: "Text",
+        context: sent.text.length > 300 ? sent.text.slice(0, 300) + "…" : sent.text,
+        message: msg(ys[0], "Text", fresh.test(sent.text)) + (ys.length > 1 ? ` (Also mentions ${ys.slice(1).join(", ")}.)` : ""),
+        sentence: { id: `rw-${hash(sent.html)}`, html: sent.html, text: sent.text, editable: !sent.html.includes("<") },
+      });
     }
   }
   if (rules.price !== "off") {
@@ -147,5 +187,21 @@ export function applyChanges(html: string, accepted: { index: number; href: stri
     }
     return whole;
   });
+  return { html: out, applied };
+}
+
+const escapeHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** Swaps reworded sentences into the post. A sentence is only touched if it still appears exactly once, as plain text with no links or formatting inside it. */
+export function applyRewrites(html: string, rewrites: { id: string; before: string; after: string }[]): { html: string; applied: string[] } {
+  let out = html;
+  const applied: string[] = [];
+  for (const r of rewrites) {
+    if (!r.before || r.before.includes("<") || !r.after.trim()) continue;
+    const at = out.indexOf(r.before);
+    if (at < 0 || out.indexOf(r.before, at + 1) >= 0) continue;
+    out = out.slice(0, at) + escapeHtml(r.after.trim()) + out.slice(at + r.before.length);
+    applied.push(r.id);
+  }
   return { html: out, applied };
 }

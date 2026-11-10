@@ -2,7 +2,7 @@
 import db from "../db.server";
 import { gql, type Admin } from "./products.server";
 import { buildContext, loadPost } from "./refresh.server";
-import { applyChanges, proposeChanges, safeStorePath } from "./refreshChanges";
+import { applyChanges, applyRewrites, proposeChanges, safeStorePath } from "./refreshChanges";
 import { scoreExisting } from "./refresh";
 import { UNDO_DAYS } from "./refreshRules";
 
@@ -20,19 +20,24 @@ async function writeBody(admin: Admin, gid: string, body: string): Promise<{ ok:
   return { ok: true, body: d.articleUpdate.article.body };
 }
 
+export type RewriteIn = { id: string; before: string; after: string; decision: "accepted" | "ignored"; detail: string };
+
 export type ApplyResult = { ok: true; applied: number; runId: string; skipped: number } | { ok: false; error: string };
 
 /** Applies the changes the merchant accepted. Everything is worked out again from the post as it is now, so a post edited since the page opened is never overwritten blindly. */
-export async function applyRefresh(admin: Admin, shop: string, gid: string, accepted: string[], ignored: string[], replace: Record<string, string>, by: string): Promise<ApplyResult> {
+export async function applyRefresh(admin: Admin, shop: string, gid: string, accepted: string[], ignored: string[], replace: Record<string, string>, rewrites: RewriteIn[], by: string): Promise<ApplyResult> {
   const post = await loadPost(admin, gid);
   if (!post) return { ok: false, error: "We couldn't find this post any more." };
   const { ctx } = await buildContext(admin, shop, [post]);
   const { changes } = proposeChanges(post, ctx);
   const take = changes.filter((c) => accepted.includes(c.id));
-  if (!take.length) return { ok: false, error: "None of the accepted changes apply to this post any more. Reload the page to see what is left." };
+  const rwTake = rewrites.filter((r) => r.decision === "accepted");
+  if (!take.length && !rwTake.length) return { ok: false, error: "None of the accepted changes apply to this post any more. Reload the page to see what is left." };
   const newOf = (id: string) => (replace[id] ? safeStorePath(replace[id]) ?? undefined : undefined);
   const next = applyChanges(post.body, take.map((c) => ({ index: c.index, href: c.href, newHref: newOf(c.id) })));
-  if (!next.applied.length || next.html === post.body) return { ok: false, error: "The post has changed since you opened this page. Reload to see what is left." };
+  const rw = applyRewrites(next.html, rwTake);
+  next.html = rw.html;
+  if ((!next.applied.length && !rw.applied.length) || next.html === post.body) return { ok: false, error: "The post has changed since you opened this page. Reload to see what is left." };
 
   const before = scoreExisting(post, ctx.hosts);
   const saved = await writeBody(admin, gid, next.html);
@@ -40,7 +45,7 @@ export async function applyRefresh(admin: Admin, shop: string, gid: string, acce
   const after = scoreExisting({ ...post, body: saved.body }, ctx.hosts);
 
   const done = take.filter((c) => next.applied.includes(c.index));
-  const skipped = take.length - done.length;
+  const skipped = take.length - done.length + (rwTake.length - rw.applied.length);
   const rest = changes.filter((c) => ignored.includes(c.id) && !accepted.includes(c.id));
   const run = await db.refreshRun.create({
     data: {
@@ -60,12 +65,15 @@ export async function applyRefresh(admin: Admin, shop: string, gid: string, acce
       changes: {
         create: [
           ...done.map((c) => ({ shop, articleId: gid, rule: c.rule, kind: newOf(c.id) ? "replace_link" : c.kind, before: `${c.pre}${c.link}${c.post}`.trim(), after: newOf(c.id) ? `${c.link} (now links to ${newOf(c.id)})` : c.link, detail: `${c.href} — ${c.detail}`, decision: "accepted" })),
+          ...rewrites
+            .filter((r) => (r.decision === "accepted" ? rw.applied.includes(r.id) : true))
+            .map((r) => ({ shop, articleId: gid, rule: "old_year", kind: "rewrite_sentence", before: r.before.slice(0, 1500), after: r.after.slice(0, 1500), detail: r.detail.slice(0, 3000), decision: r.decision })),
           ...rest.map((c) => ({ shop, articleId: gid, rule: c.rule, kind: c.kind, before: `${c.pre}${c.link}${c.post}`.trim(), after: c.link, detail: `${c.href} — ${c.detail}`, decision: "ignored" })),
         ],
       },
     },
   });
-  return { ok: true, applied: done.length, runId: run.id, skipped };
+  return { ok: true, applied: done.length + rw.applied.length, runId: run.id, skipped };
 }
 
 export function canUndo(run: { appliedAt: Date; undoneAt: Date | null; bodyBefore: string | null }) {

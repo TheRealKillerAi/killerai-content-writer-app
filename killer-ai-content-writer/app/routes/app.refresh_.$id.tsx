@@ -4,9 +4,12 @@ import { useFetcher, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { buildContext, isProtected, loadPostChoices, loadPost } from "../lib/refresh.server";
-import { applyRefresh, refreshHistory, setProtected, undoRefresh } from "../lib/refreshStore.server";
+import { applyRefresh, refreshHistory, setProtected, undoRefresh, type RewriteIn } from "../lib/refreshStore.server";
+import { factCheck, searchConfigured, suggestRewrite, type FactCheck } from "../lib/factcheck.server";
+import { loadSettings } from "../lib/settings.server";
+import { classifySource, SOURCE_LABEL } from "../lib/sources";
 import { UNDO_DAYS } from "../lib/refreshRules";
-import { proposeChanges, applyChanges } from "../lib/refreshChanges";
+import { proposeChanges, applyChanges, applyRewrites, type Note } from "../lib/refreshChanges";
 import { ageLabel, scoreExisting } from "../lib/refresh";
 import { RulesPanel } from "../components/RulesPanel";
 import { SeoBadge } from "../components/ArticleBadges";
@@ -28,6 +31,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     changes,
     notes,
     skippedChecks,
+    searchOn: searchConfigured(),
     age: ageLabel(months),
     protectedPost: await isProtected(session.shop, post),
     history: await refreshHistory(session.shop, post.id, post.body),
@@ -36,7 +40,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 };
 
-type ActionResult = { intent: string; ok: boolean; message: string };
+type ActionResult = { intent: string; ok: boolean; message: string; check?: FactCheck; sentence?: string };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
   const { admin, session } = await authenticate.admin(request);
@@ -53,9 +57,44 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       } catch {
         /* no replacements */
       }
-      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), replace, by);
+      let rewrites: RewriteIn[] = [];
+      try {
+        const raw = JSON.parse(String(form.get("rewrites") ?? "[]"));
+        if (Array.isArray(raw))
+          rewrites = raw
+            .filter((x) => x && typeof x.id === "string" && typeof x.before === "string" && typeof x.after === "string" && (x.decision === "accepted" || x.decision === "ignored"))
+            .slice(0, 20)
+            .map((x) => ({ id: x.id, before: x.before.slice(0, 1500), after: x.after.slice(0, 1500), decision: x.decision, detail: String(x.detail ?? "") }));
+      } catch {
+        /* no rewrites */
+      }
+      const r = await applyRefresh(admin, session.shop, gid, list("accepted"), list("ignored"), replace, rewrites, by);
       if (!r.ok) return { intent, ok: false, message: r.error };
       return { intent, ok: true, message: `Updated the post with ${r.applied} change${r.applied === 1 ? "" : "s"}.${r.skipped ? ` ${r.skipped} could not be applied because the post had changed.` : ""} Shopify can take a few minutes to show the change on your store.` };
+    }
+    if (intent === "factcheck") {
+      const r = await factCheck(String(form.get("sentence") ?? "").slice(0, 1500), String(form.get("updatedAt") ?? ""));
+      return r.ok ? { intent, ok: true, message: "", check: r } : { intent, ok: false, message: r.message };
+    }
+    if (intent === "rewrite") {
+      let check: FactCheck | null = null;
+      try {
+        const c = JSON.parse(String(form.get("check") ?? "null"));
+        if (c && Array.isArray(c.sources) && Array.isArray(c.facts)) {
+          // Trust is worked out again here from each address, never taken from the screen.
+          const sources = c.sources.slice(0, 8).map((x: { n: number; title: string; url: string; date: string }, i: number) => {
+            const k = classifySource(String(x.url));
+            return { n: i + 1, title: String(x.title), url: String(x.url), domain: k.domain, type: k.type, label: SOURCE_LABEL[k.type], trusted: k.trusted, date: String(x.date ?? "") };
+          });
+          const facts = c.facts.slice(0, 10).map((f: { statement: string; quote: string; source: number }) => ({ statement: String(f.statement), quote: String(f.quote), source: Number(f.source) }));
+          check = { ok: true, verdict: c.verdict === "changed" ? "changed" : "unclear", summary: String(c.summary ?? ""), facts, sources, canRewrite: c.verdict === "changed" && facts.some((f: { source: number }) => sources[f.source - 1]?.trusted) };
+        }
+      } catch {
+        /* no fact check */
+      }
+      const settings = await loadSettings(session.shop);
+      const r = await suggestRewrite({ sentence: String(form.get("sentence") ?? "").slice(0, 1500), hint: String(form.get("hint") ?? "").slice(0, 600), check, instructions: settings.refreshInstructions });
+      return r.ok ? { intent, ok: true, message: "", sentence: r.sentence } : { intent, ok: false, message: r.message };
     }
     if (intent === "undo") {
       const r = await undoRefresh(admin, session.shop, String(form.get("runId")), form.get("force") === "1");
@@ -119,12 +158,127 @@ function ChecksTable({ before, after }: { before: CheckRow[]; after: CheckRow[] 
   );
 }
 
+type Proposal = { id: string; before: string; after: string; detail: string };
+
+const VERDICT: Record<string, { tone: "success" | "warning" | "neutral"; label: string }> = {
+  still_correct: { tone: "success", label: "Still correct" },
+  changed: { tone: "warning", label: "Out of date" },
+  unclear: { tone: "neutral", label: "Couldn't verify" },
+};
+
+/** Fact check, a note for the AI, and a suggested rewording for one sentence that mentions a past year. */
+function SentenceCheck({
+  note, updatedAt, searchOn, proposal, decision, onProposal, onDecide,
+}: {
+  note: Note;
+  updatedAt: string;
+  searchOn: boolean;
+  proposal?: Proposal;
+  decision?: "accepted" | "ignored";
+  onProposal: (p: Proposal) => void;
+  onDecide: (id: string, d: "accepted" | "ignored") => void;
+}) {
+  const sent = note.sentence!;
+  const checkF = useFetcher<ActionResult>();
+  const rewriteF = useFetcher<ActionResult>();
+  const [hint, setHint] = useState("");
+  const check = checkF.data?.check ?? null;
+  const rewritten = rewriteF.data?.sentence;
+
+  useEffect(() => {
+    if (!rewritten) return;
+    const detail = JSON.stringify({ hint: hint || undefined, summary: check?.summary, sources: check?.sources.map((x) => ({ title: x.title, url: x.url, type: x.label })) });
+    onProposal({ id: sent.id, before: sent.html, after: rewritten, detail });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rewritten]);
+
+  return (
+    <s-stack direction="block" gap="small">
+      {searchOn ? (
+        <s-stack direction="inline" gap="small">
+          <s-button {...(checkF.state !== "idle" ? { loading: true } : {})} onClick={() => checkF.submit({ intent: "factcheck", sentence: sent.text, updatedAt }, { method: "POST" })}>
+            Fact check this
+          </s-button>
+        </s-stack>
+      ) : (
+        <s-text color="subdued">Fact checking isn't switched on yet. You can still add a note and ask for a rewording.</s-text>
+      )}
+      {checkF.data && !checkF.data.ok ? <s-text tone="critical">{checkF.data.message}</s-text> : null}
+      {check ? (
+        <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: 10 }}>
+          <s-stack direction="block" gap="small">
+            <div>
+              <s-badge tone={VERDICT[check.verdict].tone}>{VERDICT[check.verdict].label}</s-badge> {check.summary}
+            </div>
+            {check.facts.map((f, i) => (
+              <div key={i}>
+                <s-text>{f.statement} </s-text>
+                <s-text color="subdued">[{f.source}]</s-text>
+              </div>
+            ))}
+            {check.sources.length ? (
+              <div>
+                <s-text color="subdued">Sources. Please judge for yourself whether you trust them:</s-text>
+                <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                  {check.sources.map((x) => (
+                    <li key={x.n}>
+                      [{x.n}] <a href={x.url} target="_blank" rel="noreferrer">{x.title}</a> · {x.domain} · {x.label}
+                      {x.date ? ` · ${x.date.slice(0, 10)}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </s-stack>
+        </div>
+      ) : null}
+      {sent.editable ? (
+        <>
+          <s-text-field label="Note for the AI (optional)" placeholder="For example: now replaced by the 2025 plan" value={hint} onInput={(e: Event) => setHint((e.currentTarget as unknown as { value: string }).value)} />
+          <s-stack direction="inline" gap="small">
+            <s-button
+              {...(rewriteF.state !== "idle" ? { loading: true } : {})}
+              {...(!hint.trim() && !check?.canRewrite ? { disabled: true } : {})}
+              onClick={() => rewriteF.submit({ intent: "rewrite", sentence: sent.text, hint, check: JSON.stringify(check) }, { method: "POST" })}
+            >
+              Suggest a rewording
+            </s-button>
+            {!hint.trim() && !check?.canRewrite ? <s-text color="subdued">Fact check it, or add a note, to enable this.</s-text> : null}
+          </s-stack>
+          {rewriteF.data && !rewriteF.data.ok ? <s-text tone="critical">{rewriteF.data.message}</s-text> : null}
+          {proposal ? (
+            <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: 12 }}>
+              <s-stack direction="block" gap="small">
+                <div style={{ background: "rgba(200,40,40,0.07)", borderRadius: 6, padding: "8px 10px" }}>
+                  <s-text color="subdued">Before</s-text>
+                  <div>{sent.text}</div>
+                </div>
+                <div style={{ background: "rgba(30,140,60,0.08)", borderRadius: 6, padding: "8px 10px" }}>
+                  <s-text color="subdued">After</s-text>
+                  <div>{proposal.after}</div>
+                </div>
+                <s-stack direction="inline" gap="small">
+                  <s-button {...(decision === "accepted" ? { variant: "primary" } : {})} onClick={() => onDecide(proposal.id, "accepted")}>{decision === "accepted" ? "Accepted" : "Accept"}</s-button>
+                  <s-button variant="tertiary" onClick={() => onDecide(proposal.id, "ignored")}>{decision === "ignored" ? "Ignored" : "Ignore"}</s-button>
+                </s-stack>
+              </s-stack>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <s-text color="subdued">This sentence has a link or formatting inside it, so edit it in Shopify. The fact check above can still help you decide what to change.</s-text>
+      )}
+    </s-stack>
+  );
+}
+
 export default function RefreshPost() {
   const data = useLoaderData<typeof loader>();
   const applyF = useFetcher<ActionResult>();
   const otherF = useFetcher<ActionResult>();
   const [decision, setDecision] = useState<Record<string, "accepted" | "ignored">>({});
   const [replacement, setReplacement] = useState<Record<string, { path: string; label: string }>>({});
+  const [rewrites, setRewrites] = useState<Record<string, Proposal>>({});
   const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
   const [postPick, setPostPick] = useState<string | null>(null);
 
@@ -132,19 +286,23 @@ export default function RefreshPost() {
   const post = data.missing ? null : data.post;
   const changes = data.missing ? [] : data.changes;
   const acceptedList = changes.filter((c) => decision[c.id] === "accepted");
+  const acceptedRewrites = Object.values(rewrites).filter((r) => decision[r.id] === "accepted");
+  const totalAccepted = acceptedList.length + acceptedRewrites.length;
 
   const view = useMemo(() => {
     if (!post || data.missing) return null;
     const hosts = new Set(data.hosts);
     const next = applyChanges(post.body, acceptedList.map((c) => ({ index: c.index, href: c.href, newHref: replacement[c.id]?.path })));
-    return { before: scoreExisting(post, hosts), after: scoreExisting({ ...post, body: next.html }, hosts) };
+    const rw = applyRewrites(next.html, acceptedRewrites);
+    return { before: scoreExisting(post, hosts), after: scoreExisting({ ...post, body: rw.html }, hosts) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post, decision, replacement]);
+  }, [post, decision, replacement, rewrites]);
 
   useEffect(() => {
     if (applyF.data?.intent === "apply" && applyF.data.ok) {
       setDecision({});
       setReplacement({});
+      setRewrites({});
     }
     if (otherF.data?.intent === "undo") setConfirmRestore(null);
     const d = applyF.data ?? otherF.data;
@@ -184,9 +342,9 @@ export default function RefreshPost() {
   return (
     <s-page heading={post.title}>
       <s-link slot="breadcrumb-actions" href="/app/refresh">AI Refresh</s-link>
-      <s-button slot="primary-action" variant="primary" {...(acceptedList.length === 0 ? { disabled: true } : {})} {...(applyF.state !== "idle" ? { loading: true } : {})}
-        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(","), replace: JSON.stringify(Object.fromEntries(acceptedList.filter((c) => replacement[c.id]).map((c) => [c.id, replacement[c.id].path]))) }, { method: "POST" })}>
-        {acceptedList.length ? `Update this post in Shopify (${acceptedList.length} change${acceptedList.length === 1 ? "" : "s"})` : "Update this post in Shopify"}
+      <s-button slot="primary-action" variant="primary" {...(totalAccepted === 0 ? { disabled: true } : {})} {...(applyF.state !== "idle" ? { loading: true } : {})}
+        onClick={() => applyF.submit({ intent: "apply", accepted: acceptedList.map((c) => c.id).join(","), ignored: ignoredIds.join(","), rewrites: JSON.stringify(Object.values(rewrites).filter((r) => decision[r.id]).map((r) => ({ ...r, decision: decision[r.id] }))), replace: JSON.stringify(Object.fromEntries(acceptedList.filter((c) => replacement[c.id]).map((c) => [c.id, replacement[c.id].path]))) }, { method: "POST" })}>
+        {totalAccepted ? `Update this post in Shopify (${totalAccepted} change${totalAccepted === 1 ? "" : "s"})` : "Update this post in Shopify"}
       </s-button>
 
       {data.protectedPost ? (
@@ -325,16 +483,29 @@ export default function RefreshPost() {
       </s-section>
 
       {data.notes.length ? (
-        <s-section heading="Worth a look (we won't change these)">
+        <s-section heading="Worth a look">
           <s-stack direction="block" gap="base">
             <s-text color="subdued">
-              These are judgement calls, so they are left to you. Edit the post in Shopify if you want to change any of them.
+              These are judgement calls, so nothing here changes unless you ask. For a sentence with a past year you can fact check it against reliable sources, add a note, and ask for a reworded sentence to accept or ignore. Otherwise edit the post in Shopify.
             </s-text>
             {data.notes.map((n) => (
               <div key={n.id}>
                 <s-text color="subdued">{n.where}</s-text>
                 <div>“{n.context}”</div>
                 <s-text>{n.message}</s-text>
+                {n.sentence ? (
+                  <div style={{ marginTop: 8 }}>
+                    <SentenceCheck
+                      note={n}
+                      updatedAt={post.updatedAt}
+                      searchOn={data.searchOn}
+                      proposal={rewrites[n.sentence.id]}
+                      decision={decision[n.sentence.id]}
+                      onProposal={(p) => setRewrites((r) => ({ ...r, [p.id]: p }))}
+                      onDecide={(id, d) => set([id], d)}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))}
           </s-stack>
