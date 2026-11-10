@@ -10,6 +10,7 @@ import {
   findRepeats,
   genericClosing,
   removeRepeats,
+  removeSections,
   repairLink,
   runChecks,
   splitSentences,
@@ -116,7 +117,7 @@ export async function writeArticle(
   if (runChecks(article).words < 500) {
     await progress("Developing the article further");
     const more = await call<Partial<Article>>(
-      "You expand an article that is slightly under 500 words in its tldr, body and FAQ. Return the SAME JSON object with the same keys, rewritten to reach at least 540 words in total across tldr, body_markdown and faq. Develop facts already present in PRODUCT DATA and MERCHANT FACTS more fully: add a short section, explain how a supplied fact helps the reader, or give fuller FAQ answers. NEVER pad, repeat yourself, or add any claim, number, benefit or suitability statement that is not in the facts. Anything under UNKNOWN TO THE MERCHANT must not appear anywhere, including email_body and social_post. Keep every {{PRODUCT_URL...}} link and {{ARTICLE_URL}} exactly as written, keep the voice, and keep the email and social copy to supplied facts only.",
+      "You expand an article that is slightly under 500 words in its tldr, body and FAQ. Return the SAME JSON object with the same keys, rewritten to reach at least 540 words in total across tldr, body_markdown and faq. Develop facts already present in PRODUCT DATA and MERCHANT FACTS more fully: add a short section, explain how a supplied fact helps the reader, or give fuller FAQ answers. NEVER pad, repeat yourself, or add any claim, number, benefit or suitability statement that is not in the facts. Do NOT add a section or FAQ whose heading or question the facts cannot answer with a specific fact; if you cannot reach 540 words without padding, return the article unchanged. Anything under UNKNOWN TO THE MERCHANT must not appear anywhere, including email_body and social_post. Keep every {{PRODUCT_URL...}} link and {{ARTICLE_URL}} exactly as written, keep the voice, and keep the email and social copy to supplied facts only.",
       `VOICE GUIDE\n${voiceGuide(settings)}\n\n${facts}\n\nARTICLE\n${JSON.stringify(article)}`,
       0.4,
     );
@@ -128,6 +129,27 @@ export async function writeArticle(
       article.body_markdown = cleanStructure(removeRepeats(article.body_markdown));
       if (runChecks(article).words < runChecks(keep).words) Object.assign(article, keep);
     }
+  }
+
+  // Padding check: drop sections and FAQ items that dodge their own question or only repeat what was already said.
+  await progress("Trimming anything that doesn't earn its place");
+  try {
+    const review = await call<{ remove_sections?: { heading?: string }[]; remove_faq?: { q?: string }[] }>(
+      'You review a draft article for padding. Return ONLY JSON {"remove_sections":[{"heading":"","reason":""}],"remove_faq":[{"q":"","reason":""}]}. Remove a section or FAQ item ONLY when (1) its heading or question is not actually answered by the text beneath it (the text is a vague sentence that sidesteps the question, for example asked whether something is needed it answers with something unrelated), or (2) everything it says already appears earlier in the article in the same or nearly the same words. Do NOT remove one whose answer states a clear fact, even a short one, or a yes/no answer that follows from a fact (for example "Can it go in a tumble dryer?" answered "No, it should be hang dried"). Copy headings and questions exactly as written. If nothing needs removing return empty arrays.',
+      `ARTICLE BODY\n${article.body_markdown}\n\nFAQ\n${JSON.stringify(article.faq)}`,
+      0,
+    );
+    const drop = (review?.remove_faq ?? []).map((x) => (x.q ?? "").trim().toLowerCase()).filter(Boolean);
+    const trimmedFaq = article.faq.filter((f) => !drop.includes(f.q.trim().toLowerCase()));
+    if (trimmedFaq.length >= 1 || !article.faq.length) article.faq = trimmedFaq;
+    const heads = (review?.remove_sections ?? []).map((x) => x.heading ?? "").filter(Boolean);
+    if (heads.length) {
+      const total = (article.body_markdown.match(/^## /gm) || []).length;
+      const cut = removeSections(article.body_markdown, heads.slice(0, Math.max(1, Math.floor(total / 3))));
+      if (cut.removed.length) article.body_markdown = cleanStructure(cut.md);
+    }
+  } catch (e) {
+    console.error("Padding review failed", e);
   }
 
   // A vague closing ("view it on our store to see if it fits your needs") gets one targeted rewrite from the facts.

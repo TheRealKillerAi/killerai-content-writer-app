@@ -77,7 +77,7 @@ export function runChecks(a: Article) {
     .filter((x) => x.words > 0 && x.words < 8)
     .forEach((x) => issues.push(`Thin section "${x.title}" (${x.words} words): check it still answers its heading`));
   if (/^\s*[-*]\s*(\*\*\s*\*\*)?\s*$/m.test(a.body_markdown)) issues.push("An empty bullet");
-  if (a.faq.length < 3) issues.push(`Only ${a.faq.length} FAQ items`);
+  if (a.faq.length < 2) issues.push(`Only ${a.faq.length} FAQ item${a.faq.length === 1 ? "" : "s"}`);
   if (LEAKS.test(all)) issues.push(`Leaked wording: "${all.match(LEAKS)![0]}"`);
   const stray = PLACEHOLDERS.find(([re]) => re.test(all));
   if (stray) issues.push(`Contains ${stray[1]}`);
@@ -275,4 +275,37 @@ export function removeRepeats(md: string) {
     if (words >= 6) out.push(prefix + text);
   }
   return out.join("\n");
+}
+
+/** The body split at its H2 headings: text before the first heading, then each section with its heading line. */
+export function splitSections(md: string): { heading: string | null; text: string }[] {
+  const out: { heading: string | null; text: string }[] = [];
+  let cur: { heading: string | null; lines: string[] } = { heading: null, lines: [] };
+  const flush = () => out.push({ heading: cur.heading, text: cur.lines.join("\n") });
+  for (const line of md.split("\n")) {
+    if (/^## /.test(line)) {
+      flush();
+      cur = { heading: line.replace(/^##\s*/, "").trim(), lines: [line] };
+    } else cur.lines.push(line);
+  }
+  flush();
+  return out.filter((s) => s.heading !== null || s.text.trim());
+}
+
+/** Removes the named H2 sections. Never the first section, the closing section, or one that holds a product link. */
+export function removeSections(md: string, headings: string[]): { md: string; removed: string[] } {
+  const wanted = new Set(headings.map((h) => norm(h).join(" ")));
+  const parts = splitSections(md);
+  const lastH = parts.map((p) => p.heading).lastIndexOf(parts.filter((p) => p.heading).pop()?.heading ?? null);
+  const removed: string[] = [];
+  const kept = parts.filter((p, i) => {
+    if (!p.heading || i === lastH || i === parts.findIndex((x) => x.heading)) return true;
+    if (p.text.includes("{{PRODUCT_URL")) return true;
+    if (wanted.has(norm(p.heading).join(" "))) {
+      removed.push(p.heading);
+      return false;
+    }
+    return true;
+  });
+  return { md: kept.map((p) => p.text).join("\n").replace(/\n{3,}/g, "\n\n").trim(), removed };
 }
