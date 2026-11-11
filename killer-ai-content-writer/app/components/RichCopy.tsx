@@ -1,3 +1,4 @@
+import { safeHtml } from "../lib/safeHtml";
 import { useEffect, useRef } from "react";
 import { linkedHtml } from "../lib/articleHtml";
 
@@ -44,7 +45,7 @@ export function RichCopy({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // Set once on mount (the parent remounts us when the link address changes) so typing never loses the cursor.
-    if (ref.current) ref.current.innerHTML = linkedHtml(value);
+    if (ref.current) ref.current.innerHTML = safeHtml(linkedHtml(value));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

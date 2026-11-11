@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
+import { cronAuthorized } from "../lib/cronAuth.server";
 import { unauthenticated } from "../shopify.server";
 import { effectiveZone, fillChain, runInBackground, shopInfo } from "../lib/schedule.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
@@ -6,9 +7,7 @@ import type { Admin } from "../lib/products.server";
 
 // Carries on a long topic search in a fresh run. Only called by the app itself, with the shared secret.
 export const action = async ({ request }: ActionFunctionArgs) => {
-  // eslint-disable-next-line no-undef
-  const secret = process.env.CRON_SECRET;
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) return new Response("Unauthorized", { status: 401 });
+  if (!cronAuthorized(request)) return new Response("Unauthorized", { status: 401 });
   const body = (await request.json().catch(() => ({}))) as { shop?: string; chain?: number; force?: boolean; write?: boolean };
   if (!body.shop || !/^[a-z0-9-]+\.myshopify\.com$/.test(body.shop)) return new Response("Bad request", { status: 400 });
   const shop = body.shop;

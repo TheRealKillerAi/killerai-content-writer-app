@@ -1,3 +1,4 @@
+import { safeHtml } from "../lib/safeHtml";
 import { useEffect, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { redirect, useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
@@ -517,7 +518,7 @@ function ArticleReview({
               <p style={{ margin: "0 0 24px", color: "#6a6a6a", fontSize: 14 }}>
                 {author ? `By ${author} · ` : ""}{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
               </p>
-              <div dangerouslySetInnerHTML={{ __html: buildBodyHtml(draft, handle, toc, tldrStyle) }} />
+              <div dangerouslySetInnerHTML={{ __html: safeHtml(buildBodyHtml(draft, handle, toc, tldrStyle)) }} />
             </div>
           </div>
         </s-stack>

@@ -1,3 +1,4 @@
+import { safeHtml } from "../lib/safeHtml";
 import { useEffect, useRef, useState } from "react";
 import { useFilePicker } from "./useFilePicker";
 
@@ -106,14 +107,14 @@ export function BodyEditor({
   const [code, setCode] = useState(html);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (mode === "visual" && ref.current) ref.current.innerHTML = html;
+    if (mode === "visual" && ref.current) ref.current.innerHTML = safeHtml(html);
     // Set once per mode switch so typing never loses the cursor.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   const emitHtml = (h: string) => {
     const tmp = document.createElement("div");
-    tmp.innerHTML = h;
+    tmp.innerHTML = safeHtml(h);
     onChange(h, htmlToMarkdown(tmp, productUrl));
   };
   const emitVisual = () => ref.current && emitHtml(ref.current.innerHTML);
