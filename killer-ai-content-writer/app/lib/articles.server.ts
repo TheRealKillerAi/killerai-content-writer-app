@@ -8,7 +8,7 @@ import { loadLinkTargets } from "./links.server";
 import type { Admin } from "./products.server";
 import type { AppSettings } from "./settings";
 import type { Covered } from "./keywords";
-import { articleText, cleanStructure, findRepeats, removeRepeats, runChecks } from "./pipeline/checks";
+import { articleText, cleanStructure, findRepeats, removeRepeats, removeSentence, runChecks } from "./pipeline/checks";
 import type { Angle, Article, ArticleResult, AuditProblem, ReviewedSentence, SentInfo, MerchantFacts, ProductFacts } from "./pipeline/types";
 
 /** A sentence in lower case without punctuation, so the same sentence is recognised in a later article. */
@@ -155,6 +155,26 @@ export async function reviewSentence(shop: string, id: string, text: string, dec
   await db.sentenceReview.create({
     data: { shop, articleId: id, sentence: found.text, key: reviewKey(found.text), problem: found.problem, decision, decidedBy: by },
   });
+  await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
+  return next;
+}
+
+/** The merchant removes a flagged sentence from the article. Returns null if the sentence can't be found. */
+export async function removeFlaggedSentence(shop: string, id: string, text: string, by: string) {
+  const row = await db.article.findFirst({ where: { id, shop } });
+  if (!row?.result) return null;
+  const prev = JSON.parse(row.result) as ArticleResult;
+  const found = prev.remaining.find((p) => p.text === text);
+  if (!found) return prev;
+  const article = removeSentence(prev.article, found.text);
+  if (!article) return null;
+  const saved = await saveEdits(shop, id, article);
+  if (!saved) return null;
+  // Whatever else was flagged about it goes too; keep the record of what was removed.
+  const remaining = saved.remaining.filter((p) => p !== found && p.text !== found.text);
+  const reviewed: ReviewedSentence[] = [...(saved.reviewed ?? []), { text: found.text, problem: found.problem, decision: "removed", by, at: new Date().toISOString() }];
+  const next: ArticleResult = { ...saved, remaining, reviewed, status: statusOf(remaining, saved.issues) };
+  await db.sentenceReview.create({ data: { shop, articleId: id, sentence: found.text, key: reviewKey(found.text), problem: found.problem, decision: "removed", decidedBy: by } });
   await db.article.update({ where: { id }, data: { result: JSON.stringify(next) } });
   return next;
 }

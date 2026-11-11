@@ -4,7 +4,7 @@ import { redirect, useFetcher, useLoaderData, useRevalidator, useRouteError } fr
 import { saveChosen } from "../lib/facts.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
-import { dedupeArticle, getArticle, reviewSentence, saveEdits, setSent } from "../lib/articles.server";
+import { dedupeArticle, getArticle, removeFlaggedSentence, reviewSentence, saveEdits, setSent } from "../lib/articles.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import { pickedImage } from "../lib/files.server";
@@ -128,8 +128,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     throw redirect(`${ids ? `/app/guide/${ids.join("-")}` : `/app/product/${art.productId}`}?refine=1`);
   }
   if (intent === "review") {
-    const decision = form.get("decision") === "accepted" ? "accepted" : "ignored";
     const by = (session as { email?: string | null }).email || session.shop;
+    if (form.get("decision") === "removed") {
+      const next = await removeFlaggedSentence(session.shop, params.id!, String(form.get("text") ?? ""), by);
+      return next ? { saved: true } : { saved: false, error: "We couldn't find that sentence to remove it. Please remove it in the editor below." };
+    }
+    const decision = form.get("decision") === "accepted" ? "accepted" : "ignored";
     const next = await reviewSentence(session.shop, params.id!, String(form.get("text") ?? ""), decision, by);
     return { saved: !!next };
   }
@@ -292,7 +296,7 @@ function ArticleReview({
           <s-stack direction="block" gap="base">
             {r.remaining.length ? (
               <s-text color="subdued">
-                If one of these is actually true for your product, choose "This is correct" and it won't be flagged again. You're confirming it's true. Choose "Ignore" to leave it as it is.
+                If one of these is actually true for your product, choose "This is correct" and it won't be flagged again. You're confirming it's true. Choose "Remove sentence" to take it out of the article. "Ignore" keeps it in the article exactly as it is.
                 {dirty ? " Save your changes first to use these buttons." : ""}
               </s-text>
             ) : null}
@@ -325,6 +329,14 @@ function ArticleReview({
                   >
                     Ignore
                   </s-button>
+                  <s-button
+                    variant="tertiary"
+                    tone="critical"
+                    {...(dirty || reviewF.state !== "idle" ? { disabled: true } : {})}
+                    onClick={() => reviewF.submit({ intent: "review", decision: "removed", text: p.text }, { method: "POST" })}
+                  >
+                    Remove sentence
+                  </s-button>
                 </s-stack>
               </s-stack>
             ))}
@@ -336,7 +348,7 @@ function ArticleReview({
                 <s-text color="subdued"><strong>Checked by you</strong></s-text>
                 {r.reviewed.map((v, n) => (
                   <s-paragraph key={"v" + n} color="subdued">
-                    {v.decision === "accepted" ? "Confirmed correct" : "Ignored"} {v.remembered ? "from an earlier decision" : `by ${v.by} on ${new Date(v.at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`}: "{v.text.replace(/\*\*/g, "").slice(0, 120)}"
+                    {v.decision === "accepted" ? "Confirmed correct" : v.decision === "removed" ? "Removed" : "Ignored (kept in the article)"} {v.remembered ? "from an earlier decision" : `by ${v.by} on ${new Date(v.at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}`}: "{v.text.replace(/\*\*/g, "").slice(0, 120)}"
                   </s-paragraph>
                 ))}
               </s-stack>
@@ -550,6 +562,19 @@ function ArticleReview({
                 Update in Shopify with my latest edits
               </s-button>
             </s-stack>
+            {!sent.published ? (
+              <s-button
+                variant="primary"
+                {...(sending ? { loading: true } : {})}
+                {...(dirty ? { disabled: true } : {})}
+                onClick={() => {
+                  if (!window.confirm("Publish this article to your store's blog now? Anyone will be able to read it.")) return;
+                  sendF.submit({ intent: "update", mode: "live" }, { method: "POST" });
+                }}
+              >
+                Publish now
+              </s-button>
+            ) : null}
             {dirty ? <s-text color="subdued">Save your changes first, then update Shopify.</s-text> : null}
           </s-stack>
         ) : (

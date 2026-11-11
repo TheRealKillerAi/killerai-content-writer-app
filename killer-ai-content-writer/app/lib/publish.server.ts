@@ -74,7 +74,7 @@ export async function sendToShopify(
         mutation Update($id: ID!, $article: ArticleUpdateInput!) {
           articleUpdate(id: $id, article: $article) { article { ${ARTICLE_FIELDS} } userErrors { field message } }
         }`,
-        { id: existing.id, article: { ...base, ...(chosenBlog ? { blogId: chosenBlog } : {}), redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
+        { id: existing.id, article: { ...base, ...(chosenBlog ? { blogId: chosenBlog } : {}), ...(publish && !existing.published ? { isPublished: true } : {}), redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
       );
       return d.articleUpdate;
     }

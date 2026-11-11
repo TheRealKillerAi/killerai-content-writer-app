@@ -309,3 +309,40 @@ export function removeSections(md: string, headings: string[]): { md: string; re
   });
   return { md: kept.map((p) => p.text).join("\n").replace(/\n{3,}/g, "\n\n").trim(), removed };
 }
+
+/** Cuts the first match of `plain` out of `text`, ignoring `**` markers, and the space after it. Returns null if it isn't there. */
+function cutPlain(text: string, plain: string): string | null {
+  let stripped = "";
+  const map: number[] = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "*" && text[i + 1] === "*") {
+      i++;
+      continue;
+    }
+    stripped += text[i];
+    map.push(i);
+  }
+  const at = stripped.indexOf(plain);
+  if (at < 0) return null;
+  const from = map[at];
+  let to = map[at + plain.length - 1] + 1;
+  while (text.slice(to, to + 2) === "**") to += 2;
+  if (text[to] === " ") to++;
+  return text.slice(0, from) + text.slice(to);
+}
+
+/** Removes a flagged sentence from the article body (and from the edited HTML, if there is one). Null when it can't be found, so nothing is guessed. */
+export function removeSentence(a: Article, flagged: string): Article | null {
+  const plain = flagged.replace(/\*\*/g, "").replace(/^[-*+\d.\s]+/, "").trim();
+  if (plain.length < 12) return null;
+  const md = cutPlain(a.body_markdown, plain);
+  if (md === null) return null;
+  const next: Article = { ...a, body_markdown: cleanStructure(md) };
+  if (a.body_html !== undefined) {
+    // Match the same words even when tags (bold, links) sit between them.
+    const words = plain.split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(words.join("(?:\\s|&nbsp;|<[^>]*>)+") + "(?:\\s|&nbsp;)?");
+    next.body_html = re.test(a.body_html) ? a.body_html.replace(re, "").replace(/<(p|li)[^>]*>\s*<\/\1>\s*/gi, "") : undefined;
+  }
+  return next;
+}

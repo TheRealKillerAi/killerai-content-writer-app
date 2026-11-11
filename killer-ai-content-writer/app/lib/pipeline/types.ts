@@ -78,7 +78,7 @@ export interface ArticleResult {
 export interface ReviewedSentence {
   text: string;
   problem: string;
-  decision: "accepted" | "ignored";
+  decision: "accepted" | "ignored" | "removed";
   by: string;
   at: string;
   /** True when an earlier accepted decision was reused instead of asking again. */
