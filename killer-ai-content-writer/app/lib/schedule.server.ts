@@ -287,6 +287,10 @@ const scheduleLink = (shop: string) =>
   // eslint-disable-next-line no-undef
   `https://admin.shopify.com/store/${shop.replace(".myshopify.com", "")}/apps/${process.env.SHOPIFY_API_KEY}/app/schedule`;
 
+const articleLink = (shop: string, id: string) =>
+  // eslint-disable-next-line no-undef
+  `https://admin.shopify.com/store/${shop.replace(".myshopify.com", "")}/apps/${process.env.SHOPIFY_API_KEY}/app/article/${id}`;
+
 const when = (d: Date, tz: string) =>
   new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(d);
 
@@ -323,13 +327,13 @@ async function sendDigest(shop: string, admin: Admin, settings: AppSettings, tz:
   return { status: ok ? "sent" : "failed", count: fresh.length, to };
 }
 
-async function sendProblem(shop: string, admin: Admin, settings: AppSettings, title: string, reason: string) {
+async function sendProblem(shop: string, admin: Admin, settings: AppSettings, title: string, reason: string, articleId?: string | null) {
   if (settings.notifyFailure !== "tell") return;
   await sendEmail({
     to: await recipient(settings, admin),
     subject: `Needs a look: ${title}`,
     html: wrap(
-      `<h2 style="margin:0 0 8px">One of your scheduled articles needs a look</h2><p><strong>${esc(title)}</strong></p><p>${esc(reason)}</p><p>The schedule carries on with your next topic. <a href="${scheduleLink(shop)}">Open your schedule</a></p><p style="color:#6d7175;font-size:13px">If you'd rather not hear about these, choose "skip it and move on" in Settings under Notifications.</p>`,
+      `<h2 style="margin:0 0 8px">One of your scheduled articles needs a look</h2><p><strong>${esc(title)}</strong></p><p>${esc(reason)}</p>${articleId ? `<p><a href="${articleLink(shop, articleId)}" style="display:inline-block;background:#303030;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Open the article</a></p>` : ""}<p>The schedule carries on with your next topic. <a href="${scheduleLink(shop)}">Open your schedule</a></p><p style="color:#6d7175;font-size:13px">If you'd rather not hear about these, choose "skip it and move on" in Settings under Notifications.</p>`,
     ),
   });
 }
@@ -373,7 +377,7 @@ async function processPost(shop: string, admin: Admin, baseSettings: AppSettings
     const art = await getArticle(shop, articleId);
     if (!art?.result || art.state !== "done") {
       await db.scheduledPost.update({ where: { id }, data: { status: "failed", note: art?.error ?? "The article couldn't be written." } });
-      await sendProblem(shop, admin, settings, title, art?.error ?? "The article couldn't be written this time.");
+      await sendProblem(shop, admin, settings, title, art?.error ?? "The article couldn't be written this time.", articleId);
       return;
     }
     let result = art.result;
@@ -395,7 +399,7 @@ async function processPost(shop: string, admin: Admin, baseSettings: AppSettings
       where: { id },
       data: { status: "sent", note: held ? "Saved as a draft because it needs a quick review before it goes live." : null },
     });
-    if (held) await sendProblem(shop, admin, settings, title, "It's been saved as a draft in your blog because the checks want you to review it before it goes live.");
+    if (held) await sendProblem(shop, admin, settings, title, "It's been saved as a draft in your blog because the checks want you to review it before it goes live.", articleId);
   } catch (e) {
     console.error("Scheduled article failed", e);
     const reason = e instanceof Error && e.message ? e.message : "Something went wrong.";

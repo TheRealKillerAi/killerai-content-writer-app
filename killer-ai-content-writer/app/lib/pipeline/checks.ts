@@ -88,7 +88,15 @@ export function runChecks(a: Article) {
 
 // Evidence verification: the model must quote its evidence; code confirms the quote really exists.
 const flat = (t: string) =>
-  t.replace(/<[^>]+>/g, " ").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  t
+    .replace(/<[^>]+>/g, " ")
+    .toLowerCase()
+    .replace(/(\d)\s*[x×]\s*(?=\d)/g, "$1 ") // 20 x 28, 20x28 and 20 × 28 are the same size
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/(\d)([a-z])/g, "$1 $2") // 28cm and 28 cm are the same
+    .replace(/\s+/g, " ")
+    .trim();
+const NUMWORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
 const STOP = new Set(
   "with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using".split(
     " ",
@@ -151,10 +159,25 @@ export function verifyLabels(
     const ev = content(q + (fromAnswer ? " " + flat(fromAnswer[0]) : "")).map((w) => w.slice(0, 4));
     const sw = content(flat(s.text));
     const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
+    // Sentences with numbers are judged on the numbers: every figure must be in the evidence, and a count
+    // ("three sizes") must match the number of items quoted. Then the surrounding wording matters less.
+    const rawEv = ([] as unknown[]).concat(c.evidence || []).map(String);
+    const hayQ = " " + q + " ";
+    const sentFlat = flat(s.text);
+    const sentNums = (s.text.replace(/(\d)\s*[x×]\s*(?=\d)/g, "$1 ").match(/\d+(?:\.\d+)?(?:\s*[a-zA-Z]{1,3}\b)?/g) || []).map((n) => flat(n));
+    const words = sentFlat.split(" ").filter((w) => w in NUMWORDS);
+    const items = rawEv.length > 1 ? rawEv.length : (rawEv[0] || "").split(/[,;|\n]|\band\b|\/(?=\s)/i).filter((x) => x.trim()).length;
+    const numsOk =
+      sentNums.every((n) => hayQ.includes(" " + n + " ") || hayQ.includes(" " + n.replace(/ [a-z]+$/, "") + " ")) &&
+      words.every((w) => hayQ.includes(" " + NUMWORDS[w] + " ") || hayQ.includes(" " + w + " ") || items >= NUMWORDS[w]);
+    // A figure counts as backed when its number and unit appear together in the evidence (e.g. "0.02 kg").
+    const strongNums = sentNums.filter((n) => n.includes(" ")).every((n) => hayQ.includes(" " + n + " "));
+    const hasNums = sentNums.length + words.length > 0;
+    const numsStrong = hasNums && numsOk && (words.length ? items >= Math.max(...words.map((w) => NUMWORDS[w])) : true) && strongNums;
     const found =
       quotes.length > 0 &&
       quotes.every((x) => (x.split(" ").length >= 3 || (fromAnswer && x.length >= 2)) && hay.includes(" " + x + " "));
-    if (!found || overlap < 0.4)
+    if (!found || (hasNums && !numsOk) || (!numsStrong && overlap < (hasNums ? 0.15 : 0.4)))
       unsupported.push({
         text: s.text,
         problem: !quotes.length
