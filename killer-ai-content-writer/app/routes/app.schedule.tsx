@@ -24,6 +24,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     db.scheduledPost.findMany({ where: { shop: session.shop, publishAt: { gte: since } }, orderBy: { publishAt: "asc" }, take: 60 }),
     listAuthors(session.shop),
   ]);
+  // What Shopify actually has for each article already sent: live (or timed to go live) or still a draft.
+  const ids = rows.map((r: { articleId: string | null }) => r.articleId).filter((x: string | null): x is string => !!x);
+  const arts = ids.length ? await db.article.findMany({ where: { shop: session.shop, id: { in: ids } }, select: { id: true, result: true } }) : [];
+  const liveIds = new Set<string>();
+  for (const a of arts as { id: string; result: string | null }[]) {
+    try {
+      if ((JSON.parse(a.result ?? "{}") as { sent?: { published?: boolean } }).sent?.published) liveIds.add(a.id);
+    } catch {
+      /* unreadable result: treat as a draft */
+    }
+  }
+  const nowMs = Date.now();
   const names = new Map(authors.map((a: { id: string; name: string }) => [a.id, a.name]));
   const status = await db.scheduleStatus.findUnique({ where: { shop: session.shop } });
   return {
@@ -47,6 +59,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       status: r.status,
       note: r.note,
       articleId: r.articleId,
+      phase:
+        r.status === "sent"
+          ? r.articleId && liveIds.has(r.articleId)
+            ? r.publishAt.getTime() > nowMs
+              ? "timed"
+              : "published"
+            : "draft"
+          : r.status,
       author: (names.get(r.authorId) as string | undefined) ?? settings.businessName,
     })),
   };
@@ -111,7 +131,9 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
 const STATUS: Record<string, { label: string; tone: "info" | "success" | "critical" | "warning" | "neutral" }> = {
   scheduled: { label: "Topic scheduled", tone: "neutral" },
   writing: { label: "Writing now", tone: "info" },
-  sent: { label: "Ready in Shopify", tone: "success" },
+  timed: { label: "Set to publish", tone: "info" },
+  published: { label: "Published", tone: "success" },
+  draft: { label: "Draft: needs your review", tone: "warning" },
   failed: { label: "Needs a look", tone: "critical" },
 };
 
@@ -135,12 +157,12 @@ function IconBtn({ label, onClick, path }: { label: string; onClick: () => void;
   );
 }
 
-function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader>>["posts"][number]; tz: string; live: boolean }) {
+function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["posts"][number]; tz: string }) {
   const f = useFetcher<Result>();
   const pick = useFilePicker((img) => f.submit({ intent: "set-image", id: p.id, url: img.url, alt: img.alt || p.productTitle }, { method: "POST" }));
   const editable = p.status === "scheduled";
   const when = new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(p.publishAt));
-  const st = STATUS[p.status] ?? STATUS.scheduled;
+  const st = STATUS[p.phase] ?? STATUS.scheduled;
   return (
     <s-table-row>
       <s-table-cell>{when}</s-table-cell>
@@ -181,15 +203,16 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="block" gap="none">
-          <s-badge tone={st.tone}>{p.status === "sent" ? (live ? "Scheduled in Shopify" : "Draft in Shopify") : st.label}</s-badge>
-          {p.note ? <s-text color="subdued">{p.note}</s-text> : null}
+          <s-badge tone={st.tone}>{st.label}</s-badge>
+          {p.note && p.phase !== "published" && p.phase !== "timed" ? <s-text color="subdued">{p.note}</s-text> : null}
         </s-stack>
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="inline" gap="none">
           {p.status === "scheduled" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "write-now", id: p.id }, { method: "POST" })}>Write now</s-button> : null}
           {p.status === "failed" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "retry", id: p.id }, { method: "POST" })}>Try again</s-button> : null}
-          {p.status !== "writing" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
+          {p.phase === "draft" && p.articleId ? <s-button variant="tertiary" href={`/app/article/${p.articleId}`}>Review</s-button> : null}
+          {p.status !== "writing" && p.phase !== "published" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
         </s-stack>
       </s-table-cell>
     </s-table-row>
@@ -197,7 +220,9 @@ function Row({ p, tz, live }: { p: ReturnType<typeof useLoaderData<typeof loader
 }
 
 export default function Schedule() {
-  const { enabled, publishMode, tz, posts, days, time, usage, planDays, note, working } = useLoaderData<typeof loader>();
+  const { enabled, publishMode, tz, posts: all, days, time, usage, planDays, note, working } = useLoaderData<typeof loader>();
+  const posts = all.filter((p) => p.phase !== "published");
+  const posted = all.filter((p) => p.phase === "published").reverse();
   const fill = useFetcher<Result>();
   const rv = useRevalidator();
   const [waitUntilMs, setWaitUntilMs] = useState(0);
@@ -268,12 +293,27 @@ export default function Schedule() {
             </s-table-header-row>
             <s-table-body>
               {posts.map((p) => (
-                <Row key={p.id} p={p} tz={tz} live={publishMode === "live"} />
+                <Row key={p.id} p={p} tz={tz} />
               ))}
             </s-table-body>
           </s-table>
         )}
       </s-section>
+      {posted.length ? (
+        <s-section heading="Published in the last 7 days">
+          <s-stack direction="block" gap="small-200">
+            {posted.map((p) => (
+              <s-stack key={p.id} direction="inline" gap="base" alignItems="center">
+                <s-badge tone="success">Published</s-badge>
+                <s-text color="subdued">
+                  {new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "short", day: "numeric", month: "short" }).format(new Date(p.publishAt))}
+                </s-text>
+                {p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.title}</s-link> : <s-text>{p.title}</s-text>}
+              </s-stack>
+            ))}
+          </s-stack>
+        </s-section>
+      ) : null}
     </s-page>
   );
 }
