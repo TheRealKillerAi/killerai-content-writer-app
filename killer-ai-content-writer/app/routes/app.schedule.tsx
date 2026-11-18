@@ -45,6 +45,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const names = new Map(authors.map((a: { id: string; name: string }) => [a.id, a.name]));
   const status = await db.scheduleStatus.findUnique({ where: { shop: session.shop } });
   return {
+    // eslint-disable-next-line no-undef
+    appHandle: process.env.SHOPIFY_APP_HANDLE ?? "",
     note: status?.note ?? "",
     working: await isWorking(session.shop),
     usage: await monthlyUsage(session.shop),
@@ -153,20 +155,34 @@ const ICONS = {
   trash: "M8 2h4l1 1h3v2H4V3h3l1-1Zm-3 5h10l-.7 9a1 1 0 0 1-1 1H6.7a1 1 0 0 1-1-1L5 7Z",
 };
 
-// Opens a page inside the app without reloading it, so it can never drop out of the Shopify admin frame.
-function AppLink({ to, children }: { to: string; children: React.ReactNode }) {
+// In-app link: a normal click navigates inside the frame; a new tab, copy-link or Ctrl-click gets the full
+// Shopify admin address (the raw app address has no Shopify login with it, so it would open blank).
+function useAppHref(path: string) {
+  const [href, setHref] = useState(path);
+  const handle = useLoaderData<typeof loader>().appHandle;
+  useEffect(() => {
+    try {
+      const host = new URLSearchParams(window.location.search).get("host");
+      if (host && handle) setHref(`https://${atob(host.replace(/-/g, "+").replace(/_/g, "/"))}/apps/${handle}${path.replace(/^\/app/, "/app")}`);
+    } catch {
+      /* keep the relative address */
+    }
+  }, [handle, path]);
+  return href;
+}
+
+function AppLink({ to, children, button }: { to: string; children: React.ReactNode; button?: boolean }) {
   const navigate = useNavigate();
-  return (
-    <s-link
-      href={to}
-      onClick={(e: { preventDefault: () => void; metaKey?: boolean; ctrlKey?: boolean }) => {
-        if (e.metaKey || e.ctrlKey) return;
-        e.preventDefault();
-        navigate(to);
-      }}
-    >
-      {children}
-    </s-link>
+  const href = useAppHref(to);
+  const go = (e: { preventDefault: () => void; metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean }) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    navigate(to);
+  };
+  return button ? (
+    <s-button variant="tertiary" href={href} onClick={go}>{children}</s-button>
+  ) : (
+    <s-link href={href} onClick={go}>{children}</s-link>
   );
 }
 
@@ -239,7 +255,7 @@ function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["po
         <s-stack direction="inline" gap="none">
           {p.status === "scheduled" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "write-now", id: p.id }, { method: "POST" })}>Write now</s-button> : null}
           {p.status === "failed" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "retry", id: p.id }, { method: "POST" })}>Try again</s-button> : null}
-          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <AppLink to={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</AppLink> : null}
+          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <AppLink button to={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</AppLink> : null}
           {p.status !== "writing" && p.phase !== "published" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
         </s-stack>
       </s-table-cell>
