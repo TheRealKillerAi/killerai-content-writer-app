@@ -99,7 +99,7 @@ const flat = (t: string) =>
 const COLOURS = new Set("red blue green yellow purple pink black white grey gray brown beige navy teal turquoise silver".split(" "));
 const NUMWORDS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
 const STOP = new Set(
-  "with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using".split(
+  "with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using answer simpler looks come comes makes make suits help helps need needs want wants simple easy easier practical good great keep stay every whether decide choose right here heres whats things thing way ways".split(
     " ",
   ),
 );
@@ -168,12 +168,14 @@ export function verifyLabels(
 ): AuditReport {
   void answers;
   const hay = " " + flat(factsText) + " ";
-  const stem = (w: string) => w.slice(0, 5);
-  const hayStems = new Set(hay.split(" ").filter(Boolean).map(stem));
+  const hayWords = hay.split(" ").filter(Boolean);
+  const stems4 = new Set(hayWords.map((w) => w.slice(0, 4)));
+  const stems5 = new Set(hayWords.map((w) => w.slice(0, 5)));
   const byId = new Map((raw.labels || []).map((l) => [l.id, l]));
   const unsupported: AuditReport["unsupported"] = [];
   const missing: string[] = [];
-  const inHay = (w: string) => hayStems.has(stem(w));
+  const inHay = (w: string) => stems4.has(w.slice(0, 4));
+  const claimInHay = (w: string) => stems5.has(w.slice(0, 5));
   for (const s of sentences) {
     const c = byId.get(s.id);
     if (!c) {
@@ -212,7 +214,7 @@ export function verifyLabels(
     // 4. Guards: colour lists, safety/material claim words, and evidence that says the opposite.
     const sentColours = sentWords.filter((w) => COLOURS.has(w));
     const colourBad = new Set(sentColours).size >= 2 && sentColours.some((w) => !hay.includes(" " + w + " "));
-    const claimBad = sentWords.some((w) => CLAIM_WORDS.has(w) && !inHay(w));
+    const claimBad = sentWords.some((w) => CLAIM_WORDS.has(w) && !claimInHay(w));
     const evText = quotes.join(" ");
     const negBad = !!evText && NEG.test(evText) !== NEG.test(sentFlat);
 
