@@ -6,6 +6,7 @@ import { saveChosen } from "../lib/facts.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { dedupeArticle, getArticle, removeFlaggedSentence, reviewSentence, saveEdits, setSent } from "../lib/articles.server";
+import { autoPublishCleared } from "../lib/schedule.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
 import { PublishError, sendToShopify } from "../lib/publish.server";
 import { pickedImage } from "../lib/files.server";
@@ -132,10 +133,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const by = (session as { email?: string | null }).email || session.shop;
     if (form.get("decision") === "removed") {
       const next = await removeFlaggedSentence(session.shop, params.id!, String(form.get("text") ?? ""), by);
+      if (next) await autoPublishCleared(admin, session.shop, params.id!);
       return next ? { saved: true } : { saved: false, error: "We couldn't find that sentence to remove it. Please remove it in the editor below." };
     }
     const decision = form.get("decision") === "accepted" ? "accepted" : "ignored";
     const next = await reviewSentence(session.shop, params.id!, String(form.get("text") ?? ""), decision, by);
+    if (next) await autoPublishCleared(admin, session.shop, params.id!);
     return { saved: !!next };
   }
   if (form.get("intent") === "dedupe") {
@@ -144,6 +147,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
   const article = JSON.parse(String(form.get("article"))) as Article;
   const result = await saveEdits(session.shop, params.id!, article);
+  if (result) await autoPublishCleared(admin, session.shop, params.id!);
   return { saved: !!result };
 };
 

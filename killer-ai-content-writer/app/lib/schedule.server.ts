@@ -9,7 +9,7 @@ import { loadAngles, loadFacts, saveAngles } from "./facts.server";
 import { findCovered } from "./keywords";
 import { findAngles } from "./pipeline/angles.server";
 import { findGuideAngles } from "./pipeline/guide.server";
-import { guideKey, parseGuideKey } from "./guide";
+import { firstProductId, guideKey, parseGuideKey } from "./guide";
 import { sendToShopify } from "./publish.server";
 import { existingArticleTitles, getProduct, gql, listProducts, productImages, type Admin } from "./products.server";
 import { loadEffectiveSettings, validZone } from "./settings.server";
@@ -492,3 +492,36 @@ export async function runAllShops() {
 }
 
 export const runInBackground = (p: Promise<unknown>) => waitUntil(p.catch((e) => console.error("Background run failed", e)));
+
+
+/**
+ * When the merchant clears a scheduled article that was held for review, send it live without another click:
+ * at its scheduled time if that is still ahead (Shopify holds it until then), otherwise straight away.
+ * Only for scheduled articles, only when the store publishes automatically, and never throws.
+ */
+export async function autoPublishCleared(admin: Admin, shop: string, articleId: string): Promise<void> {
+  try {
+    const post = await db.scheduledPost.findFirst({ where: { shop, articleId, status: "sent" } });
+    if (!post) return;
+    const art = await getArticle(shop, articleId);
+    if (!art?.result || art.result.status !== "READY FOR MERCHANT APPROVAL" || !art.result.sent || art.result.sent.published) return;
+    const settings = await loadEffectiveSettings(admin, shop);
+    if (settings.publishMode !== "live") return;
+    const product = await getProduct(admin, `gid://shopify/Product/${firstProductId(art.productId)}`);
+    if (!product) return;
+    const { sent } = await sendToShopify(admin, {
+      article: art.result.article,
+      angle: art.angle,
+      productHandle: product.facts.handle,
+      settings,
+      shopName: settings.businessName,
+      publish: true,
+      existing: art.result.sent,
+      publishAt: post.publishAt.toISOString(),
+    });
+    await setSent(shop, articleId, sent);
+    await db.scheduledPost.update({ where: { id: post.id }, data: { note: null } });
+  } catch (e) {
+    console.error("Auto-publish of a cleared article failed", e);
+  }
+}
