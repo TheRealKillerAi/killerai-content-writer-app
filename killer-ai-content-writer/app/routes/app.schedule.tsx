@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ActionFunctionArgs, HeadersFunction, LoaderFunctionArgs } from "react-router";
-import { useFetcher, useLoaderData, useRevalidator, useRouteError } from "react-router";
+import { useFetcher, useLoaderData, useNavigate, useRevalidator, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { UsageMeter } from "../components/UsageMeter";
 import { monthlyUsage } from "../lib/usage.server";
@@ -29,9 +29,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const arts = ids.length ? await db.article.findMany({ where: { shop: session.shop, id: { in: ids } }, select: { id: true, result: true } }) : [];
   const liveIds = new Set<string>();
   const readyIds = new Set<string>();
+  const reasons = new Map<string, string>();
   for (const a of arts as { id: string; result: string | null }[]) {
     try {
-      const res = JSON.parse(a.result ?? "{}") as { sent?: { published?: boolean }; status?: string };
+      const res = JSON.parse(a.result ?? "{}") as { sent?: { published?: boolean }; status?: string; issues?: string[]; remaining?: unknown[] };
+      const why = [...(res.issues ?? []).slice(0, 2), ...(res.remaining?.length ? [`${res.remaining.length} sentence${res.remaining.length === 1 ? "" : "s"} to check`] : [])];
+      if (why.length) reasons.set(a.id, why.join(". "));
       if (res.sent?.published) liveIds.add(a.id);
       if (res.status === "READY FOR MERCHANT APPROVAL") readyIds.add(a.id);
     } catch {
@@ -72,6 +75,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
               ? "ready"
               : "draft"
           : r.status,
+      why: r.articleId ? reasons.get(r.articleId) ?? "" : "",
       author: (names.get(r.authorId) as string | undefined) ?? settings.businessName,
     })),
   };
@@ -149,6 +153,23 @@ const ICONS = {
   trash: "M8 2h4l1 1h3v2H4V3h3l1-1Zm-3 5h10l-.7 9a1 1 0 0 1-1 1H6.7a1 1 0 0 1-1-1L5 7Z",
 };
 
+// Opens a page inside the app without reloading it, so it can never drop out of the Shopify admin frame.
+function AppLink({ to, children }: { to: string; children: React.ReactNode }) {
+  const navigate = useNavigate();
+  return (
+    <s-link
+      href={to}
+      onClick={(e: { preventDefault: () => void; metaKey?: boolean; ctrlKey?: boolean }) => {
+        if (e.metaKey || e.ctrlKey) return;
+        e.preventDefault();
+        navigate(to);
+      }}
+    >
+      {children}
+    </s-link>
+  );
+}
+
 function IconBtn({ label, onClick, path }: { label: string; onClick: () => void; path: string }) {
   return (
     <button
@@ -203,22 +224,22 @@ function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["po
       </s-table-cell>
       <s-table-cell>
         <div style={{ minWidth: 220, maxWidth: 460, whiteSpace: "normal", overflowWrap: "anywhere" }}>
-          {p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.title}</s-link> : <s-text>{p.title}</s-text>}
+          {p.articleId ? <AppLink to={`/app/article/${p.articleId}`}>{p.title}</AppLink> : <s-text>{p.title}</s-text>}
           <div style={{ opacity: 0.7, fontSize: 13, marginTop: 2 }}>{p.productTitle} · by {p.author}</div>
         </div>
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="block" gap="none">
           <s-badge tone={st.tone}>{st.label}</s-badge>
-          {p.note && p.phase === "draft" ? <s-text color="subdued">{p.note}</s-text> : null}
-          {p.phase === "ready" ? <s-text color="subdued">Reviewed and clear. Open it and press Publish now when you're happy.</s-text> : null}
+          {p.phase === "draft" ? <div style={{ maxWidth: 300, whiteSpace: "normal", opacity: 0.75, fontSize: 13 }}>{p.why ? `To check: ${p.why}.` : p.note}</div> : null}
+          {p.phase === "ready" ? <div style={{ maxWidth: 300, whiteSpace: "normal", opacity: 0.75, fontSize: 13 }}>Reviewed and clear. Open it and press Publish now when you're happy.</div> : null}
         </s-stack>
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="inline" gap="none">
           {p.status === "scheduled" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "write-now", id: p.id }, { method: "POST" })}>Write now</s-button> : null}
           {p.status === "failed" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "retry", id: p.id }, { method: "POST" })}>Try again</s-button> : null}
-          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</s-link> : null}
+          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <AppLink to={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</AppLink> : null}
           {p.status !== "writing" && p.phase !== "published" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
         </s-stack>
       </s-table-cell>
@@ -315,7 +336,7 @@ export default function Schedule() {
                 <s-text color="subdued">
                   {new Intl.DateTimeFormat("en-AU", { timeZone: tz, weekday: "short", day: "numeric", month: "short" }).format(new Date(p.publishAt))}
                 </s-text>
-                {p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.title}</s-link> : <s-text>{p.title}</s-text>}
+                {p.articleId ? <AppLink to={`/app/article/${p.articleId}`}>{p.title}</AppLink> : <s-text>{p.title}</s-text>}
               </s-stack>
             ))}
           </s-stack>

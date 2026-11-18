@@ -399,7 +399,10 @@ async function processPost(shop: string, admin: Admin, baseSettings: AppSettings
       where: { id },
       data: { status: "sent", note: held ? "Saved as a draft because it needs a quick review before it goes live." : null },
     });
-    if (held) await sendProblem(shop, admin, settings, title, "It's been saved as a draft in your blog because the checks want you to review it before it goes live.", articleId);
+    if (held) {
+      const why = [...(result.issues ?? []).slice(0, 3), ...(result.remaining?.length ? [`${result.remaining.length} sentence${result.remaining.length === 1 ? "" : "s"} to check`] : [])];
+      await sendProblem(shop, admin, settings, title, `It's been saved as a draft in your blog because the checks want you to review it before it goes live.${why.length ? ` To check: ${why.join("; ")}.` : ""}`, articleId);
+    }
   } catch (e) {
     console.error("Scheduled article failed", e);
     const reason = e instanceof Error && e.message ? e.message : "Something went wrong.";
