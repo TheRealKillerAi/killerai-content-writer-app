@@ -175,8 +175,13 @@ function AppLink({ to, children, button }: { to: string; children: React.ReactNo
   const navigate = useNavigate();
   const href = useAppHref(to);
   const go = (e: { preventDefault: () => void; metaKey?: boolean; ctrlKey?: boolean; shiftKey?: boolean }) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();
+    // The Shopify frame turns every click into same-window navigation, so new tabs are opened here.
+    if (e.metaKey || e.ctrlKey || e.shiftKey) {
+      (e as unknown as { stopPropagation?: () => void }).stopPropagation?.();
+      window.open(href.startsWith("http") ? href : `${window.location.origin}${href}`, "_blank", "noopener");
+      return;
+    }
     navigate(to);
   };
   return button ? (
