@@ -240,6 +240,10 @@ export async function writeArticle(
     article.meta_description = t.meta_description || article.meta_description;
   }
 
+  // Last resort if the model still left these too long: cut at a sentence or word boundary.
+  article.title_tag = trimTo(article.title_tag, 60, false);
+  article.meta_description = trimTo(article.meta_description, 155, true);
+
   const checks = runChecks(article);
   const remaining: AuditProblem[] = [
     ...report.unsupported,
@@ -249,4 +253,16 @@ export async function writeArticle(
   ];
   const status = remaining.length === 0 && checks.issues.length === 0 ? "READY FOR MERCHANT APPROVAL" : "NEEDS REVIEW";
   return { article, status, words: checks.words, issues: checks.issues, remaining, tokens };
+}
+
+
+function trimTo(text: string, max: number, endWithStop: boolean): string {
+  const t = (text ?? "").trim();
+  if (t.length <= max) return t;
+  const head = t.slice(0, max + 1);
+  const sentence = Math.max(head.lastIndexOf(". "), head.lastIndexOf("! "), head.lastIndexOf("? "));
+  if (sentence >= max * 0.6) return t.slice(0, sentence + 1);
+  let cut = t.slice(0, max).replace(/\s+\S*$/, "").replace(/[\s,;:\-–—(]+$/, "").replace(/\s+(and|or|the|a|an|to|of|for|with|in|on|that|which)$/i, "");
+  if (endWithStop && !/[.!?]$/.test(cut)) cut += ".";
+  return cut.length <= max ? cut : cut.slice(0, max);
 }

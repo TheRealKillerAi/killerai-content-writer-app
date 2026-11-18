@@ -28,9 +28,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const ids = rows.map((r: { articleId: string | null }) => r.articleId).filter((x: string | null): x is string => !!x);
   const arts = ids.length ? await db.article.findMany({ where: { shop: session.shop, id: { in: ids } }, select: { id: true, result: true } }) : [];
   const liveIds = new Set<string>();
+  const readyIds = new Set<string>();
   for (const a of arts as { id: string; result: string | null }[]) {
     try {
-      if ((JSON.parse(a.result ?? "{}") as { sent?: { published?: boolean } }).sent?.published) liveIds.add(a.id);
+      const res = JSON.parse(a.result ?? "{}") as { sent?: { published?: boolean }; status?: string };
+      if (res.sent?.published) liveIds.add(a.id);
+      if (res.status === "READY FOR MERCHANT APPROVAL") readyIds.add(a.id);
     } catch {
       /* unreadable result: treat as a draft */
     }
@@ -65,7 +68,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
             ? r.publishAt.getTime() > nowMs
               ? "timed"
               : "published"
-            : "draft"
+            : r.articleId && readyIds.has(r.articleId)
+              ? "ready"
+              : "draft"
           : r.status,
       author: (names.get(r.authorId) as string | undefined) ?? settings.businessName,
     })),
@@ -134,6 +139,7 @@ const STATUS: Record<string, { label: string; tone: "info" | "success" | "critic
   timed: { label: "Set to publish", tone: "info" },
   published: { label: "Published", tone: "success" },
   draft: { label: "Draft: needs your review", tone: "warning" },
+  ready: { label: "Draft: ready to publish", tone: "info" },
   failed: { label: "Needs a look", tone: "critical" },
 };
 
@@ -204,14 +210,15 @@ function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["po
       <s-table-cell>
         <s-stack direction="block" gap="none">
           <s-badge tone={st.tone}>{st.label}</s-badge>
-          {p.note && p.phase !== "published" && p.phase !== "timed" ? <s-text color="subdued">{p.note}</s-text> : null}
+          {p.note && p.phase === "draft" ? <s-text color="subdued">{p.note}</s-text> : null}
+          {p.phase === "ready" ? <s-text color="subdued">Reviewed and clear. Open it and press Publish now when you're happy.</s-text> : null}
         </s-stack>
       </s-table-cell>
       <s-table-cell>
         <s-stack direction="inline" gap="none">
           {p.status === "scheduled" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "write-now", id: p.id }, { method: "POST" })}>Write now</s-button> : null}
           {p.status === "failed" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "retry", id: p.id }, { method: "POST" })}>Try again</s-button> : null}
-          {p.phase === "draft" && p.articleId ? <s-button variant="tertiary" href={`/app/article/${p.articleId}`}>Review</s-button> : null}
+          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <s-link href={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</s-link> : null}
           {p.status !== "writing" && p.phase !== "published" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
         </s-stack>
       </s-table-cell>

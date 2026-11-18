@@ -96,6 +96,7 @@ const flat = (t: string) =>
     .replace(/(\d)([a-z])/g, "$1 $2") // 28cm and 28 cm are the same
     .replace(/\s+/g, " ")
     .trim();
+const COLOURS = new Set("red blue green yellow purple pink black white grey gray brown beige navy teal turquoise silver".split(" "));
 const NUMWORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
 const STOP = new Set(
   "with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using".split(
@@ -174,10 +175,19 @@ export function verifyLabels(
     const strongNums = sentNums.filter((n) => n.includes(" ")).every((n) => hayQ.includes(" " + n + " "));
     const hasNums = sentNums.length + words.length > 0;
     const numsStrong = hasNums && numsOk && (words.length ? items >= Math.max(...words.map((w) => NUMWORDS[w])) : true) && strongNums;
+    // A list quoted from structured data ("Colours: Blue, Green, Red") rarely matches the data character for
+    // character, so a list counts as found when every item in it appears in the data.
+    const listFound = (raw: string) => {
+      const items = raw.split(/[,;|\n]|\band\b|\bor\b|\//i).map((x) => flat(x)).filter(Boolean);
+      return items.length >= 2 && items.every((x) => hay.includes(" " + x + " "));
+    };
     const found =
       quotes.length > 0 &&
-      quotes.every((x) => (x.split(" ").length >= 3 || (fromAnswer && x.length >= 2)) && hay.includes(" " + x + " "));
-    if (!found || (hasNums && !numsOk) || (!numsStrong && overlap < (hasNums ? 0.15 : 0.4)))
+      quotes.every((x, i) => ((x.split(" ").length >= 3 || (fromAnswer && x.length >= 2)) && hay.includes(" " + x + " ")) || listFound(rawEv[i] ?? ""));
+    // A sentence that lists colours may only name colours the product data has (stops an invented "grey").
+    const sentColours = sentFlat.split(" ").filter((w) => COLOURS.has(w));
+    const colourBad = new Set(sentColours).size >= 2 && sentColours.some((w) => !hay.includes(" " + w + " "));
+    if (!found || colourBad || (hasNums && !numsOk) || (!numsStrong && overlap < (hasNums ? 0.15 : 0.4)))
       unsupported.push({
         text: s.text,
         problem: !quotes.length
