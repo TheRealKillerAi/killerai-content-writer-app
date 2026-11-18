@@ -20,6 +20,9 @@ Rules
 - A sentence that refers back with "both", "it" or "this" (for example "It is made from both") is judged together with the sentence it refers to.
 - A sentence that only completes a stated procedure by reversing a stated step (closing or refitting what the facts say to open or remove) is supported: use the quote for the step it reverses as evidence.
 
+- Not every sentence needs evidence. Plain statements of what the product is for, or who might want it, that follow directly from what the product is (for example "this table mat protects a table from hot dishes", "a good fit for anyone who wants a reusable option") and that state no specific size, number, material, temperature, certification, safety, care or performance claim are "other". Use product_fact only when the sentence states a specific attribute or claim that the data could confirm or contradict.
+- Quote short. A single exact phrase from the data (for example "Dishwasher-safe" or "Heat-resistant up to 230°C") is good evidence. Quote the data's own wording; do not stitch words from different places into one quote.
+
 Also list leaks: sentences a reader should never see (about how the article was made, what information was or was not provided, or that undermine the product). A sentence is NOT a leak just because its information came from MERCHANT FACTS; stating a supplied fact plainly is correct.
 
 Return ONLY JSON: {"labels":[{"id":"S1","category":"","evidence":null}],"leaks":[{"text":"","problem":""}]}

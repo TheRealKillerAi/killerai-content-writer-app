@@ -97,7 +97,7 @@ const flat = (t: string) =>
     .replace(/\s+/g, " ")
     .trim();
 const COLOURS = new Set("red blue green yellow purple pink black white grey gray brown beige navy teal turquoise silver".split(" "));
-const NUMWORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
+const NUMWORDS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
 const STOP = new Set(
   "with this that your from have they them then than will were been into also each when what which their there about after before while more most some such only over under the and for are you can may not but all any its our out use used using".split(
     " ",
@@ -133,16 +133,47 @@ type RawAudit = {
   leaks?: { text?: string; problem?: string }[];
 };
 
+const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", deg: "°", ndash: "-", mdash: "-", times: "×", rsquo: "'", lsquo: "'", ldquo: '"', rdquo: '"', hellip: "..." };
+/** Plain readable text from product data or merchant answers: tags, HTML entities and JSON escapes removed. */
+export function plainText(v: unknown): string {
+  const parts: string[] = [];
+  const walk = (x: unknown) => {
+    if (x == null) return;
+    if (typeof x === "string") parts.push(x);
+    else if (typeof x === "number" || typeof x === "boolean") parts.push(String(x));
+    else if (Array.isArray(x)) x.forEach(walk);
+    else if (typeof x === "object") Object.values(x as Record<string, unknown>).forEach(walk);
+  };
+  walk(v);
+  return parts
+    .join(" \n ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (m, n) => ENTITIES[n.toLowerCase()] ?? m)
+    .replace(/\s+/g, " ");
+}
+
+// Words that make a safety, material or performance claim. If a sentence uses one, the product data must use it too.
+const CLAIM_WORDS = new Set(
+  "certified certification tested proven guarantee guaranteed warranty lifetime award clinically hypoallergenic antibacterial antimicrobial waterproof microwave freezer oven dishwasher biodegradable compostable organic vegan toxic bpa fda eco lead odour odor recyclable recycled".split(" "),
+);
+const NEG = /\b(not|no|never|without|cannot|cant|dont|doesnt|isnt|non|avoid|unsafe)\b/;
+
 export function verifyLabels(
   sentences: Sentence[],
   raw: RawAudit,
   factsText: string,
   answers: Record<string, string> = {},
 ): AuditReport {
+  void answers;
   const hay = " " + flat(factsText) + " ";
+  const stem = (w: string) => w.slice(0, 5);
+  const hayStems = new Set(hay.split(" ").filter(Boolean).map(stem));
   const byId = new Map((raw.labels || []).map((l) => [l.id, l]));
   const unsupported: AuditReport["unsupported"] = [];
   const missing: string[] = [];
+  const inHay = (w: string) => hayStems.has(stem(w));
   for (const s of sentences) {
     const c = byId.get(s.id);
     if (!c) {
@@ -150,51 +181,58 @@ export function verifyLabels(
       continue;
     }
     if (!NEEDS.has(c.category)) continue;
-    const quotes = ([] as unknown[])
-      .concat(c.evidence || [])
-      .map((e) => flat(String(e)))
-      .filter(Boolean);
-    const q = quotes.join(" ");
-    const content = (t: string) => t.split(" ").filter((w) => w.length >= 4 && !STOP.has(w));
-    const fromAnswer = Object.entries(answers).find(([, a]) => quotes.length === 1 && flat(String(a)).includes(quotes[0]));
-    const ev = content(q + (fromAnswer ? " " + flat(fromAnswer[0]) : "")).map((w) => w.slice(0, 4));
-    const sw = content(flat(s.text));
-    const overlap = sw.length ? sw.filter((w) => ev.includes(w.slice(0, 4))).length / sw.length : 1;
-    // Sentences with numbers are judged on the numbers: every figure must be in the evidence, and a count
-    // ("three sizes") must match the number of items quoted. Then the surrounding wording matters less.
-    const rawEv = ([] as unknown[]).concat(c.evidence || []).map(String);
-    const hayQ = " " + q + " ";
+    const rawEv = ([] as unknown[]).concat(c.evidence || []).map(String).filter((e) => flat(e));
+    const quotes = rawEv.map((e) => flat(e));
     const sentFlat = flat(s.text);
-    const sentNums = (s.text.replace(/(\d)\s*[x×]\s*(?=\d)/g, "$1 ").match(/\d+(?:\.\d+)?(?:\s*[a-zA-Z]{1,3}\b)?/g) || []).map((n) => flat(n));
-    const words = sentFlat.split(" ").filter((w) => w in NUMWORDS);
-    const items = rawEv.length > 1 ? rawEv.length : (rawEv[0] || "").split(/[,;|\n]|\band\b|\/(?=\s)/i).filter((x) => x.trim()).length;
-    const numsOk =
-      sentNums.every((n) => hayQ.includes(" " + n + " ") || hayQ.includes(" " + n.replace(/ [a-z]+$/, "") + " ")) &&
-      words.every((w) => hayQ.includes(" " + NUMWORDS[w] + " ") || hayQ.includes(" " + w + " ") || items >= NUMWORDS[w]);
-    // A figure counts as backed when its number and unit appear together in the evidence (e.g. "0.02 kg").
-    const strongNums = sentNums.filter((n) => n.includes(" ")).every((n) => hayQ.includes(" " + n + " "));
-    const hasNums = sentNums.length + words.length > 0;
-    const numsStrong = hasNums && numsOk && (words.length ? items >= Math.max(...words.map((w) => NUMWORDS[w])) : true) && strongNums;
-    // A list quoted from structured data ("Colours: Blue, Green, Red") rarely matches the data character for
-    // character, so a list counts as found when every item in it appears in the data.
-    const listFound = (raw: string) => {
-      const items = raw.split(/[,;|\n]|\band\b|\bor\b|\//i).map((x) => flat(x)).filter(Boolean);
-      return items.length >= 2 && items.every((x) => hay.includes(" " + x + " "));
+    const sentWords = sentFlat.split(" ").filter(Boolean);
+
+    // 1. Is the quoted evidence really in the data? Any length, or a list whose every item is in the data.
+    const itemsOf = (t: string) => t.split(/[,;|\n]|\band\b|\bor\b|\//i).map((x) => flat(x)).filter(Boolean);
+    const quoteFound = (e: string) => {
+      const x = flat(e);
+      if (!x) return false;
+      if (hay.includes(" " + x + " ")) return true;
+      const items = itemsOf(e);
+      return items.length >= 2 && items.every((i) => hay.includes(" " + i + " "));
     };
-    const found =
-      quotes.length > 0 &&
-      quotes.every((x, i) => ((x.split(" ").length >= 3 || (fromAnswer && x.length >= 2)) && hay.includes(" " + x + " ")) || listFound(rawEv[i] ?? ""));
-    // A sentence that lists colours may only name colours the product data has (stops an invented "grey").
-    const sentColours = sentFlat.split(" ").filter((w) => COLOURS.has(w));
+    const found = rawEv.length > 0 && rawEv.every(quoteFound);
+
+    // 2. How much of the sentence is made of things the data actually says?
+    const content = sentWords.filter((w) => (w.length >= 4 && !STOP.has(w)) || /\d/.test(w));
+    const cover = content.length ? content.filter(inHay).length / content.length : 1;
+
+    // 3. Figures must match the data exactly; counts ("three sizes") must match the items quoted.
+    const sentNums = (s.text.replace(/(\d)\s*[x×]\s*(?=\d)/g, "$1 ").match(/\d+(?:\.\d+)?(?:\s*[a-zA-Z]{1,3}\b)?/g) || []).map((n) => flat(n));
+    const numWords = sentWords.filter((w) => w in NUMWORDS);
+    const items = rawEv.length > 1 ? rawEv.length : rawEv[0] ? itemsOf(rawEv[0]).length : 0;
+    const numsOk =
+      sentNums.every((n) => hay.includes(" " + n + " ") || hay.includes(" " + n.replace(/ [a-z]+$/, "") + " ")) &&
+      numWords.every((w) => hay.includes(" " + NUMWORDS[w] + " ") || hay.includes(" " + w + " ") || items >= NUMWORDS[w]);
+
+    // 4. Guards: colour lists, safety/material claim words, and evidence that says the opposite.
+    const sentColours = sentWords.filter((w) => COLOURS.has(w));
     const colourBad = new Set(sentColours).size >= 2 && sentColours.some((w) => !hay.includes(" " + w + " "));
-    if (!found || colourBad || (hasNums && !numsOk) || (!numsStrong && overlap < (hasNums ? 0.15 : 0.4)))
+    const claimBad = sentWords.some((w) => CLAIM_WORDS.has(w) && !inHay(w));
+    const evText = quotes.join(" ");
+    const negBad = !!evText && NEG.test(evText) !== NEG.test(sentFlat);
+
+    const supported = numsOk && !colourBad && !claimBad && !negBad && ((found && cover >= 0.5) || cover >= 0.85);
+    if (!supported)
       unsupported.push({
         text: s.text,
-        problem: !quotes.length
-          ? `no supporting evidence (${c.category})`
-          : found
-            ? `the quoted evidence does not support this sentence (${c.category})`
-            : "quoted evidence not found in product data or merchant facts",
+        problem: !numsOk
+          ? `a figure or count here isn't in the product data (${c.category})`
+          : claimBad
+            ? `makes a claim the product data doesn't mention (${c.category})`
+            : colourBad
+              ? `names a colour the product data doesn't have (${c.category})`
+              : negBad
+                ? `the evidence says something different (${c.category})`
+                : !rawEv.length
+                  ? `no supporting evidence (${c.category})`
+                  : !found
+                    ? "quoted evidence not found in product data or merchant facts"
+                    : `the quoted evidence does not support this sentence (${c.category})`,
         category: c.category,
       });
   }

@@ -15,6 +15,7 @@ import {
   runChecks,
   splitSentences,
   verifyLabels,
+  plainText,
 } from "./checks";
 import { addInternalLinks, addLinkOnPhrase, type LinkTargets } from "./links";
 import { sameKeyword } from "../keywords";
@@ -53,6 +54,8 @@ export async function writeArticle(
     null,
     2,
   )}\n\nUNKNOWN TO THE MERCHANT (do not cover, estimate or hint at these)\n${JSON.stringify(merchant.unknown)}`;
+  // What the checker searches: the product data and the merchant's answers as plain text (not the JSON the writer saw).
+  const plain = plainText([guide ?? product, Object.values(merchant.known)]);
   const gaps = [...(angle.needs_info?.filter(Boolean) ?? []), ...merchant.unknown];
 
   await progress("Writing the article");
@@ -75,12 +78,12 @@ export async function writeArticle(
     const listing = (ss: typeof sentences) => ss.map((x) => `${x.id} [where=${x.where}]: ${x.text}`).join("\n");
     type Raw = Parameters<typeof verifyLabels>[1];
     let raw = await call<Raw>(auditorPrompt, `${facts}\n\nSENTENCES\n${listing(sentences)}`, 0);
-    let res = verifyLabels(sentences, raw, facts, merchant.known);
+    let res = verifyLabels(sentences, raw, plain, merchant.known);
     if (res.missing.length) {
       const rest = sentences.filter((x) => res.missing.includes(x.id));
       const raw2 = await call<Raw>(auditorPrompt, `${facts}\n\nSENTENCES\n${listing(rest)}`, 0);
       raw = { labels: [...(raw.labels || []), ...(raw2.labels || [])], leaks: raw.leaks || [] };
-      res = verifyLabels(sentences, raw, facts, merchant.known);
+      res = verifyLabels(sentences, raw, plain, merchant.known);
     }
     for (const id of res.missing) {
       res.unsupported.push({
