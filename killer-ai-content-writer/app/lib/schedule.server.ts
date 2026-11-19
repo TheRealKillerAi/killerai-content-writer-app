@@ -499,16 +499,16 @@ export const runInBackground = (p: Promise<unknown>) => waitUntil(p.catch((e) =>
  * at its scheduled time if that is still ahead (Shopify holds it until then), otherwise straight away.
  * Only for scheduled articles, only when the store publishes automatically, and never throws.
  */
-export async function autoPublishCleared(admin: Admin, shop: string, articleId: string): Promise<void> {
+export async function autoPublishCleared(admin: Admin, shop: string, articleId: string, retryFailed = false): Promise<boolean> {
   try {
-    const post = await db.scheduledPost.findFirst({ where: { shop, articleId, status: "sent" } });
-    if (!post) return;
+    const post = await db.scheduledPost.findFirst({ where: { shop, articleId, status: retryFailed ? { in: ["sent", "failed"] } : "sent" } });
+    if (!post) return false;
     const art = await getArticle(shop, articleId);
-    if (!art?.result || art.result.status !== "READY FOR MERCHANT APPROVAL" || !art.result.sent || art.result.sent.published) return;
+    if (!art?.result || art.result.status !== "READY FOR MERCHANT APPROVAL" || (!retryFailed && !art.result.sent) || art.result.sent?.published) return false;
     const settings = await loadEffectiveSettings(admin, shop);
-    if (settings.publishMode !== "live") return;
+    if (settings.publishMode !== "live") return false;
     const product = await getProduct(admin, `gid://shopify/Product/${firstProductId(art.productId)}`);
-    if (!product) return;
+    if (!product) return false;
     const { sent } = await sendToShopify(admin, {
       article: art.result.article,
       angle: art.angle,
@@ -516,12 +516,14 @@ export async function autoPublishCleared(admin: Admin, shop: string, articleId: 
       settings,
       shopName: settings.businessName,
       publish: true,
-      existing: art.result.sent,
+      existing: art.result.sent ?? null,
       publishAt: post.publishAt.toISOString(),
     });
     await setSent(shop, articleId, sent);
-    await db.scheduledPost.update({ where: { id: post.id }, data: { note: null } });
+    await db.scheduledPost.update({ where: { id: post.id }, data: { status: "sent", note: null } });
+    return true;
   } catch (e) {
     console.error("Auto-publish of a cleared article failed", e);
+    return false;
   }
 }

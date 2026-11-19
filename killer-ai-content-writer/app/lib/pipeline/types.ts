@@ -87,7 +87,9 @@ export interface ReviewedSentence {
 
 export interface SentInfo {
   id: string; // gid://shopify/Article/...
-  published: boolean;
+  published: boolean; // true once live, or when Shopify has it timed to go live
+  /** ISO time Shopify will publish it, while that is still ahead. */
+  scheduledFor?: string;
   at: string;
   handle: string;
   blogHandle: string;

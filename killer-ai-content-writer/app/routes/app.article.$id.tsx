@@ -551,9 +551,9 @@ function ArticleReview({
         {sent ? (
           <s-stack direction="block" gap="base">
             <s-stack direction="inline" gap="small" alignItems="center">
-              <s-badge tone={sent.published ? "success" : "info"}>{sent.published ? "Published" : "Draft"}</s-badge>
+              <s-badge tone={sent.published ? "success" : "info"}>{sent.published ? (sent.scheduledFor && new Date(sent.scheduledFor).getTime() > Date.now() ? "Scheduled" : "Published") : "Draft"}</s-badge>
               <s-text>
-                {sent.published ? "This article is live on your blog." : "This article is saved as a draft in your blog."}
+                {sent.published ? (sent.scheduledFor && new Date(sent.scheduledFor).getTime() > Date.now() ? `Shopify will publish this article on ${new Date(sent.scheduledFor).toLocaleString("en-AU", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}.` : "This article is live on your blog.") : "This article is saved as a draft in your blog."}
               </s-text>
             </s-stack>
             <s-stack direction="inline" gap="small">

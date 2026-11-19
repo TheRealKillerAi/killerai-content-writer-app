@@ -37,6 +37,8 @@ export async function sendToShopify(
   },
 ): Promise<{ sent: SentInfo; warning?: string }> {
   const { article: a, angle, settings, publish, existing } = opts;
+  // Shopify refuses "published" together with a future date: a scheduled article is unpublished with a publishDate.
+  const scheduledFor = publish && opts.publishAt && new Date(opts.publishAt).getTime() > Date.now() ? opts.publishAt : undefined;
   const handle = safeHandle(a.handle, a.h1);
   const org = a.organization;
   const tagList = org
@@ -74,7 +76,7 @@ export async function sendToShopify(
         mutation Update($id: ID!, $article: ArticleUpdateInput!) {
           articleUpdate(id: $id, article: $article) { article { ${ARTICLE_FIELDS} } userErrors { field message } }
         }`,
-        { id: existing.id, article: { ...base, ...(chosenBlog ? { blogId: chosenBlog } : {}), ...(publish && !existing.published ? { isPublished: true, ...(opts.publishAt && new Date(opts.publishAt).getTime() > Date.now() ? { publishDate: opts.publishAt } : {}) } : {}), redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
+        { id: existing.id, article: { ...base, ...(chosenBlog ? { blogId: chosenBlog } : {}), ...(publish && !existing.published ? (scheduledFor ? { isPublished: false, publishDate: scheduledFor } : { isPublished: true }) : {}), redirectNewHandle: true, ...(withSeo ? { metafields: seo } : {}) } },
       );
       return d.articleUpdate;
     }
@@ -94,7 +96,7 @@ export async function sendToShopify(
         articleCreate(article: $article, blog: $blog) { article { ${ARTICLE_FIELDS} } userErrors { field message } }
       }`,
       {
-        article: { ...base, ...(blogId ? { blogId } : {}), isPublished: publish, ...(publish && opts.publishAt ? { publishDate: opts.publishAt } : {}), ...(withSeo ? { metafields: seo } : {}) },
+        article: { ...base, ...(blogId ? { blogId } : {}), isPublished: publish && !scheduledFor, ...(scheduledFor ? { publishDate: scheduledFor } : publish && opts.publishAt ? { publishDate: opts.publishAt } : {}), ...(withSeo ? { metafields: seo } : {}) },
         ...(blogId ? {} : { blog: { title: "News" } }),
       },
     );
@@ -114,7 +116,7 @@ export async function sendToShopify(
   const art = result.article;
   const url = await storefrontUrl(admin, art.blog.handle, art.handle);
   return {
-    sent: { id: art.id, published: art.isPublished, at: new Date().toISOString(), handle: art.handle, blogHandle: art.blog.handle, url },
+    sent: { id: art.id, published: art.isPublished || !!scheduledFor, ...(scheduledFor ? { scheduledFor } : {}), at: new Date().toISOString(), handle: art.handle, blogHandle: art.blog.handle, url },
     warning,
   };
 }

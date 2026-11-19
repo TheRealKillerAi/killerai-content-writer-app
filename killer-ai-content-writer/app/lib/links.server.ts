@@ -42,6 +42,7 @@ export async function loadLinkTargets(
           const res = JSON.parse(r.result ?? "null") as ArticleResult | null;
           const sent = res?.sent;
           if (!res || !sent?.published || !sent.handle || !sent.blogHandle) continue;
+          if (sent.scheduledFor && new Date(sent.scheduledFor).getTime() > Date.now()) continue; // not live yet
           const path = `/blogs/${sent.blogHandle}/${sent.handle}`;
           seen.add(path);
           targets.articles.push({ title: res.article.h1 || r.title || "", keyword: r.keyword, path });

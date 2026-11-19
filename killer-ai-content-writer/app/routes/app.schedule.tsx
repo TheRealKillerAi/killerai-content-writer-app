@@ -7,7 +7,7 @@ import { monthlyUsage } from "../lib/usage.server";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { loadEffectiveSettings } from "../lib/settings.server";
-import { effectiveZone, fillChain, isWorking, openSlotCount, processDue, runInBackground, sendTopicsEmail, shopInfo } from "../lib/schedule.server";
+import { autoPublishCleared, effectiveZone, fillChain, isWorking, openSlotCount, processDue, runInBackground, sendTopicsEmail, shopInfo } from "../lib/schedule.server";
 import { listAuthors } from "../lib/authors.server";
 import { pickedImage } from "../lib/files.server";
 import { productImages } from "../lib/products.server";
@@ -131,6 +131,8 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<Result> =
     return { message: "Writing started. This takes about a minute." };
   }
   if (intent === "retry" && own && own.status === "failed") {
+    // The article was already written and only the send failed: send it again instead of paying to rewrite it.
+    if (own.articleId && (await autoPublishCleared(admin, shop, own.articleId, true))) return { message: "Sent to Shopify." };
     await db.scheduledPost.update({ where: { id }, data: { status: "scheduled", note: null } });
     const settings = await loadEffectiveSettings(admin, shop);
     runInBackground(processDue(shop, admin, settings, id));
@@ -252,6 +254,7 @@ function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["po
       <s-table-cell>
         <s-stack direction="block" gap="none">
           <s-badge tone={st.tone}>{st.label}</s-badge>
+          {p.phase === "failed" && p.note ? <div style={{ maxWidth: 300, whiteSpace: "normal", opacity: 0.75, fontSize: 13 }}>{p.note}</div> : null}
           {p.phase === "draft" ? <div style={{ maxWidth: 300, whiteSpace: "normal", opacity: 0.75, fontSize: 13 }}>{p.why ? `To check: ${p.why}.` : p.note}</div> : null}
           {p.phase === "ready" ? <div style={{ maxWidth: 300, whiteSpace: "normal", opacity: 0.75, fontSize: 13 }}>Reviewed and clear. Open it and press Publish now when you're happy.</div> : null}
         </s-stack>
@@ -260,7 +263,7 @@ function Row({ p, tz }: { p: ReturnType<typeof useLoaderData<typeof loader>>["po
         <s-stack direction="inline" gap="none">
           {p.status === "scheduled" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "write-now", id: p.id }, { method: "POST" })}>Write now</s-button> : null}
           {p.status === "failed" ? <s-button variant="tertiary" onClick={() => f.submit({ intent: "retry", id: p.id }, { method: "POST" })}>Try again</s-button> : null}
-          {(p.phase === "draft" || p.phase === "ready") && p.articleId ? <AppLink button to={`/app/article/${p.articleId}`}>{p.phase === "ready" ? "Open" : "Review"}</AppLink> : null}
+          {(p.phase === "draft" || p.phase === "ready" || p.phase === "failed") && p.articleId ? <AppLink button to={`/app/article/${p.articleId}`}>{p.phase === "draft" ? "Review" : "Open"}</AppLink> : null}
           {p.status !== "writing" && p.phase !== "published" ? <s-button variant="tertiary" tone="critical" onClick={() => f.submit({ intent: "delete", id: p.id }, { method: "POST" })}>Remove</s-button> : null}
         </s-stack>
       </s-table-cell>
