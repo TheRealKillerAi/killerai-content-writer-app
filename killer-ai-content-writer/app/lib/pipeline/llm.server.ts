@@ -12,8 +12,11 @@ export async function chatJson<T>(
   if (!key) throw new LlmError("DEEPSEEK_API_KEY is not set. Add it to the app's .env file and restart the dev server.");
 
   let lastStatus = 0;
-  for (let attempt = 1; attempt <= 4; attempt++) {
-    const res = await fetch(URL_, {
+  let badJson = 0;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(URL_, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
@@ -26,7 +29,13 @@ export async function chatJson<T>(
           { role: "user", content: user },
         ],
       }),
-    });
+      });
+    } catch {
+      // Network blip: wait and try again.
+      lastStatus = 0;
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
+      continue;
+    }
     lastStatus = res.status;
     if (res.ok) {
       const data = await res.json();
@@ -34,7 +43,9 @@ export async function chatJson<T>(
       try {
         return { json: JSON.parse(text) as T, tokens: data.usage?.total_tokens ?? 0 };
       } catch {
-        throw new LlmError("The AI returned something that was not valid JSON. Please try again.");
+        // Occasionally the model returns cut-off or malformed JSON. Asking again almost always fixes it.
+        if (++badJson >= 3) throw new LlmError("The AI returned an answer we couldn't read, three times in a row. Please try again.");
+        continue;
       }
     }
     if (res.status < 500 && res.status !== 429) {

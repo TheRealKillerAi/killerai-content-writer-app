@@ -10,6 +10,11 @@ export async function monthlyUsage(shop: string): Promise<Usage> {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  // An article whose write died part-way must never count against the merchant.
+  await db.article.updateMany({
+    where: { shop, state: "writing", updatedAt: { lt: new Date(Date.now() - 10 * 60 * 1000) } },
+    data: { state: "failed", error: "This took too long or was interrupted. Please try again." },
+  });
   const used = await db.article.count({ where: { shop, state: { in: ["writing", "done"] }, createdAt: { gte: start } } });
   return { used, limit: CURRENT_PLAN.monthlyArticles, plan: CURRENT_PLAN.name, resetsOn: next.toISOString() };
 }
