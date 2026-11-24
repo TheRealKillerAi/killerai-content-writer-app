@@ -68,7 +68,7 @@ const hash = (t: string) => {
 };
 
 /** The sentences of the post's paragraphs, list items and headings, each as raw HTML. */
-function sentencesOf(html: string): { html: string; text: string }[] {
+export function sentencesOf(html: string): { html: string; text: string }[] {
   const out: { html: string; text: string }[] = [];
   const seen = new Set<string>();
   for (const m of html.matchAll(/<(p|li|h[1-6]|td|blockquote)\b[^>]*>([\s\S]*?)<\/\1>/gi)) {

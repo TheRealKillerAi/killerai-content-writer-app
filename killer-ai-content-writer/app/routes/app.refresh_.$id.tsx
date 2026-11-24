@@ -10,6 +10,7 @@ import { loadSettings } from "../lib/settings.server";
 import { classifySource, SOURCE_LABEL } from "../lib/sources";
 import { UNDO_DAYS } from "../lib/refreshRules";
 import { proposeChanges, applyChanges, applyRewrites, type Note } from "../lib/refreshChanges";
+import { checkProductFacts, linkedProductHandles, type FactFix } from "../lib/refreshFacts.server";
 import { ageLabel, hasFaq, hasTldr, scoreExisting } from "../lib/refresh";
 import { applyLinkAdds, applyAdditions, ADD_FAQ_ID, ADD_TLDR_ID, type Addition } from "../lib/refreshAdd";
 import { writeFaq, writeTldr } from "../lib/refreshAdd.server";
@@ -36,6 +37,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     notes,
     skippedChecks,
     searchOn: searchConfigured(),
+    linkedProducts: ctx.rules!.product_fact === "off" ? 0 : linkedProductHandles(post.body).length,
     needs: { tldr: !hasTldr(post.body) && ctx.rules!.add_tldr !== "off", faq: !hasFaq(post.body) && ctx.rules!.add_faq !== "off" },
     tldrStyle: {
       tldrEnabled: true, tldrLabel: settings.tldrLabel, tldrBg: settings.tldrBg, tldrText: settings.tldrText,
@@ -49,7 +51,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   };
 };
 
-type ActionResult = { intent: string; ok: boolean; message: string; check?: FactCheck; sentence?: string; tldr?: string; faq?: { q: string; a: string }[] };
+type ActionResult = { intent: string; ok: boolean; message: string; fixes?: FactFix[]; products?: string[]; checked?: number; check?: FactCheck; sentence?: string; tldr?: string; faq?: { q: string; a: string }[] };
 
 export const action = async ({ request, params }: ActionFunctionArgs): Promise<ActionResult> => {
   const { admin, session } = await authenticate.admin(request);
@@ -84,7 +86,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
           rewrites = raw
             .filter((x) => x && typeof x.id === "string" && typeof x.before === "string" && typeof x.after === "string" && (x.decision === "accepted" || x.decision === "ignored"))
             .slice(0, 20)
-            .map((x) => ({ id: x.id, before: x.before.slice(0, 1500), after: x.after.slice(0, 1500), decision: x.decision, detail: String(x.detail ?? "") }));
+            .map((x) => ({ id: x.id, before: x.before.slice(0, 1500), after: x.after.slice(0, 1500), decision: x.decision, detail: String(x.detail ?? ""), rule: x.rule === "product_fact" ? ("product_fact" as const) : ("old_year" as const) }));
       } catch {
         /* no rewrites */
       }
@@ -102,6 +104,13 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       }
       const r = await writeFaq(post.title, post.body, settings);
       return r.ok ? { intent, ok: true, message: "", faq: r.items } : { intent, ok: false, message: r.message };
+    }
+    if (intent === "productfacts") {
+      const post = await loadPost(admin, gid);
+      if (!post) return { intent, ok: false, message: "We couldn't find this post." };
+      const settings = await loadSettings(session.shop);
+      const r = await checkProductFacts(admin, post, settings);
+      return r.ok ? { intent, ok: true, message: "", fixes: r.fixes, products: r.products, checked: r.checked } : { intent, ok: false, message: r.message };
     }
     if (intent === "factcheck") {
       const r = await factCheck(String(form.get("sentence") ?? "").slice(0, 1500), String(form.get("updatedAt") ?? ""));
@@ -189,7 +198,7 @@ function ChecksTable({ before, after }: { before: CheckRow[]; after: CheckRow[] 
   );
 }
 
-type Proposal = { id: string; before: string; after: string; detail: string };
+type Proposal = { id: string; before: string; after: string; detail: string; rule?: "old_year" | "product_fact" };
 
 const VERDICT: Record<string, { tone: "success" | "warning" | "neutral"; label: string }> = {
   still_correct: { tone: "success", label: "Still correct" },
@@ -198,6 +207,46 @@ const VERDICT: Record<string, { tone: "success" | "warning" | "neutral"; label: 
 };
 
 /** Fact check, a note for the AI, and a suggested rewording for one sentence that mentions a past year. */
+function ProductFacts({ decisions, proposals, onProposal, onDecide }: { decisions: Record<string, "accepted" | "ignored" | undefined>; proposals: Record<string, Proposal>; onProposal: (p: Proposal) => void; onDecide: (id: string, d: "accepted" | "ignored") => void }) {
+  const f = useFetcher<ActionResult>();
+  const fixes = f.data?.fixes;
+  useEffect(() => {
+    fixes?.forEach((x) => onProposal({ id: x.id, before: x.before, after: x.after, rule: "product_fact", detail: JSON.stringify({ evidence: x.evidence, product: x.product }) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixes]);
+  return (
+    <s-stack direction="block" gap="base">
+      <s-stack direction="inline" gap="small" alignItems="center">
+        <s-button {...(f.state !== "idle" ? { loading: true } : {})} onClick={() => f.submit({ intent: "productfacts" }, { method: "POST" })}>Check product facts</s-button>
+        <s-text color="subdued">Compares this post with the current data of the products it links to. Takes about a minute.</s-text>
+      </s-stack>
+      {f.data && !f.data.ok ? <s-text tone="critical">{f.data.message}</s-text> : null}
+      {f.data?.ok && !fixes?.length ? (
+        <s-text>We checked {f.data.checked} sentences against {f.data.products?.join(", ")} and found nothing that differs from the product data.</s-text>
+      ) : null}
+      {fixes?.map((x) => (
+        <div key={x.id} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: 12 }}>
+          <s-stack direction="block" gap="small">
+            <s-text color="subdued">About {x.product}. The product data says: "{x.evidence}"</s-text>
+            <div style={{ background: "rgba(200,40,40,0.07)", borderRadius: 6, padding: "8px 10px" }}>
+              <s-text color="subdued">Before</s-text>
+              <div>{x.text}</div>
+            </div>
+            <div style={{ background: "rgba(30,140,60,0.08)", borderRadius: 6, padding: "8px 10px" }}>
+              <s-text color="subdued">After</s-text>
+              <div>{x.after}</div>
+            </div>
+            <s-stack direction="inline" gap="small">
+              <s-button {...(decisions[x.id] === "accepted" ? { variant: "primary" } : {})} onClick={() => onDecide(x.id, "accepted")}>{decisions[x.id] === "accepted" ? "Accepted" : "Accept"}</s-button>
+              <s-button variant="tertiary" onClick={() => onDecide(x.id, "ignored")}>{decisions[x.id] === "ignored" ? "Ignored" : "Ignore"}</s-button>
+            </s-stack>
+          </s-stack>
+        </div>
+      ))}
+    </s-stack>
+  );
+}
+
 function SentenceCheck({
   note, updatedAt, searchOn, proposal, decision, onProposal, onDecide,
 }: {
@@ -585,6 +634,17 @@ export default function RefreshPost() {
           </s-stack>
         )}
       </s-section>
+
+      {data.linkedProducts ? (
+        <s-section heading="Product facts">
+          <s-stack direction="block" gap="base">
+            <s-text color="subdued">
+              Sizes, materials, counts and colours change. This compares what the post says about the products it links to with their current product data, and suggests a corrected sentence only where they differ, quoting the data. Nothing changes until you accept it and update the post.
+            </s-text>
+            <ProductFacts decisions={decision} proposals={rewrites} onProposal={(p) => setRewrites((r) => ({ ...r, [p.id]: p }))} onDecide={(id, d) => set([id], d)} />
+          </s-stack>
+        </s-section>
+      ) : null}
 
       {data.needs.tldr || data.needs.faq ? (
         <s-section heading="Add what's missing">

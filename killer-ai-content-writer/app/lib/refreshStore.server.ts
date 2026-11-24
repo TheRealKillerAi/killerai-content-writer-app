@@ -21,7 +21,7 @@ async function writeBody(admin: Admin, gid: string, body: string): Promise<{ ok:
   return { ok: true, body: d.articleUpdate.article.body };
 }
 
-export type RewriteIn = { id: string; before: string; after: string; decision: "accepted" | "ignored"; detail: string };
+export type RewriteIn = { id: string; before: string; after: string; decision: "accepted" | "ignored"; detail: string; rule?: "old_year" | "product_fact" };
 export type AdditionIn = ({ id: string; kind: "tldr"; text: string } | { id: string; kind: "faq"; items: { q: string; a: string }[] }) & { decision: "accepted" | "ignored"; detail: string };
 
 export type ApplyResult = { ok: true; applied: number; runId: string; skipped: number } | { ok: false; error: string };
@@ -121,7 +121,7 @@ export async function applyRefresh(
           ...doneAdds.map((c) => rec(c, "accepted")),
           ...rewrites
             .filter((r) => (r.decision === "accepted" ? rw.applied.includes(r.id) : true))
-            .map((r) => ({ shop, articleId: gid, rule: "old_year", kind: "rewrite_sentence", before: r.before.slice(0, 1500), after: r.after.slice(0, 1500), detail: r.detail.slice(0, 3000), decision: r.decision })),
+            .map((r) => ({ shop, articleId: gid, rule: r.rule === "product_fact" ? "product_fact" : "old_year", kind: "rewrite_sentence", before: r.before.slice(0, 1500), after: r.after.slice(0, 1500), detail: r.detail.slice(0, 3000), decision: r.decision })),
           ...additions
             .filter((x) => (x.decision === "accepted" ? addTake.some((t) => t.id === x.id) : true))
             .map((x) => ({

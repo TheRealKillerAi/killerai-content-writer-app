@@ -1,6 +1,6 @@
 // The rules AI Refresh follows. Shown to the merchant ("How AI Refresh decides") and switchable in Settings.
 export type RuleMode = "on" | "flag" | "off";
-export type RuleId = "dead_product" | "dead_collection" | "dead_post" | "product_stock" | "old_year" | "price" | "add_links" | "add_tldr" | "add_faq";
+export type RuleId = "dead_product" | "dead_collection" | "dead_post" | "product_stock" | "old_year" | "price" | "product_fact" | "add_links" | "add_tldr" | "add_faq";
 
 export type RuleDef = {
   id: RuleId;
@@ -66,6 +66,16 @@ export const RULES: RuleDef[] = [
     bulk: false,
     modes: ["flag", "off"],
     default: "flag",
+  },
+  {
+    id: "product_fact",
+    name: "Product facts that no longer match",
+    looksFor: "A sentence about a product the post links to (size, material, count, colour, care) that says something different from the product's current data.",
+    action: "On request, compares the post with the product data and suggests a corrected sentence, quoting the data. Nothing changes until you accept it.",
+    risk: "Medium",
+    bulk: false,
+    modes: ["on", "off"],
+    default: "on",
   },
   {
     id: "price",
